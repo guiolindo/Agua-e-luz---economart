@@ -17,7 +17,7 @@
 {% include "partials/chart_panel.html" with context %}
 
 <section class="card flush">
-  <div style="padding:14px 18px 0"><h2>Resumo mensal — total da loja (R$)</h2></div>
+  <div style="padding:14px 18px 0"><h2 style="display:inline">Resumo mensal — total da loja (R$)</h2> <span class="muted small">por {{ 'mês de vencimento' if by == 'due' else 'mês de referência' }} · <a href="?by={{ 'reference' if by == 'due' else 'due' }}&start={{ start.strftime('%Y-%m') }}&end={{ end.strftime('%Y-%m') }}">ver por {{ 'referência' if by == 'due' else 'vencimento' }}</a></span></div>
   {% if summary.rows %}
   <div class="tablewrap"><table>
     <thead><tr><th>Tipo</th>{% for m in summary.months %}<th class="num">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th></tr></thead>

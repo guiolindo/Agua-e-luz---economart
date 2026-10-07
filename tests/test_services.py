@@ -95,5 +95,46 @@ def test_store_summary_totals_by_type_and_month(db):
 
 
 def test_manual_type_indicators_follow_type_fields(db):
-    gerador = db.query(RecordType).filter_by(code="gerador").one()
+    gerador = db.query(RecordType).filter_by(code="combustivel-gerador").one()
     assert [i.key for i in chart_service.indicators_for_type(gerador)] == ["value", "horas", "litros"]
+
+
+# ---------- a folha impressa (CD300) é reproduzida ao centavo ----------
+def test_summary_by_due_month_reproduces_the_printed_sheet_exactly(db):
+    import json
+    from pathlib import Path
+
+    from scripts import seed_demo
+
+    seed_demo.main()
+    sheet = json.loads((Path(__file__).parents[1] / "scripts" / "demo_cd300.json").read_text())
+    store = db.query(Store).filter_by(code="CD300").one()
+    s = chart_service.store_summary(db, store, date(2026, 1, 1), date(2026, 10, 1), by="due")
+    assert [str(t) for t in s["totals"]] == sheet["total_geral_impresso"]            # coluna a coluna, como na planilha
+    assert str(s["grand_total"]) == sheet["total_final_impresso"] == "496587.37"
+    names = {r["type"].code: str(r["total"]) for r in s["rows"]}
+    assert names == {"cemig-geracao": "186794.63", "cemig": "206087.97", "ll-energia": "18708.21",
+                     "ccee": "49974.98", "manutencao-gerador": "33450.00", "combustivel-gerador": "1571.58"}
+
+
+def test_summary_by_reference_month_moves_cemig_one_month_back(db):
+    from scripts import seed_demo
+
+    seed_demo.main()
+    store = db.query(Store).filter_by(code="CD300").one()
+    ref = chart_service.store_summary(db, store, date(2026, 1, 1), date(2026, 10, 1), by="reference")
+    cemig = next(r for r in ref["rows"] if r["type"].code == "cemig")["values"]
+    assert str(cemig[0]) == "22543.10" and str(cemig[8]) == "20505.00" and cemig[9] is None   # igual ao gráfico (jan..set)
+    due = chart_service.store_summary(db, store, date(2026, 1, 1), date(2026, 10, 1), by="due")
+    assert str(next(r for r in due["rows"] if r["type"].code == "cemig")["values"][9]) == "20505.00"   # SET vence em out
+
+
+def test_report_can_be_filtered_to_one_supplier(db):
+    from scripts import seed_demo
+
+    seed_demo.main()
+    store = db.query(Store).filter_by(code="CD300").one()
+    cemig = db.query(RecordType).filter_by(code="cemig").one()
+    data = chart_service.report_data(db, store, date(2026, 1, 1), date(2026, 9, 1), by="reference", type_id=cemig.id)
+    assert [b["type"].code for b in data["blocks"]] == ["cemig"]
+    assert data["blocks"][0]["days"][:3] == [31, 28, 31] and data["blocks"][0]["variations"][1].text == "↓ 13,23%"

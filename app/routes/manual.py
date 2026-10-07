@@ -14,7 +14,7 @@ from app.security import admin_required, current_user, verify_csrf, writer_requi
 from app.services import audit_service
 from app.services.duplicate_service import find_bill_duplicates, find_manual_duplicates
 from app.services.import_service import save_bill
-from app.utils.parsing import clean_str, parse_decimal, parse_reference
+from app.utils.parsing import clean_str, parse_date, parse_decimal, parse_reference
 from app.web import flash, render
 
 router = APIRouter()
@@ -45,7 +45,7 @@ def manual_page(request: Request, bill: int | None = None, record: int | None = 
         r = db.get(ManualRecord, record)
         if not r:
             raise HTTPException(404, "Lançamento não encontrado.")
-        form = {"reference": r.reference.strftime("%Y-%m"), "value": f"{r.value:.2f}".replace(".", ","),
+        form = {"reference": r.reference.strftime("%Y-%m"), "due_date": r.due_date.isoformat() if r.due_date else "", "value": f"{r.value:.2f}".replace(".", ","),
                 "notes": r.notes or "", **{f"f_{k}": str(v) for k, v in (r.data or {}).items()}}
         extra.update(edit_record=r, form=form, sel_store=r.store_id, sel_unit=r.unit_id, sel_type=r.record_type_id)
     return render(request, "manual/form.html", user=user, **_ctx(db, **extra))
@@ -95,6 +95,9 @@ async def manual_save(request: Request, user: User = Depends(writer_required), d
 
     # tipos manuais
     reference = parse_reference(posted.get("reference"))
+    due_date = parse_date(posted.get("due_date"))
+    if clean_str(posted.get("due_date")) and due_date is None:
+        errors["due_date"] = "Data inválida."
     value = parse_decimal(posted.get("value"))
     if reference is None:
         errors["reference"] = "Informe o mês."
@@ -121,6 +124,7 @@ async def manual_save(request: Request, user: User = Depends(writer_required), d
                            value=value)
         db.add(rec)
     rec.unit_id, rec.reference, rec.value, rec.data = unit_id, reference, value, data
+    rec.due_date = due_date
     rec.notes, rec.updated_by = clean_str(posted.get("notes"), 2000), user.id
     db.flush()
     audit_service.log(db, user.id, "update" if existing or action == "replace" else "create", "manual_record", rec.id,

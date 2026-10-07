@@ -32,6 +32,12 @@ ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decis�
 - **Retenção:** a foto/PDF fica no PostgreSQL por 6 meses e então é apagada automaticamente (rotina na subida e a cada
   6 h; manual: `python -m scripts.purge_documents`). Os dados lidos, valores e gráficos permanecem; a tela mostra
   “Original expirado”.
+- **Fornecedores da planilha atual:** já vêm cadastrados CEMIG (distribuição), COELBA, CEMIG Geração e Transmissão, LL Energia,
+  Câmara de Comercialização de Energia (CCEE), Compra de combustível para gerador e Manutenção de Gerador. O relatório e o
+  resumo mensal podem **agrupar por mês de referência (competência) ou por mês de vencimento** — a planilha impressa usa o
+  vencimento (a conta de SET/2026, que vence em outubro, cai na coluna out/2026). Lançamentos manuais aceitam “Vencimento”
+  opcional; sem ele, entram no mês de referência. O relatório também filtra por fornecedor. `python -m scripts.seed_demo`
+  reproduz a folha do CD300 (o teste confere o Total Geral ao centavo).
 - **Imprimir uma conta com gráficos:** em *Unidade → Contas → Imprimir* (ou `/bills/<id>/print`). A ficha A4 traz os dados
   da conta, o comparativo com o mês anterior, os itens faturados e três gráficos dos últimos 12 meses (valor com linha de
   variação, consumo HP/HFP e demanda com a contratada), com o mês escolhido em destaque. Na própria tela dá para trocar

@@ -71,16 +71,17 @@ def store_create(request: Request, code: str = Form(...), name: str = Form(""), 
 @router.get("/stores/{store_id}")
 def store_history(request: Request, store_id: int, type_id: int | None = None, indicator: str | None = None,
                   view: str = "units", start: str | None = None, end: str | None = None,
-                  highlight: int | None = None, unit_id: int | None = None,
+                  highlight: int | None = None, unit_id: int | None = None, by: str = "reference",
                   user: User = Depends(current_user), db: Session = Depends(get_db)):
     store = _store_or_404(db, store_id)
+    by = "due" if by == "due" else "reference"
     types = list_record_types(db)
     chosen = next((t for t in types if t.id == type_id), None) or default_bill_type(db) or (types[0] if types else None)
     start_d, end_d = chart_service.default_range(db, store.id, parse_reference(start), parse_reference(end))
-    summary = chart_service.store_summary(db, store, start_d, end_d)
+    summary = chart_service.store_summary(db, store, start_d, end_d, by)
     return render(request, "stores/history.html", user=user, store=store, types=types, chosen=chosen,
                   view=view if view in ("units", "types") else "units", indicator=indicator, start=start_d, end=end_d,
-                  highlight=highlight, unit_id=unit_id, summary=summary)
+                  highlight=highlight, unit_id=unit_id, summary=summary, by=by)
 
 
 @router.get("/stores/{store_id}/settings")
@@ -157,9 +158,11 @@ def unit_page(request: Request, unit_id: int, indicator: str | None = None, user
 
 @router.get("/stores/{store_id}/report")
 def store_report(request: Request, store_id: int, start: str | None = None, end: str | None = None,
-                 user: User = Depends(current_user), db: Session = Depends(get_db)):
+                 by: str = "reference", type_id: int | None = None, user: User = Depends(current_user), db: Session = Depends(get_db)):
     from datetime import datetime, timezone
 
     store = _store_or_404(db, store_id)
-    data = chart_service.report_data(db, store, parse_reference(start), parse_reference(end))
-    return render(request, "stores/report.html", user=user, store=store, generated=datetime.now(timezone.utc), **data)
+    by = "due" if by == "due" else "reference"
+    data = chart_service.report_data(db, store, parse_reference(start), parse_reference(end), by, type_id)
+    return render(request, "stores/report.html", user=user, store=store, generated=datetime.now(timezone.utc),
+                  types=list_record_types(db, only_active=False), **data)

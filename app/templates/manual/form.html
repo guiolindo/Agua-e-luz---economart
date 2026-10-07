@@ -45,6 +45,7 @@
     <div class="row row-3">
       {{ field("reference", "Mês de referência", form, errors, type="month", required=true) }}
       {{ field("value", "Valor (R$)", form, errors, required=true, placeholder="0,00") }}
+      {{ field("due_date", "Vencimento (opcional)", form, errors, type="date", hint="Usado para agrupar pelo mês de vencimento.") }}
     </div>
     {% if t.fields %}<div class="row row-3">{% for f in t.fields %}
       {{ field("f_" ~ f.key, f.label ~ (' (' ~ f.unit ~ ')' if f.unit else ''), form, errors) }}{% endfor %}</div>{% endif %}

@@ -70,6 +70,16 @@ def tooltip_lines(rt: RecordType, rec) -> list[str]:
     return lines
 
 
+def month_of(reference: date, due: date | None, by: str) -> date:
+    """Mês em que o registro entra nas tabelas: referência (competência) ou vencimento (como a planilha atual)."""
+    return due.replace(day=1) if by == "due" and due else reference
+
+
+def _fetch_range(start: date, end: date, by: str) -> tuple[date, date]:
+    """Por vencimento, uma conta com referência fora do período pode vencer dentro dele: busca 1 mês a mais."""
+    return (add_months(start, -1), add_months(end, 1)) if by == "due" else (start, end)
+
+
 def default_range(db: Session, store_id: int | None, start: date | None, end: date | None) -> tuple[date, date]:
     if end is None:
         end = repo.latest_reference(db, store_id) or date.today().replace(day=1)
@@ -179,25 +189,31 @@ def _chart_by_type(db, store, types, months, idx, start, end) -> dict:
             "indicator": {"key": "value", "label": "Total por tipo", "kind": "brl"}, "series": series}
 
 
-def store_summary(db: Session, store: Store, start: date | None = None, end: date | None = None) -> dict:
+def store_summary(db: Session, store: Store, start: date | None = None, end: date | None = None,
+                  by: str = "reference") -> dict:
     """Resumo mensal da loja: tipo x mês, com total e variação (equivale ao 'Resumo mensal' da planilha atual)."""
     start, end = default_range(db, store.id, start, end)
     months = month_range(start, end)
     idx = {m: i for i, m in enumerate(months)}
     types = {t.id: t for t in list_record_types(db, only_active=False)}
     per_type: dict[int, list] = defaultdict(lambda: [None] * len(months))
-    for b in repo.bills_for_units(db, [u.id for u in store.units], start, end):
-        c = per_type[b.record_type_id]
-        c[idx[b.reference]] = (c[idx[b.reference]] or Decimal(0)) + b.total_value
-    for r in repo.manual_for_store(db, store.id, start, end):
-        c = per_type[r.record_type_id]
-        c[idx[r.reference]] = (c[idx[r.reference]] or Decimal(0)) + r.value
+    qs, qe = _fetch_range(start, end, by)
+    for b in repo.bills_for_units(db, [u.id for u in store.units], qs, qe):
+        m = month_of(b.reference, b.due_date, by)
+        if m in idx:
+            c = per_type[b.record_type_id]
+            c[idx[m]] = (c[idx[m]] or Decimal(0)) + b.total_value
+    for r in repo.manual_for_store(db, store.id, qs, qe):
+        m = month_of(r.reference, r.due_date, by)
+        if m in idx:
+            c = per_type[r.record_type_id]
+            c[idx[m]] = (c[idx[m]] or Decimal(0)) + r.value
     rows = [{"type": types[tid], "values": vals, "total": sum((v for v in vals if v is not None), Decimal(0))}
             for tid, vals in sorted(per_type.items(), key=lambda kv: types[kv[0]].sort_order)]
     totals = [sum((r["values"][i] for r in rows if r["values"][i] is not None), Decimal(0)) if
               any(r["values"][i] is not None for r in rows) else None for i in range(len(months))]
     return {
-        "months": months, "rows": rows, "totals": totals,
+        "by": by, "months": months, "rows": rows, "totals": totals,
         "variations": [variation(totals[i - 1] if i else None, t) for i, t in enumerate(totals)],
         "grand_total": sum((t for t in totals if t is not None), Decimal(0)),
     }
@@ -226,7 +242,8 @@ def unit_overview(db: Session, unit: ConsumerUnit) -> dict:
     }
 
 
-def report_data(db: Session, store: Store, start: date | None = None, end: date | None = None) -> dict:
+def report_data(db: Session, store: Store, start: date | None = None, end: date | None = None,
+                by: str = "reference", type_id: int | None = None) -> dict:
     """Dados do relatório impresso: um bloco por tipo de registro (gráfico de barras + variação + tabela)."""
     start, end = default_range(db, store.id, start, end)
     months = month_range(start, end)
@@ -240,18 +257,25 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
         return blocks.setdefault(tid, {"type": types[tid], "rows": {}, "totals": [None] * n, "days": [None] * n,
                                        "days_conflict": False})
 
-    for b in repo.bills_for_units(db, list(units), start, end):
+    qs, qe = _fetch_range(start, end, by)
+    for b in repo.bills_for_units(db, list(units), qs, qe):
+        m = month_of(b.reference, b.due_date, by)
+        if m not in idx or (type_id and b.record_type_id != type_id):
+            continue
         blk = block(b.record_type_id)
-        i = idx[b.reference]
+        i = idx[m]
         row = blk["rows"].setdefault(b.unit_id, [None] * n)
         row[i] = (row[i] or Decimal(0)) + b.total_value
         blk["totals"][i] = (blk["totals"][i] or Decimal(0)) + b.total_value
         if b.days is not None:
             blk["days_conflict"] |= blk["days"][i] not in (None, b.days)
             blk["days"][i] = b.days
-    for r in repo.manual_for_store(db, store.id, start, end):
+    for r in repo.manual_for_store(db, store.id, qs, qe):
+        m = month_of(r.reference, r.due_date, by)
+        if m not in idx or (type_id and r.record_type_id != type_id):
+            continue
         blk = block(r.record_type_id)
-        i = idx[r.reference]
+        i = idx[m]
         key = r.unit_id
         row = blk["rows"].setdefault(key, [None] * n)
         row[i] = (row[i] or Decimal(0)) + r.value
@@ -269,7 +293,8 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
             "chart": {"labels": [fmt.month_short(m) for m in months], "values": [float(t) if t is not None else None for t in totals],
                       "variation": [float(v.pct) if v.pct is not None else None for v in vars_]},
         })
-    return {"months": months, "start": start, "end": end, "blocks": out, "summary": store_summary(db, store, start, end)}
+    return {"months": months, "start": start, "end": end, "blocks": out, "by": by, "type_id": type_id,
+            "summary": store_summary(db, store, start, end, by)}
 
 
 def bill_print_data(db: Session, bill, months_back: int = 11) -> dict:
