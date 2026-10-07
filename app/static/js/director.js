@@ -85,7 +85,7 @@
     const diff = a.values.map((v, i) => (v == null || b.values[i] == null) ? null : v - b.values[i]);
     const pct = a.values.map((v, i) => (v == null || !b.values[i]) ? null : ((v - b.values[i]) / b.values[i]) * 100);
     const th = D.labels.map((l) => '<th class="num">' + l + '</th>').join('');
-    $('pair-table').innerHTML = '<thead><tr><th></th>' + th + '<th class="num">Total</th></tr></thead><tbody>' +
+    $('pair-table').innerHTML = '<thead><tr><th><span class="sr">Loja</span></th>' + th + '<th class="num">Total</th></tr></thead><tbody>' +
       '<tr><td><strong>' + a.code + '</strong></td>' + a.values.map(cell).join('') + '<td class="num"><strong>' + nfBRL0.format(a.total) + '</strong></td></tr>' +
       '<tr><td><strong>' + b.code + '</strong></td>' + b.values.map(cell).join('') + '<td class="num"><strong>' + nfBRL0.format(b.total) + '</strong></td></tr>' +
       '<tr class="sub"><td>Diferença (R$)</td>' + diff.map(cell).join('') + '<td class="num">' + nfBRL0.format(a.total - b.total) + '</td></tr>' +

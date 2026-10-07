@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Entrar · Controle de Energia{% endblock %}
 {% block bare %}
-<div class="login">
+<main class="login" id="content">
   <h1 style="margin-bottom:14px">Controle de Energia</h1>
   <form class="card" method="post" action="/login">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="next" value="{{ next }}">
@@ -10,5 +10,5 @@
     <div class="field"><label for="p">Senha</label><input id="p" name="password" type="password" autocomplete="current-password" required></div>
     <button class="btn primary" style="width:100%">Entrar</button>
   </form>
-</div>
+</main>
 {% endblock %}

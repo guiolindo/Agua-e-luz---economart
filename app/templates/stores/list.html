@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Lojas · Controle de Energia{% endblock %}
 {% block content %}
-<div class="page-head"><h1>Lojas</h1>{% if user.is_admin %}<a class="btn primary" href="/stores/new">Nova loja</a>{% endif %}</div>
+<div class="page-head"><div><h1>Lojas</h1>{% if stores|length > 5 %}<div class="field searchbox" style="margin:8px 0 0"><label for="q" class="sr">Buscar loja</label><input id="q" type="search" placeholder="Buscar por código, nome ou região…" data-filter="#stores-body tr" data-count="q-count" autocomplete="off"><span id="q-count" class="muted small" aria-live="polite"></span></div>{% endif %}</div>{% if user.is_admin %}<a class="btn primary" href="/stores/new">Nova loja</a>{% endif %}</div>
 <div class="card flush"><div class="tablewrap"><table>
-  <thead><tr><th>Código</th><th>Nome</th><th>Localização</th><th class="num">Unidades</th><th>Situação</th><th></th></tr></thead>
-  <tbody>{% for s in stores %}
+  <thead><tr><th>Código</th><th>Nome</th><th>Localização</th><th class="num">Unidades</th><th>Situação</th><th><span class="sr">Ações</span></th></tr></thead>
+  <tbody id="stores-body">{% for s in stores %}
     <tr><td><a href="/stores/{{ s.id }}"><strong>{{ s.code }}</strong></a></td><td>{{ s.name or '—' }}</td><td>{{ s.location or '—' }}</td>
       <td class="num">{{ s.units|length }}</td><td>{% if s.active %}<span class="badge ok">Ativa</span>{% else %}<span class="badge">Inativa</span>{% endif %}</td>
       <td class="right actions" style="justify-content:flex-end"><a class="btn sm" href="/stores/{{ s.id }}">Histórico</a>
         {% if user.is_admin %}<a class="btn sm" href="/stores/{{ s.id }}/settings">Cadastro</a>{% endif %}</td></tr>
-  {% else %}<tr><td colspan="6" class="muted">Nenhuma loja cadastrada.{% if user.is_admin %} <a href="/stores/new">Cadastrar a primeira loja</a>.{% endif %}</td></tr>{% endfor %}
+  {% else %}<tr><td colspan="6"><div class="empty"><strong>Nenhuma loja cadastrada ainda</strong>{% if user.is_admin %}Comece cadastrando a primeira loja e depois as unidades consumidoras dela.<br><a class="btn primary" style="margin-top:10px" href="/stores/new">Cadastrar a primeira loja</a>{% else %}Peça ao administrador para cadastrar as lojas.{% endif %}</div></td></tr>{% endfor %}
   </tbody></table></div></div>
 {% endblock %}

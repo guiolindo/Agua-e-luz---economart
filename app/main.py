@@ -9,7 +9,11 @@ from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import database, models, security  # noqa: F401  (models registra as tabelas no metadata)
+from app import (  # noqa: F401  (models registra as tabelas no metadata)
+    database,
+    models,
+    security,
+)
 from app.config import get_settings
 from app.middleware import (
     BodySizeLimitMiddleware,
@@ -25,15 +29,17 @@ from app.routes import (
     dashboard,
     director,
     documents,
+    help,
     imports,
     manual,
+    points,
     stores,
     types,
 )
 from app.security import LoginRequired, MustChangePassword
 from app.seed import seed
-from app.startup_checks import security_problems
 from app.services.retention_service import retention_loop
+from app.startup_checks import security_problems
 from app.utils.log_safety import install_log_redaction
 from app.web import render
 
@@ -76,7 +82,7 @@ def create_app() -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
     app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-    for module in (auth, account, dashboard, director, stores, types, imports, manual, charts, documents, admin):
+    for module in (auth, account, dashboard, director, stores, types, imports, manual, points, charts, documents, help, admin):
         app.include_router(module.router)
 
     @app.get("/health", include_in_schema=False)

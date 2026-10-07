@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Erro {{ code }}{% endblock %}
 {% block bare %}
-<div class="login card" style="margin-top:10vh">
+<main class="login card" id="content" style="margin-top:10vh">
   <h1>{{ message }}</h1><p class="muted">Código {{ code }}.</p><p><a class="btn" href="/">Voltar ao painel</a></p>
-</div>
+</main>
 {% endblock %}

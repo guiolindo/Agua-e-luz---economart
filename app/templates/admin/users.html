@@ -8,7 +8,7 @@
   <code style="font-size:16px;user-select:all;margin:0 6px">{{ temp_password }}</code>
   <div class="small">Copie e entregue ao usuário agora — ela não será exibida novamente. No primeiro acesso ele será obrigado a trocá-la.</div></div>
 {% endif %}
-<div class="card flush"><div class="tablewrap"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Último acesso</th><th>Situação</th><th></th></tr></thead><tbody>
+<div class="card flush"><div class="tablewrap"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Último acesso</th><th>Situação</th><th><span class="sr">Ações</span></th></tr></thead><tbody>
   {% for u in users %}<tr><td>{{ u.username }}{% if u.id == user.id %} <span class="muted small">(você)</span>{% endif %}</td>
     <td>{% if u.id != user.id %}<form method="post" action="/admin/users/{{ u.id }}/role" class="actions">{{ csrf(csrf_token) }}
       <select name="role" data-autosubmit style="width:auto" aria-label="Perfil de {{ u.username }}">{% for k, v in roles.items() %}<option value="{{ k }}" {{ 'selected' if (u.role == k or (u.role == 'user' and k == 'operator')) }}>{{ v }}</option>{% endfor %}</select></form>

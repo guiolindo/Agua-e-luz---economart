@@ -1,4 +1,6 @@
-from sqlalchemy import JSON, Boolean, ForeignKey, String, Text
+from datetime import date
+
+from sqlalchemy import JSON, Boolean, Date, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -38,6 +40,9 @@ class ConsumerUnit(TimestampMixin, Base):
     # Somente dígitos: é a chave de busca do matching ("12.060.073.018-19" == "1206007301819").
     number_normalized: Mapped[str] = mapped_column(String(40), unique=True, index=True)
     internal_code: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    # Dia do mês em que a conta vence (1-31) -> lembrete "vence hoje". due_ack = último vencimento já tratado (pago/visto).
+    due_day: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    due_ack: Mapped[date | None] = mapped_column(Date, nullable=True)
     description: Mapped[str | None] = mapped_column(String(200), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)

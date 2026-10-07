@@ -37,6 +37,21 @@ fornecedores. Para não enganar: um mês em que poucas lojas já lançaram é ma
 último mês completo), e “vs. período anterior” compara a **média mensal** só das lojas com histórico. `python -m scripts.seed_demo_company`
 cria lojas **fictícias** para visualizar o painel.
 
+## Vencimentos, novo ponto de energia e usabilidade
+
+- **+ Novo ponto de energia** (canto superior direito, em qualquer tela; admin e funcionário): loja, nº da unidade consumidora,
+  distribuidora e **data de vencimento**. O ponto passa a vencer todo mês nesse dia (dia 31 em mês curto cai no último dia).
+  Contas importadas ou lançadas também ensinam o dia de vencimento ao ponto.
+- **Aviso de vencimento:** ao entrar no sistema, aparece um aviso do lado — “Vence hoje” (e “Venceu há N dias”, por até 15 dias) —
+  que **some sozinho em 15 segundos** (passar o mouse ou focar com o teclado pausa; aparece uma vez por login por dia). O **sino**
+  guarda a lista (inclui “vence amanhã/em N dias”); **Já paguei** dá baixa daquele vencimento. “Hoje” é o dia do Brasil
+  (America/Sao_Paulo), não o do servidor. Diretoria e consulta veem os avisos, mas não dão baixa.
+- **Usabilidade/acessibilidade:** link “Ir para o conteúdo”, navegação por teclado com foco visível, rótulos em todos os campos,
+  mensagens de erro/sucesso anunciadas a leitores de tela (sucessos somem sozinhos), botões que mostram “Salvando…” e não permitem
+  duplo clique, busca nas listas, estados vazios com orientação, página **Ajuda** por perfil e respeito a `prefers-reduced-motion`.
+  Auditoria automática (axe-core, WCAG 2.1 A/AA + boas práticas) em 18 telas, no desktop e no celular: 0 violações. Isso não substitui
+  teste com usuários nem leitor de tela real.
+
 ## Distribuidoras, anotação à mão, retenção e impressão
 
 - **Várias distribuidoras:** CEMIG e COELBA (testada com a conta real “Neoenergia Coelba” de Feira de Santana) já vêm cadastradas como tipos de conta. A IA lê a distribuidora da própria
@@ -55,6 +70,7 @@ cria lojas **fictícias** para visualizar o painel.
   vencimento (a conta de SET/2026, que vence em outubro, cai na coluna out/2026). Lançamentos manuais aceitam “Vencimento”
   opcional; sem ele, entram no mês de referência. O relatório também filtra por fornecedor. `python -m scripts.seed_demo`
   reproduz a folha do CD300 (o teste confere o Total Geral ao centavo).
+- **Folha de impressão:** é a mesma para qualquer fornecedor (CEMIG, Coelba, LL Energia…). Traz indicadores resumidos, destaque do último mês com dados, consumo e demanda quando há leitura, e rodapé.
 - **Folha de impressão (uma página A4 paisagem)**, no formato da planilha atual: cabeçalho da loja, *Resumo mensal* de todos os
   fornecedores com Total Geral, o *Imóvel/fornecedor* escolhido com faixa de informações da última conta, gráfico de barras com
   linha de variação e a tabela Valor da fatura / Dias / Variação. Em *Histórico da loja → Imprimir relatório*; dá para escolher

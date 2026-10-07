@@ -18,25 +18,27 @@
 </div>
 
 <div class="report sheet" {% if not all_types %}data-fit="{{ 700 }}"{% endif %}>
-  <header class="report-head">
-    <h1>ENERGIA — GRÁFICO POR LOJA</h1>
-    <div class="report-meta"><div><span class="muted">LOJA:</span> <strong>{{ store.code }}</strong>{% if store.name %} — {{ store.name }}{% endif %}</div>
-      <div><span class="muted">Período:</span> {{ start|month_label }} a {{ end|month_label }} · <span class="muted">por</span> {{ 'mês de vencimento' if by == 'due' else 'mês de referência' }}</div>
-      <div class="muted small">Emitido em {{ generated.strftime('%d/%m/%Y %H:%M') }} por {{ user.username }}</div></div>
+  <header class="report-head sheet-head">
+    <div><div class="eyebrow">ENERGIA — GRÁFICO POR LOJA</div>
+      <h1><span class="code">{{ store.code }}</span>{% if store.name %}<span class="sname">{{ store.name }}</span>{% endif %}</h1></div>
+    <div class="report-meta"><div><span class="muted">LOJA:</span> <strong>{{ store.code }}</strong>{% if store.region %} · {{ store.region }}{% endif %}</div>
+      <div><span class="muted">Período:</span> <strong>{{ start|month_label }} a {{ end|month_label }}</strong></div>
+      <div><span class="muted">Agrupado por</span> {{ 'mês de vencimento' if by == 'due' else 'mês de referência' }}</div></div>
   </header>
 
   <section class="rblock">
     <h2>RESUMO MENSAL — TOTAL GERAL DA LOJA (R$)</h2>
     {% if summary.rows %}<table class="rtable">
-      <thead><tr><th>Fornecedor</th>{% for m in months %}<th class="num">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
-      <tbody>{% for r in summary.rows %}<tr><td>{{ r.type.name }}</td>{% for v in r['values'] %}<td class="num">{{ v|num(2) if v is not none else '' }}</td>{% endfor %}<td class="num">{{ r.total|num(2) }}</td></tr>{% endfor %}</tbody>
+      <thead><tr><th>Fornecedor</th>{% for m in months %}<th class="num {{ 'lastcol' if loop.index0 == last_idx }}">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
+      <tbody>{% for r in summary.rows %}<tr><td>{{ r.type.name }}</td>{% for v in r['values'] %}<td class="num {{ 'lastcol' if loop.index0 == last_idx }}">{{ v|num(2) if v is not none else '' }}</td>{% endfor %}<td class="num">{{ r.total|num(2) }}</td></tr>{% endfor %}</tbody>
       <tfoot><tr><td>Total geral</td>{% for t in summary.totals %}<td class="num">{{ t|num(2) if t is not none else '' }}</td>{% endfor %}<td class="num">{{ summary.grand_total|num(2) }}</td></tr></tfoot>
     </table>{% else %}<p class="muted">Sem registros no período.</p>{% endif %}
   </section>
 
   {% for b in blocks %}
   <section class="rblock {{ 'pagebreak' if all_types and not loop.first }}">
-    <h2>IMÓVEL: {{ b.type.name|upper }} — {{ store.code }}</h2>
+    <h2 class="imovel">IMÓVEL: {{ b.type.name|upper }} — {{ store.code }}</h2>
+    {% if b.kpis %}<div class="chips">{% for k in b.kpis %}<div class="chip"><span class="clabel">{{ k.label }}</span><span class="cvalue {{ 'var-' ~ k.dir if k.dir }}">{{ k.value }}</span>{% if k.sub %}<span class="csub">{{ k.sub }}</span>{% endif %}</div>{% endfor %}</div>{% endif %}
     {% if b.latest %}{% set l = b.latest %}
     <div class="infostrip">
       <span><em>Unidade</em> <b class="mono">{{ l.unit.number }}</b></span><span><em>Última conta</em> <b>{{ l.reference|month_label }}</b></span>
@@ -46,18 +48,22 @@
       {% if l.contracted_demand is not none %}<span><em>Contratada</em> <b>{{ l.contracted_demand|num(0) }} kW</b></span>{% endif %}
       {% if l.days is not none %}<span><em>Dias</em> <b>{{ l.days }}</b></span>{% endif %}
     </div>{% endif %}
-    <div class="rchart"><canvas data-chart='{{ b.chart|tojson }}' aria-label="Gráfico {{ b.type.name }}" role="img"></canvas></div>
+    <div class="rchart"><canvas data-chart='{{ dict(b.chart, last=last_idx)|tojson }}' aria-label="Gráfico {{ b.type.name }}" role="img"></canvas></div>
     <table class="rtable">
-      <thead><tr><th></th>{% for m in months %}<th class="num">{{ m|month_label }}</th>{% endfor %}</tr></thead>
+      <thead><tr><th><span class="sr">Indicador</span></th>{% for m in months %}<th class="num">{{ m|month_label }}</th>{% endfor %}</tr></thead>
       <tbody>
         {% for r in b.rows %}<tr class="sub"><td>{{ r.label }}</td>{% for v in r['values'] %}<td class="num">{{ v|brl if v is not none else '' }}</td>{% endfor %}</tr>{% endfor %}
         <tr><td><strong>Valor da fatura</strong></td>{% for v in b.totals %}<td class="num">{{ v|brl if v is not none else '' }}</td>{% endfor %}</tr>
+        {% if b.cons %}<tr><td>Consumo (kWh)</td>{% for v in b.cons %}<td class="num">{{ v|num(0) if v is not none else '' }}</td>{% endfor %}</tr>{% endif %}
+        {% if b.dem %}<tr><td>Demanda HFP (kW)</td>{% for v in b.dem %}<td class="num">{{ v|num(0) if v is not none else '' }}</td>{% endfor %}</tr>{% endif %}
         {% if b.days %}<tr><td>Dias de consumo</td>{% for d in b.days %}<td class="num">{{ d if d is not none else '' }}</td>{% endfor %}</tr>{% endif %}
         <tr><td>Variação (%)</td>{% for v in b.variations %}<td class="num">{{ variation(v) }}</td>{% endfor %}</tr>
       </tbody>
     </table>
   </section>
   {% else %}<p class="muted">Nenhum registro deste fornecedor no período.</p>{% endfor %}
+  <footer class="sheet-foot"><span>Controle de Energia · emitido em {{ generated.strftime('%d/%m/%Y %H:%M') }} por {{ user.username }}</span>
+    <span>Variação = mês em relação ao mês anterior (↑ gastou mais, ↓ gastou menos) · barra escura = último mês</span></footer>
 </div>
 {% endblock %}
 {% block scripts %}
@@ -70,9 +76,12 @@
     const d = JSON.parse(cv.dataset.chart);
     return new Chart(cv, {
       data: { labels: d.labels, datasets: [
-        { type: 'bar', label: 'Valor da fatura (R$)', data: d.values, backgroundColor: '#7f8b9b', borderRadius: 2, maxBarThickness: 40, yAxisID: 'y' },
+        { type: 'bar', label: 'Valor da fatura (R$)', data: d.values, backgroundColor: d.labels.map((_, i) => i === d.last ? '#17202b' : '#9aa5b4'), borderRadius: 2, maxBarThickness: 40, yAxisID: 'y' },
         { type: 'line', label: 'Variação (%)', data: d.variation, borderColor: '#0b5cab', backgroundColor: '#0b5cab', borderWidth: 2, pointRadius: 3, spanGaps: true, yAxisID: 'y1' },
       ] },
+      plugins: [{ id: 'varlabels', afterDatasetsDraw(c) {   // % de variação sobre cada ponto da linha (≤ 13 meses)
+        if (d.labels.length > 13) return; const g = c.ctx, m = c.getDatasetMeta(1); g.save(); g.font = '600 9px sans-serif'; g.textAlign = 'center';
+        m.data.forEach((pt, i) => { const v = d.variation[i]; if (v == null) return; g.lineWidth = 3; g.strokeStyle = '#fff'; g.lineJoin = 'round'; const t = (v > 0 ? '↑' : v < 0 ? '↓' : '→') + Math.abs(v).toFixed(1).replace('.', ',') + '%'; g.strokeText(t, pt.x, pt.y - 7); g.fillStyle = v > 0 ? '#b3261e' : v < 0 ? '#1d7a46' : '#5d6b7c'; g.fillText(t, pt.x, pt.y - 7); }); g.restore(); } }],
       options: { responsive: true, maintainAspectRatio: false, animation: false,
         scales: { y: { beginAtZero: true, ticks: { callback: (v) => 'R$ ' + nf.format(v) } },
                   y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: (v) => v + '%' } } },

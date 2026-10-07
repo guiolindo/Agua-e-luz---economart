@@ -1,0 +1,22 @@
+{% from "macros.html" import csrf %}
+<form method="post" action="/points" class="pointform" data-point-form>
+  {{ csrf(csrf_token) }}<input type="hidden" name="next" value="{{ next }}">
+  {% if errors %}<div class="flash error" role="alert">Confira os campos destacados.</div>{% endif %}
+  <div class="field {{ 'error' if errors.store_id }}"><label for="pt-store">Loja *</label>
+    <select id="pt-store" name="store_id" required><option value="">Selecione…</option>
+      {% for s in stores %}<option value="{{ s.id }}" {{ 'selected' if store_id == s.id }}>{{ s.label }}</option>{% endfor %}</select>
+    {% if errors.store_id %}<div class="err">{{ errors.store_id }}</div>{% endif %}</div>
+  <div class="row row-2">
+    <div class="field {{ 'error' if errors.number }}"><label for="pt-num">Nº da unidade consumidora *</label>
+      <input id="pt-num" name="number" type="text" inputmode="numeric" autocomplete="off" required placeholder="12.060.073.018-19" value="{{ form.get('number', '') }}">
+      {% if errors.number %}<div class="err">{{ errors.number }}</div>{% endif %}</div>
+    <div class="field"><label for="pt-type">Distribuidora</label>
+      <select id="pt-type" name="record_type_id">{% for t in types %}<option value="{{ t.id }}" {{ 'selected' if default_type and default_type.id == t.id }}>{{ t.name }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="field"><label for="pt-desc">Descrição (opcional)</label><input id="pt-desc" name="description" type="text" maxlength="200" placeholder="Ex.: Padaria, galpão 2…" value="{{ form.get('description', '') }}"></div>
+  <div class="field {{ 'error' if errors.due_date }}"><label for="pt-due">Data de vencimento *</label>
+    <input id="pt-due" name="due_date" type="date" required value="{{ form.get('due_date', '') }}">
+    <div class="hint">O sistema repete todo mês nesse dia e avisa, ao você entrar, quando a conta vencer.</div>
+    {% if errors.due_date %}<div class="err">{{ errors.due_date }}</div>{% endif %}</div>
+  <div class="actions"><button class="btn primary">Cadastrar ponto de energia</button><a class="btn" href="{{ next }}" data-close-dialog>Cancelar</a></div>
+</form>

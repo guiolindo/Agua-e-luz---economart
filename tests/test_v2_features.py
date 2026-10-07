@@ -1,7 +1,8 @@
 import json
 import re
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
+from decimal import Decimal as D
 from pathlib import Path
 
 import pytest
@@ -10,7 +11,7 @@ from sqlalchemy import create_engine, text
 from app import database
 from app.models import ConsumerUnit, Document, EnergyBill, RecordType, Store
 from app.models.mixins import utcnow
-from app.services import import_service
+from app.services import chart_service, import_service
 from app.services.extraction_service import MockExtractor
 from app.services.gemini_service import (
     ExtractionError,
@@ -271,3 +272,23 @@ def test_print_sheet_can_pick_the_supplier_or_print_all_one_per_sheet(client, db
     assert "IMÓVEL: LL ENERGIA" in one and one.count("<canvas") == 1 and 'class="infostrip"' not in one
     every = client.get(f"/stores/{store.id}/report?start=2026-01&end=2026-10&all=1").text
     assert every.count("<canvas") == 6 and every.count("pagebreak") == 5 and "data-fit" not in every
+
+
+def test_print_sheet_has_kpis_extra_rows_footer_and_highlights_last_month_with_data(client, db):
+    from scripts import seed_demo
+    seed_demo.main()
+    store = db.query(Store).filter_by(code="CD300").one()
+    cemig = db.query(RecordType).filter_by(code="cemig").one()
+    unit = db.query(ConsumerUnit).filter_by(store_id=store.id).one()
+    for b in db.query(EnergyBill).filter_by(unit_id=unit.id).all():                 # consumo/demanda só nas contas com leitura
+        b.consumption_hfp, b.demand_hfp = D("50000"), D("180")
+    db.commit()
+    data = chart_service.report_data(db, store, date(2026, 1, 1), date(2026, 10, 1), by="reference", type_id=cemig.id)
+    assert data["last_idx"] == 8                                                     # SET/2026 (out/2026 está vazio na referência)
+    blk = data["blocks"][0]
+    assert [k["label"] for k in blk["kpis"]] == ["Total no período", "Média mensal", "Maior mês", "Menor mês", "Última variação"]
+    assert blk["kpis"][2]["sub"] == "MAR/2026" and blk["kpis"][3]["sub"] == "MAI/2026"       # maior e menor mês
+    assert blk["cons"][0] == D("50000") and blk["dem"][0] == D("180")
+    html = client.get(f"/stores/{store.id}/report?start=2026-01&end=2026-10&type_id={cemig.id}").text
+    assert 'class="chips"' in html and "Consumo (kWh)" in html and "Demanda HFP (kW)" in html and 'class="sheet-foot"' in html
+    assert html.count("lastcol") >= 2 and "ENERGIA — GRÁFICO POR LOJA" in html

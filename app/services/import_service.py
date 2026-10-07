@@ -146,6 +146,8 @@ def save_bill(db: Session, unit: ConsumerUnit, record_type_id: int, values: dict
               replace: EnergyBill | None = None) -> EnergyBill:
     """Cria a conta, ou (replace=...) substitui os dados de uma existente mantendo o histórico em auditoria."""
     payload = {f: values.get(f) for f in BILL_FIELDS}
+    if unit.due_day is None and values.get("due_date"):
+        unit.due_day = values["due_date"].day  # o lembrete de vencimento nasce sozinho a partir da conta
     if replace is not None:
         before = _snapshot(replace)
         for f, v in payload.items():

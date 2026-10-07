@@ -242,6 +242,23 @@ def unit_overview(db: Session, unit: ConsumerUnit) -> dict:
     }
 
 
+def _sheet_kpis(months: list[date], totals: list, variations: list) -> list[dict]:
+    """Indicadores resumidos do fornecedor na folha: total, média, maior e menor mês, última variação."""
+    present = [(m, t) for m, t in zip(months, totals) if t]
+    if not present:
+        return []
+    total = sum((t for _, t in present), Decimal(0))
+    hi, lo = max(present, key=lambda p: p[1]), min(present, key=lambda p: p[1])
+    last_var = next((v for v in reversed(variations) if v.pct is not None), None)
+    return [
+        {"label": "Total no período", "value": fmt.brl(total, 0), "sub": f"{len(present)} meses com dados"},
+        {"label": "Média mensal", "value": fmt.brl(total / len(present), 0), "sub": ""},
+        {"label": "Maior mês", "value": fmt.brl(hi[1], 0), "sub": fmt.month_label(hi[0])},
+        {"label": "Menor mês", "value": fmt.brl(lo[1], 0), "sub": fmt.month_label(lo[0])},
+        {"label": "Última variação", "value": last_var.text if last_var else "—", "sub": "vs. mês anterior", "dir": last_var.direction if last_var else None},
+    ]
+
+
 def report_data(db: Session, store: Store, start: date | None = None, end: date | None = None,
                 by: str = "reference", type_id: int | None = None, all_types: bool = False) -> dict:
     """Folha de impressão: resumo de todos os fornecedores + UM fornecedor (gráfico, variação, tabela e dados da conta).
@@ -256,6 +273,7 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
 
     def block(tid: int) -> dict:
         return blocks.setdefault(tid, {"type": types[tid], "rows": {}, "totals": [None] * n, "days": [None] * n,
+                                       "cons": [None] * n, "dem": [None] * n,
                                        "days_conflict": False})
 
     qs, qe = _fetch_range(start, end, by)
@@ -270,6 +288,10 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
         row = blk["rows"].setdefault(b.unit_id, [None] * n)
         row[i] = (row[i] or Decimal(0)) + b.total_value
         blk["totals"][i] = (blk["totals"][i] or Decimal(0)) + b.total_value
+        if b.consumption_total is not None:
+            blk["cons"][i] = (blk["cons"][i] or Decimal(0)) + b.consumption_total
+        if b.demand_hfp is not None:
+            blk["dem"][i] = max(blk["dem"][i] or Decimal(0), b.demand_hfp)
         if b.days is not None:
             blk["days_conflict"] |= blk["days"][i] not in (None, b.days)
             blk["days"][i] = b.days
@@ -298,12 +320,17 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
         out.append({
             "type": blk["type"], "rows": rows if len(rows) > 1 else [], "totals": totals, "variations": vars_,
             "latest": blk.get("latest"),
+            "cons": blk["cons"] if any(v is not None for v in blk["cons"]) else None,
+            "dem": blk["dem"] if any(v is not None for v in blk["dem"]) else None,
+            "kpis": _sheet_kpis(months, totals, vars_),
             "days": None if blk["days_conflict"] or not any(d is not None for d in blk["days"]) else blk["days"],
             "chart": {"labels": [fmt.month_short(m) for m in months], "values": [float(t) if t is not None else None for t in totals],
                       "variation": [float(v.pct) if v.pct is not None else None for v in vars_]},
         })
-    return {"months": months, "start": start, "end": end, "blocks": out, "by": by, "type_id": selected, "available": available, "all_types": all_types,
-            "summary": store_summary(db, store, start, end, by)}
+    summ = store_summary(db, store, start, end, by)
+    last_idx = max((i for i, t in enumerate(summ["totals"]) if t), default=len(months) - 1)   # último mês COM dados
+    return {"months": months, "start": start, "end": end, "blocks": out, "by": by, "last_idx": last_idx, "type_id": selected, "available": available, "all_types": all_types,
+            "summary": summ}
 
 
 def bill_print_data(db: Session, bill, months_back: int = 11) -> dict:

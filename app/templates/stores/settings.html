@@ -23,7 +23,7 @@
   <div style="padding:14px 18px 0"><h2>Unidades consumidoras</h2></div>
   {% for u in store.units %}<form method="post" action="/units/{{ u.id }}/edit" id="uf{{ u.id }}">{{ csrf(csrf_token) }}</form>{% endfor %}
   <div class="tablewrap"><table>
-    <thead><tr><th>Número</th><th>Descrição</th><th>Cód. interno</th><th>Tipo</th><th>Situação</th><th></th></tr></thead>
+    <thead><tr><th>Número</th><th>Descrição</th><th>Cód. interno</th><th>Tipo</th><th>Situação</th><th><span class="sr">Ações</span></th></tr></thead>
     <tbody>{% for u in store.units %}
       <tr>
         <td><input form="uf{{ u.id }}" type="text" name="number" value="{{ u.number }}" required style="min-width:170px"></td>

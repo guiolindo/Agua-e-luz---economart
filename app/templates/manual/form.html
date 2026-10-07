@@ -56,7 +56,7 @@
   <div class="actions" id="submit-row" hidden><button class="btn primary">Salvar</button><a class="btn" href="/manual">Cancelar</a></div>
 </form>
 
-<aside>
+<aside aria-label="Últimos lançamentos">
   <section class="card flush"><div style="padding:14px 18px 0"><h2>Últimos lançamentos manuais</h2></div>
     <div class="tablewrap"><table><tbody>
       {% for r in recent_manual %}<tr><td><strong>{{ r.store.code }}</strong> · {{ r.record_type.name }}<div class="muted small">{{ r.reference|month_label }}</div></td>

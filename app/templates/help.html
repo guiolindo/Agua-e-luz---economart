@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Ajuda · Controle de Energia{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Ajuda</h1><div class="muted">Passo a passo rápido para cada perfil. Você está como <strong>{{ {'admin': 'administrador', 'operator': 'funcionário', 'director': 'diretoria', 'viewer': 'consulta', 'user': 'funcionário'}.get(user.role, user.role) }}</strong>.</div></div></div>
+
+<div class="grid cols-2">
+  {% if user.can_write %}
+  <section class="card"><h2>Enviar uma conta (foto ou PDF)</h2>
+    <ol class="steps-help">
+      <li>Clique em <strong>Importar conta</strong> e arraste a foto ou o PDF (ou toque para fotografar).</li>
+      <li>Aguarde alguns segundos: o sistema lê a conta e descobre sozinho a loja e a unidade.</li>
+      <li><strong>Confira</strong> os campos ao lado da imagem. A leitura é feita por IA e pode errar; campos marcados com “conferir” merecem atenção.</li>
+      <li>Clique em <strong>Confirmar e salvar</strong>. O gráfico da loja já aparece atualizado.</li>
+    </ol></section>
+  <section class="card"><h2>Cadastrar um ponto de energia e o vencimento</h2>
+    <ol class="steps-help">
+      <li>Em qualquer tela, clique em <strong>+ Novo ponto de energia</strong> (canto superior direito).</li>
+      <li>Escolha a loja, informe o número da unidade consumidora e a <strong>data de vencimento</strong>.</li>
+      <li>Pronto: todo mês, no dia do vencimento, ao entrar no sistema aparece um aviso do lado (some sozinho em 15 segundos). O <strong>sino</strong> guarda a lista; marque <strong>Já paguei</strong> para dar baixa.</li>
+    </ol></section>
+  <section class="card"><h2>Lançamento manual</h2>
+    <p>Use para fornecedores sem foto (LL Energia, Câmara, combustível, manutenção…) e para meses antigos: <strong>Lançamento manual</strong> → loja, tipo, mês e valor. O vencimento é opcional.</p></section>
+  {% endif %}
+  {% if user.can_see_executive %}
+  <section class="card"><h2>Painel da diretoria</h2>
+    <p>Compare lojas, veja o ranking, as variações do último mês, o custo por kWh e o uso da demanda contratada. Use os filtros de período, região e fornecedor, e <strong>Comparar duas lojas</strong> para ver a diferença mês a mês. Meses ainda incompletos aparecem com * e não entram nas variações.</p></section>
+  {% endif %}
+  {% if user.is_admin %}
+  <section class="card"><h2>Administração</h2>
+    <ul><li><strong>Usuários:</strong> crie funcionários, diretoria e consulta. A senha provisória aparece uma única vez e deve ser trocada no primeiro acesso.</li>
+      <li><strong>Lojas e unidades:</strong> cadastre as lojas (com região/UF e apelidos como “CD 300”) e as unidades consumidoras.</li>
+      <li><strong>Tipos de registro:</strong> crie novos fornecedores (ex.: outra distribuidora).</li>
+      <li><strong>Auditoria:</strong> quem entrou, falhas de login e alterações.</li></ul></section>
+  {% endif %}
+  <section class="card"><h2>Imprimir</h2>
+    <p><strong>Lojas → (loja) → Imprimir relatório:</strong> folha A4 com resumo, gráfico e dados do fornecedor escolhido.<br>
+      <strong>Unidade → Contas → Imprimir:</strong> ficha de uma conta com gráficos.</p></section>
+  <section class="card"><h2>Palavras que aparecem</h2>
+    <dl class="gloss">
+      <dt>Unidade consumidora (UC)</dt><dd>Número da instalação na conta de energia.</dd>
+      <dt>Mês de referência</dt><dd>Mês do consumo. O <strong>vencimento</strong> costuma cair no mês seguinte.</dd>
+      <dt>HP / HFP</dt><dd>Horário de ponta / fora de ponta (tarifa horária).</dd>
+      <dt>Demanda contratada</dt><dd>Potência combinada com a distribuidora; passar dela gera cobrança extra.</dd>
+      <dt>Variação</dt><dd>Diferença percentual do mês em relação ao anterior. ↑ gastou mais, ↓ gastou menos.</dd></dl></section>
+</div>
+{% endblock %}

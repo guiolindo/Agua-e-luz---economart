@@ -8,6 +8,10 @@
     <input id="m" type="month" name="month" value="{{ month.strftime('%Y-%m') }}" style="width:auto" data-autosubmit></form>
 </div>
 
+{% if stores == 0 %}<section class="card"><h2>Primeiros passos</h2>
+  <ol class="steps-help"><li>{% if user.is_admin %}<a href="/stores/new">Cadastre a primeira loja</a>{% else %}Peça ao administrador para cadastrar as lojas{% endif %} (código, nome e região).</li>
+    <li>{% if user.is_admin %}Adicione as unidades consumidoras da loja{% else %}Aguarde o cadastro das unidades consumidoras{% endif %}, ou use <strong>+ Novo ponto de energia</strong>.</li>
+    <li>Clique em <strong>Importar conta</strong> e envie a foto ou o PDF da primeira conta.</li></ol></section>{% endif %}
 <div class="grid cols-4" style="margin-bottom:16px">
   <div class="kpi"><div class="label">Lojas ativas</div><div class="value">{{ stores }}</div></div>
   <div class="kpi"><div class="label">Unidades consumidoras</div><div class="value">{{ units }}</div></div>
@@ -21,7 +25,7 @@
     <div style="padding:14px 18px 0"><h2>Pendências de {{ month|month_label }}</h2></div>
     {% if pending %}
     <div class="tablewrap"><table>
-      <thead><tr><th>Loja</th><th>Unidade</th><th>Tipo</th><th>Situação</th><th></th></tr></thead>
+      <thead><tr><th>Loja</th><th>Unidade</th><th>Tipo</th><th>Situação</th><th><span class="sr">Ações</span></th></tr></thead>
       <tbody>{% for p in pending[:30] %}
         <tr><td><a href="/stores/{{ p.store.id }}">{{ p.store.code }}</a></td><td class="mono">{{ p.unit.number if p.unit else '—' }}</td>
           <td>{{ p.type.name }}</td><td class="muted">{{ p.text }}</td>

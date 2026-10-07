@@ -32,7 +32,7 @@
 <section class="card flush">
   <div style="padding:14px 18px 0"><h2>Unidades consumidoras</h2></div>
   <div class="tablewrap"><table>
-    <thead><tr><th>Número</th><th>Descrição</th><th></th></tr></thead>
+    <thead><tr><th>Número</th><th>Descrição</th><th><span class="sr">Ações</span></th></tr></thead>
     <tbody>{% for u in store.units %}<tr class="{{ 'hl' if highlight == u.id }}"><td class="mono"><a href="/units/{{ u.id }}">{{ u.number }}</a></td>
       <td>{{ u.description or '—' }}{% if not u.active %} <span class="badge">Inativa</span>{% endif %}</td>
       <td class="right"><a class="btn sm" href="/units/{{ u.id }}">Ver unidade</a></td></tr>

@@ -117,6 +117,7 @@ def _user(admin: Client, name: str, role: str) -> Client:
     _login(c, name, pw)
     new = "Senha-forte-" + name[:3] + "-2026X"
     c.post("/account/password", {"current_password": pw, "new_password": new, "confirm": new})
+    c.refresh()   # a sessão é recriada na troca de senha: novo token CSRF
     return c
 
 

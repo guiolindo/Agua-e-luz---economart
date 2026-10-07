@@ -145,3 +145,42 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 .storepick { margin-bottom: 8px; } table.heat td, table.heat th { padding: 5px 8px; font-size: 12px; } table.heat tr:hover td { background-image: none; }
 @media (max-width: 1100px) { .cols-main2 { grid-template-columns: 1fr; } }
 @media print { .dir-kpis { grid-template-columns: repeat(4, 1fr); } .card { break-inside: avoid; } .dchart { height: 240px; } .dchart.tall { height: 280px; } }
+
+/* ---- UX: acessibilidade, barra superior, avisos de vencimento ---- */
+.skip { position: absolute; left: -999px; top: 8px; background: #fff; color: var(--text); padding: 8px 12px; border-radius: var(--radius); z-index: 100; border: 2px solid var(--accent); }
+.skip:focus { left: 8px; } .main:focus { outline: none; }
+.topbar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin: -6px 0 14px; position: relative; min-height: 34px; }
+.iconbtn { position: relative; background: #fff; border: 1px solid #c4ccd6; border-radius: var(--radius); width: 36px; height: 34px; cursor: pointer; color: var(--text); display: inline-flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1; }
+.iconbtn:hover { background: #f3f5f8; } .iconbtn .count { position: absolute; top: -6px; right: -6px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; }
+.bellwrap { position: relative; } .bellpanel { position: absolute; right: 0; top: 42px; width: 360px; max-width: 92vw; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 28px rgba(20,30,45,.16); padding: 12px 14px; z-index: 60; max-height: 70vh; overflow: auto; }
+.bellpanel h2 { margin: 0 0 6px; } .brow { padding: 9px 0; border-top: 1px solid var(--line-soft); } .brow .tlabel { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; margin-bottom: 2px; }
+.brow.today .tlabel, .toast.today .tlabel { color: var(--bad); } .brow.overdue .tlabel, .toast.overdue .tlabel { color: #a45a00; } .brow.soon .tlabel, .toast.soon .tlabel { color: var(--accent); }
+.dactions { display: flex; gap: 8px; margin-top: 8px; }
+.toasts { position: fixed; right: 18px; top: 64px; width: 360px; max-width: calc(100vw - 24px); z-index: 80; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+.toast { pointer-events: auto; background: #fff; border: 1px solid var(--line); border-left: 5px solid var(--accent); border-radius: 8px; box-shadow: 0 8px 28px rgba(20,30,45,.18); padding: 11px 14px 0; animation: tin .25s ease-out; overflow: hidden; }
+.toast.today { border-left-color: var(--bad); } .toast.overdue { border-left-color: #d08c3a; } .toast.out { opacity: 0; transform: translateX(24px); transition: .25s; }
+.toast .thead { display: flex; justify-content: space-between; align-items: center; } .toast .tlabel { font-weight: 700; font-size: 13px; }
+.tclose { background: none; border: 0; font-size: 20px; line-height: 1; cursor: pointer; color: var(--muted); padding: 0 2px; } .tclose:hover { color: var(--text); }
+.toast .tbody { padding: 4px 0 10px; } .tbar { height: 3px; margin: 0 -14px; background: var(--line-soft); } .tbar i { display: block; height: 100%; width: 100%; background: var(--muted); transform-origin: left; animation: tbar linear forwards; }
+@keyframes tbar { to { transform: scaleX(0); } } @keyframes tin { from { opacity: 0; transform: translateX(24px); } }
+.flash.out { opacity: 0; transition: opacity .3s; }
+.dialog { border: 0; border-radius: 10px; padding: 22px 24px; width: 520px; max-width: 94vw; box-shadow: 0 16px 48px rgba(20,30,45,.3); } .dialog::backdrop { background: rgba(20,30,45,.45); }
+.dclose { position: absolute; right: 10px; top: 10px; width: 30px; height: 30px; border: 0; background: none; } button.loading { opacity: .7; cursor: progress; }
+.empty { text-align: center; padding: 34px 20px; color: var(--muted); } .empty strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 4px; }
+.steps-help { counter-reset: s; list-style: none; padding: 0; margin: 0; } .steps-help li { counter-increment: s; padding: 10px 0 10px 40px; position: relative; border-top: 1px solid var(--line-soft); }
+.steps-help li::before { content: counter(s); position: absolute; left: 4px; top: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.searchbox { max-width: 360px; } .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } @media (prefers-reduced-motion: reduce) { .toast, .toast.out, .flash.out { animation: none; transition: none; } .tbar i { animation-duration: 0.01ms !important; } }
+@media (max-width: 800px) { .toasts { top: 56px; right: 8px; left: 8px; width: auto; } .topbar { margin-top: 0; } }
+.gloss dt { font-weight: 600; margin-top: 8px; } .gloss dd { margin: 0 0 2px; color: var(--muted); }
+
+/* folha de impressão — acabamento profissional */
+.sheet-head { align-items: flex-end; border-bottom: 3px solid #17202b; padding-bottom: 8px; }
+.sheet-head .eyebrow { font-size: 10px; letter-spacing: .14em; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+.sheet-head h1 { font-size: 24px; margin: 0; display: flex; align-items: baseline; gap: 12px; } .sheet-head .sname { font-size: 14px; font-weight: 400; color: var(--muted); }
+.sheet .rblock h2 { text-transform: uppercase; letter-spacing: .05em; color: #33404f; border-bottom: 1px solid #c4ccd6; }
+.sheet .rblock h2.imovel { background: #17202b; color: #fff; border: 0; padding: 4px 10px; border-radius: 3px; margin-bottom: 6px; letter-spacing: .06em; }
+.sheet .rtable thead th { background: #eef1f5; color: #33404f; border-bottom: 1px solid #c4ccd6; } .sheet .rtable tbody tr:nth-child(even) td { background: #fafbfc; }
+.sheet .rtable td.lastcol, .sheet .rtable th.lastcol { background: #e7f0fa !important; font-weight: 700; } .sheet .rtable tfoot td { background: #eef1f5; border-top: 2px solid #17202b; }
+.chips { display: flex; gap: 8px; margin: 0 0 6px; } .chip { flex: 1; border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; display: flex; flex-direction: column; background: #fff; min-width: 0; }
+.chip .clabel { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); } .chip .cvalue { font-size: 14px; font-weight: 700; } .chip .csub { font-size: 9.5px; color: var(--muted); }
+.sheet-foot { display: flex; justify-content: space-between; gap: 12px; font-size: 9.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 4px; margin-top: 6px; }

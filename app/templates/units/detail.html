@@ -24,7 +24,7 @@
 <section class="card flush">
   <div style="padding:14px 18px 0"><h2>Contas</h2></div>
   <div class="tablewrap"><table>
-    <thead><tr><th>Referência</th><th class="num">Valor</th><th>Variação</th><th class="num">Dias</th><th class="num">Consumo (kWh)</th><th class="num">Demanda HFP (kW)</th><th>Vencimento</th><th>Origem</th><th></th></tr></thead>
+    <thead><tr><th>Referência</th><th class="num">Valor</th><th>Variação</th><th class="num">Dias</th><th class="num">Consumo (kWh)</th><th class="num">Demanda HFP (kW)</th><th>Vencimento</th><th>Origem</th><th><span class="sr">Ações</span></th></tr></thead>
     <tbody>{% for h in history %}{% set b = h.bill %}
       <tr><td><strong>{{ b.reference|month_label }}</strong></td><td class="num">{{ b.total_value|brl }}</td><td>{{ variation(h.variation) }}</td>
         <td class="num">{{ b.days if b.days is not none else '—' }}</td><td class="num">{{ b.consumption_total|num }}</td>

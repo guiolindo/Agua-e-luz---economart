@@ -72,6 +72,7 @@ def test_lockout_expires(client, db):
     for _ in range(5):
         _login(c, "joao", "errada-errada-1")
     from datetime import timedelta
+
     from app.models.mixins import utcnow
     u = db.query(User).filter_by(username="joao").one()
     u.blocked_until = utcnow() - timedelta(minutes=1)
@@ -412,3 +413,11 @@ def test_discarded_import_allows_reupload_of_same_file(client, db, monkeypatch):
     job = int(client.post("/import", {}, files={"file": ("a.pdf", PDF, "application/pdf")}).headers["location"].rsplit("/", 1)[1])
     client.post(f"/import/{job}/cancel")
     assert client.post("/import", {}, files={"file": ("a.pdf", PDF, "application/pdf")}).status_code == 303
+
+
+def test_new_pages_are_csp_clean(client, db):
+    for path in ("/ajuda", "/points/new", "/points/new?fragment=1"):
+        html = client.get(path).text
+        assert not re.search(r"\son(click|change|submit|input|load|error)\s*=", html, re.I), path
+        for tag in re.findall(r"<script(?![^>]*\bsrc=)(?![^>]*type=)[^>]*>", html):
+            assert "nonce=" in tag, (path, tag)

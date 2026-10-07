@@ -71,7 +71,7 @@
     <button class="btn danger" type="submit" form="cancel" data-confirm="Descartar esta importação?">Descartar importação</button></div>
 </form>
 
-<aside class="docpane">
+<aside class="docpane" aria-label="Documento original">
   <h3>Documento original</h3>
   {% if not job.document.available %}<div class="flash info">O arquivo original expirou e foi removido ({{ job.document.purged_at|date_br }}).</div>
   {% elif job.document.content_type == 'application/pdf' %}<iframe src="/documents/{{ job.document_id }}" title="Documento original"></iframe>
