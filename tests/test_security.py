@@ -55,7 +55,7 @@ def test_lockout_after_failed_attempts_hides_whether_account_exists(client, db):
     admin = client
     pw = _create_user(admin, "maria", "operator")
     c = _new_client()
-    msgs = {_login(c, "maria", "errada-errada-1").text.count("incorretos") for _ in range(5)}
+    msgs = {_login(c, "maria", "errada-errada-1").text.count("incorretos") for _ in range(3)}   # senha provisória: bloqueia na 3ª
     assert msgs == {1}
     r = _login(c, "maria", pw)                       # senha CERTA, mas conta bloqueada
     assert r.status_code == 401 and "incorretos" in r.text and "bloqueado" in r.text   # mesma mensagem genérica
@@ -63,7 +63,7 @@ def test_lockout_after_failed_attempts_hides_whether_account_exists(client, db):
     assert ghost.status_code == 401 and "incorretos" in ghost.text                    # igual para usuário inexistente
     db.expire_all()
     actions = [a.action for a in db.query(AuditLog).filter(AuditLog.entity == "auth")]
-    assert "account_locked" in actions and "login_blocked" in actions and actions.count("login_failed") >= 5
+    assert "account_locked" in actions and "login_blocked" in actions and actions.count("login_failed") >= 3
 
 
 def test_lockout_expires(client, db):

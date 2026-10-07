@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     session_idle_minutes: int = 60
     session_max_hours: int = 12
     min_password_length: int = 10
+    temp_password_hours: int = 48          # validade da senha provisória (4 dígitos) de usuário novo/redefinido
+    temp_max_login_attempts: int = 3       # contas com senha provisória bloqueiam mais cedo
     rate_limit_enabled: bool = True
     csrf_allowed_origins: str = ""      # origens extras permitidas em POST (CSV); normalmente vazio
 

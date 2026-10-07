@@ -1,9 +1,13 @@
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import security
+from app.config import get_settings
+from app.models.mixins import utcnow
 from app.database import get_db
 from app.models import AuditLog, User
 from app.security import admin_required, verify_csrf
@@ -24,8 +28,11 @@ def _active_admins(db: Session) -> int:
 
 
 def _page(request, db, user, **extra):
+    from datetime import datetime, timezone
+
     return render(request, "admin/users.html", user=user, users=db.scalars(select(User).order_by(User.username)).all(),
-                  roles=ROLES, **extra)
+                  roles=ROLES, temp_hours=get_settings().temp_password_hours,
+                  now_naive=datetime.now(timezone.utc).replace(tzinfo=None), **extra)
 
 
 @router.get("/admin/users")
@@ -44,7 +51,8 @@ def user_create(request: Request, username: str = Form(..., max_length=80), role
     else:
         temp = security.generate_temp_password()
         new = User(username=username, password_hash=security.hash_password(temp),
-                   role=role if role in ROLES else "operator", must_change_password=True)
+                   role=role if role in ROLES else "operator", must_change_password=True,
+                   temp_expires_at=utcnow() + timedelta(hours=get_settings().temp_password_hours))
         db.add(new)
         db.flush()
         audit_service.log(db, user.id, "create", "user", new.id, {"username": username, "role": new.role})

@@ -19,6 +19,7 @@ class User(TimestampMixin, Base):
     failed_attempts: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
     blocked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    temp_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # validade da senha provisória
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Incrementa em logout/troca de senha/desativação: sessões com época antiga deixam de valer.
     session_epoch: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)

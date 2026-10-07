@@ -88,8 +88,22 @@ def validate_password(password: str, username: str = "", min_length: int | None 
     return None
 
 
+def _weak_pin(pin: str) -> bool:
+    d = [int(c) for c in pin]
+    steps = {d[i + 1] - d[i] for i in range(3)}
+    return (len(set(pin)) == 1                                  # 0000, 7777
+            or steps in ({1}, {-1})                             # 1234, 4321
+            or pin[:2] == pin[2:]                               # 1212
+            or pin in ("2026", "2025", "2024", "1010"))
+
+
 def generate_temp_password() -> str:
-    return secrets.token_urlsafe(12)
+    """Senha provisória de 4 dígitos (uso interno, só para o 1º acesso: vale 48 h e só serve para trocar a senha).
+    Sorteio uniforme com `secrets`, descartando padrões óbvios (0000, 1234, 1212...)."""
+    while True:
+        pin = f"{secrets.randbelow(10_000):04d}"
+        if not _weak_pin(pin):
+            return pin
 
 
 # ---------------------------------------------------------------- IP / LGPD

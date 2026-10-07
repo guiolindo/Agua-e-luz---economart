@@ -6,6 +6,8 @@ a IA (Gemini) lê os dados, o sistema descobre sozinho a **loja e a unidade cons
 
 Stack: Python · FastAPI · SQLAlchemy 2 · Jinja2 · Chart.js (embutido em `static/js/vendor`) · SQLite (dev) / PostgreSQL (produção).
 
+> **Tutorial passo a passo (Railway + uso diário por perfil):** [`TUTORIAL.md`](TUTORIAL.md) · [PDF](docs/Tutorial_Controle_de_Energia.pdf).
+
 > **Segurança:** veja [`SECURITY.md`](SECURITY.md). Em produção (`DEBUG=false`) o servidor só inicia com `SECRET_KEY`, `DOCUMENT_ENCRYPTION_KEY` e PostgreSQL configurados.
 
 ## Fluxo principal
@@ -117,6 +119,7 @@ Edite o `.env`:
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Criam o administrador no primeiro start (se não existir nenhum usuário). Em produção a senha precisa ter ≥12 caracteres e não ser fraca. Em `DEBUG` sem senha, usa `admin`/`admin`. |
 | `DOCUMENT_ENCRYPTION_KEY` | Chave Fernet que criptografa fotos/PDFs no banco (obrigatória em produção). |
 | `TRUSTED_PROXY_COUNT` | Proxies à frente do app (Railway = 1), para o IP real. |
+| `TEMP_PASSWORD_HOURS` / `TEMP_MAX_LOGIN_ATTEMPTS` | Validade (padrão 48 h) e limite de tentativas (padrão 3) da senha provisória de 4 dígitos. |
 | `MAX_UPLOAD_MB` | Limite do upload (padrão 12; o envio ao Gemini vai em base64, +33%, e o teto da requisição é ~20 MB). |
 | `GEMINI_MAX_CONCURRENCY` | Chamadas simultâneas ao Gemini (padrão 2). |
 | `DOCUMENT_RETENTION_DAYS` | Dias até a foto/PDF original ser apagada do banco (padrão 183 ≈ 6 meses). |

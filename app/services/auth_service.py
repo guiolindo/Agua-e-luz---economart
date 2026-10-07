@@ -51,10 +51,17 @@ def attempt_login(db: Session, request: Request, username: str, password: str) -
         db.commit()
         return LoginResult(None, False, locked=True)
 
+    # senha provisória (4 dígitos) é fraca de propósito: bloqueia mais cedo e expira
+    limit = s.temp_max_login_attempts if user.must_change_password else s.max_login_attempts
+    temp_expired = bool(user.must_change_password and user.temp_expires_at and _aware(user.temp_expires_at) < now)
+    if temp_expired and security.verify_password(password, user.password_hash):
+        security_event(db, request, "login_temp_expired", user.id)
+        db.commit()
+        return LoginResult(None, False)               # mesma mensagem genérica; o admin precisa redefinir
     if not user.active or not security.verify_password(password, user.password_hash):
         if user.active:
             user.failed_attempts = (user.failed_attempts or 0) + 1
-            if user.failed_attempts >= s.max_login_attempts:
+            if user.failed_attempts >= limit:
                 user.blocked_until = now + timedelta(minutes=s.login_block_minutes)
                 user.failed_attempts = 0
                 security_event(db, request, "account_locked", user.id, minutes=s.login_block_minutes)
@@ -71,9 +78,11 @@ def attempt_login(db: Session, request: Request, username: str, password: str) -
 
 
 def set_password(db: Session, user: User, new_password: str, *, must_change: bool = False) -> None:
-    """Troca a senha e revoga todas as sessões existentes (incrementa a época)."""
+    """Troca a senha e revoga todas as sessões existentes (incrementa a época).
+    `must_change=True` = senha provisória: ganha validade (`temp_password_hours`) e obriga a troca no 1º acesso."""
     user.password_hash = security.hash_password(new_password)
     user.must_change_password = must_change
+    user.temp_expires_at = utcnow() + timedelta(hours=get_settings().temp_password_hours) if must_change else None
     user.password_changed_at = utcnow()
     user.failed_attempts, user.blocked_until = 0, None
     user.session_epoch = user.epoch + 1
