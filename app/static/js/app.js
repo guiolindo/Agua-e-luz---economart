@@ -190,8 +190,10 @@ document.querySelectorAll('[data-login-form]').forEach((f) => f.addEventListener
 
 // Delay em cascata para animar os cartões KPI em sequência (efeito "stagger")
 (function () {
+  // Stagger limitado a 180ms no total pra não deixar as últimas cards aparecerem tarde
+  // em telas com muitos KPIs (painel da diretoria tem 8).
   document.querySelectorAll('.grid.cols-4 > .kpi, .grid.cols-3 > .kpi, .grid.cols-2 > .kpi').forEach((el, i) => {
-    el.style.setProperty('--d', (i * 40) + 'ms');
+    el.style.setProperty('--d', Math.min(i * 40, 180) + 'ms');
   });
 })();
 
