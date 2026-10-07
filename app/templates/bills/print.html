@@ -78,7 +78,7 @@
   if (typeof Chart === 'undefined') return;
   const d = JSON.parse(document.getElementById('bill-data').textContent), s = d.series;
   const nf = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
-  const GRAY = '#9aa5b4', BLUE = '#0b5cab', DARK = '#073b73';
+  const GRAY = '#9aa5b4', BLUE = '#f47920', DARK = '#1b4f8a';
   const hl = (base) => d.labels.map((_, i) => i === d.selected ? DARK : base);
   const common = { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom' } } };
   const charts = [];

@@ -1,14 +1,36 @@
 {% extends "base.html" %}
-{% block title %}Entrar · Controle de Energia{% endblock %}
+{% block title %}Entrar · Economart Energia{% endblock %}
 {% block bare %}
-<main class="login" id="content">
-  <h1 style="margin-bottom:14px">Controle de Energia</h1>
-  <form class="card" method="post" action="/login">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="next" value="{{ next }}">
-    {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
-    <div class="field"><label for="u">Usuário</label><input id="u" name="username" type="text" autocomplete="username" autofocus required></div>
-    <div class="field"><label for="p">Senha</label><input id="p" name="password" type="password" autocomplete="current-password" required></div>
-    <button class="btn primary" style="width:100%">Entrar</button>
-  </form>
-</main>
+<div class="auth">
+  <aside class="auth-brand" aria-hidden="false">
+    <div class="auth-logo"><img src="/static/img/logo.png" alt="Economart Atacadista" width="445" height="113"></div>
+    <div class="auth-pitch">
+      <h2>Controle de Energia</h2>
+      <p>Contas de energia de todas as lojas num só lugar, do envio da foto ao gráfico atualizado.</p>
+      <ul>
+        <li>Envie a foto ou o PDF da conta e confira os dados lidos</li>
+        <li>Histórico mensal e variação por loja e por unidade</li>
+        <li>Avisos de vencimento e painel da diretoria</li>
+      </ul>
+    </div>
+    <div class="auth-foot">Economart Atacadista · uso interno</div>
+  </aside>
+  <main class="auth-form" id="content">
+    <div class="auth-box">
+      <div class="mlogo"><img src="/static/img/logo.png" alt="Economart Atacadista" width="445" height="113"></div>
+      <h1>Entrar</h1>
+      <p class="sub">Use seu usuário e senha do sistema.</p>
+      <form method="post" action="/login" data-no-loading data-login-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="next" value="{{ next }}">
+        {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+        <div class="field"><label for="u">Usuário</label><input id="u" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus required></div>
+        <div class="field"><label for="p">Senha</label>
+          <div class="pwrap"><input id="p" name="password" type="password" autocomplete="current-password" required>
+            <button class="pwtoggle" type="button" data-toggle-password="#p" aria-controls="p" aria-pressed="false">Mostrar</button></div></div>
+        <button class="btn primary" type="submit">Entrar</button>
+      </form>
+      <p class="hint">Esqueceu a senha? Peça ao administrador para redefinir.</p>
+    </div>
+  </main>
+</div>
 {% endblock %}

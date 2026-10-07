@@ -6,9 +6,9 @@
   const nfBRL0 = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
   const nfBRL3 = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 3, maximumFractionDigits: 3 });
   const nfN = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
-  const GRID = '#eceff3', INK = '#5d6b7c', UP = '#c0504d', DOWN = '#2e8b57', NEUTRAL = '#7f8b9b', BLUE = '#0b5cab';
-  const PALETTE = ['#2f6f9f', '#d08c3a', '#5b9a6b', '#8a6aa3', '#4f9a94', '#b0605f', '#7f8b9b', '#a89a3d', '#3d5a80', '#9c6644', '#6b8e23', '#a05195'];
-  Chart.defaults.font.family = '"Segoe UI", system-ui, sans-serif'; Chart.defaults.color = INK;
+  const GRID = '#eceff3', INK = '#5d6b7c', UP = '#c0504d', DOWN = '#2e8b57', NEUTRAL = '#7f8b9b', BLUE = '#1b4f8a';
+  const PALETTE = ['#1b4f8a', '#f47920', '#4f9a94', '#8a6aa3', '#b08a3e', '#7a8f5a', '#7f8b9b', '#b0605f', '#3d5a80', '#9c6644', '#6b8e23', '#a05195'];
+  Chart.defaults.font.family = 'Inter, "Segoe UI", system-ui, sans-serif'; Chart.defaults.color = INK;
   const arrow = (p) => p == null ? '—' : (p > 0 ? '↑ ' : p < 0 ? '↓ ' : '→ ') + nfN.format(Math.abs(p)) + '%';
   const $ = (id) => document.getElementById(id);
   const refLine = (value, color, label) => ({ id: 'ref' + label, afterDatasetsDraw(c) {
@@ -74,7 +74,7 @@
   rows.forEach((r, i) => { [A, B].forEach((s) => s.add(new Option(r.code + (r.name ? ' — ' + r.name : ''), i))); });
   A.value = 0; B.value = rows.length > 1 ? 1 : 0;
   const pairChart = new Chart($('c-pair'), { type: 'bar', data: { labels: D.labels, datasets: [
-      { label: '', data: [], backgroundColor: '#2f6f9f', maxBarThickness: 26 }, { label: '', data: [], backgroundColor: '#d08c3a', maxBarThickness: 26 } ] },
+      { label: '', data: [], backgroundColor: '#1b4f8a', maxBarThickness: 26 }, { label: '', data: [], backgroundColor: '#f47920', maxBarThickness: 26 } ] },
     options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { y: { beginAtZero: true, grid: { color: GRID }, ticks: { callback: (v) => nfBRL0.format(v) } }, x: { grid: { display: false } } },
       plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (i) => i.dataset.label + ': ' + nfBRL0.format(i.raw) } } } } });
   function drawPair() {

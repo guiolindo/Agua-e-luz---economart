@@ -72,7 +72,7 @@ def create_app() -> FastAPI:
     security.configure(secret)
 
     install_log_redaction(settings.gemini_api_key)
-    app = FastAPI(title="Controle de Energia", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="Economart · Controle de Energia", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     # Ordem: o último adicionado é o mais externo (cabeçalhos envolvem tudo; a sessão fica por dentro).
     app.add_middleware(SessionMiddleware, secret_key=secret, session_cookie="energia_session",
                        https_only=not settings.debug, same_site="strict", max_age=settings.session_max_hours * 3600)
@@ -84,6 +84,10 @@ def create_app() -> FastAPI:
 
     for module in (auth, account, dashboard, director, stores, types, imports, manual, points, charts, documents, help, admin):
         app.include_router(module.router)
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        return RedirectResponse("/static/img/favicon.png", status_code=301)
 
     @app.get("/health", include_in_schema=False)
     def health():

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Lojas · Controle de Energia{% endblock %}
+{% block title %}Lojas · Economart Energia{% endblock %}
 {% block content %}
 <div class="page-head"><div><h1>Lojas</h1>{% if stores|length > 5 %}<div class="field searchbox" style="margin:8px 0 0"><label for="q" class="sr">Buscar loja</label><input id="q" type="search" placeholder="Buscar por código, nome ou região…" data-filter="#stores-body tr" data-count="q-count" autocomplete="off"><span id="q-count" class="muted small" aria-live="polite"></span></div>{% endif %}</div>{% if user.can_write %}<a class="btn primary" href="/stores/new">Nova loja</a>{% endif %}</div>
 <div class="card flush"><div class="tablewrap"><table>

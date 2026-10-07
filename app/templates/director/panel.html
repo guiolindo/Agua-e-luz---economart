@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "macros.html" import variation as _v %}
 {% macro delta(v) %}{% if v and v.pct is not none %}<span class="var var-{{ v.direction }}">{{ v.text }}</span>{% else %}<span class="muted">—</span>{% endif %}{% endmacro %}
-{% block title %}Painel da diretoria · Controle de Energia{% endblock %}
+{% block title %}Painel da diretoria · Economart Energia{% endblock %}
 {% block content %}
 <div class="page-head no-print">
   <div><h1>Painel da diretoria</h1><div class="muted">Custos de energia e despesas relacionadas, comparando lojas · {{ start|month_label }} a {{ end|month_label }}</div></div>

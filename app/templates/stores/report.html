@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "macros.html" import variation %}
-{% block title %}Folha de impressão {{ store.code }} · Controle de Energia{% endblock %}
+{% block title %}Folha de impressão {{ store.code }} · Economart Energia{% endblock %}
 {% block content %}
 <div class="page-head no-print">
   <div><div class="crumbs"><a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div><h1>Folha de impressão</h1>
@@ -62,7 +62,7 @@
     </table>
   </section>
   {% else %}<p class="muted">Nenhum registro deste fornecedor no período.</p>{% endfor %}
-  <footer class="sheet-foot"><span>Controle de Energia · emitido em {{ generated|dt_br }} por {{ user.username }}</span>
+  <footer class="sheet-foot"><span>Economart · Controle de Energia · emitido em {{ generated|dt_br }} por {{ user.username }}</span>
     <span>Variação = mês em relação ao mês anterior (↑ gastou mais, ↓ gastou menos) · barra escura = último mês</span></footer>
 </div>
 {% endblock %}
@@ -76,8 +76,8 @@
     const d = JSON.parse(cv.dataset.chart);
     return new Chart(cv, {
       data: { labels: d.labels, datasets: [
-        { type: 'bar', label: 'Valor da fatura (R$)', data: d.values, backgroundColor: d.labels.map((_, i) => i === d.last ? '#17202b' : '#9aa5b4'), borderRadius: 2, maxBarThickness: 40, yAxisID: 'y' },
-        { type: 'line', label: 'Variação (%)', data: d.variation, borderColor: '#0b5cab', backgroundColor: '#0b5cab', borderWidth: 2, pointRadius: 3, spanGaps: true, yAxisID: 'y1' },
+        { type: 'bar', label: 'Valor da fatura (R$)', data: d.values, backgroundColor: d.labels.map((_, i) => i === d.last ? '#1b4f8a' : '#9aa5b4'), borderRadius: 2, maxBarThickness: 40, yAxisID: 'y' },
+        { type: 'line', label: 'Variação (%)', data: d.variation, borderColor: '#f47920', backgroundColor: '#f47920', borderWidth: 2, pointRadius: 3, spanGaps: true, yAxisID: 'y1' },
       ] },
       plugins: [{ id: 'varlabels', afterDatasetsDraw(c) {   // % de variação sobre cada ponto da linha (≤ 13 meses)
         if (d.labels.length > 13) return; const g = c.ctx, m = c.getDatasetMeta(1); g.save(); g.font = '600 9px sans-serif'; g.textAlign = 'center';

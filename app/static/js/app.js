@@ -158,3 +158,10 @@ document.addEventListener('input', (e) => {
   });
   scrollables(); window.addEventListener('resize', scrollables); window.addEventListener('load', scrollables);
 })();
+
+// Login: mostrar/ocultar senha e feedback de envio.
+document.querySelectorAll('[data-toggle-password]').forEach((b) => b.addEventListener('click', () => {
+  const i = document.querySelector(b.dataset.togglePassword); if (!i) return;
+  const show = i.type === 'password'; i.type = show ? 'text' : 'password'; b.textContent = show ? 'Ocultar' : 'Mostrar'; b.setAttribute('aria-pressed', String(show)); }));
+document.querySelectorAll('[data-login-form]').forEach((f) => f.addEventListener('submit', () => {
+  const b = f.querySelector('button[type="submit"]'); if (b) { setTimeout(() => { b.disabled = true; b.classList.add('loading'); b.textContent = 'Entrando…'; }, 0); } }));

@@ -96,7 +96,7 @@ def default_range(db: Session, store_id: int | None, start: date | None, end: da
 
 def _palette(n: int, highlight_present: bool) -> list[str]:
     neutral = ["#9aa5b4", "#b7c0cc", "#7f8b9b", "#cdd4dd", "#6b7787", "#aeb8c5"]
-    categorical = ["#2f6f9f", "#7a8f5a", "#b08a3e", "#8a6aa3", "#4f9a94", "#a35d5d"]
+    categorical = ["#1b4f8a", "#f47920", "#4f9a94", "#8a6aa3", "#b08a3e", "#7a8f5a"]
     base = neutral if highlight_present else categorical
     return [base[i % len(base)] for i in range(n)]
 
@@ -152,7 +152,7 @@ def build_chart(db: Session, store: Store, *, record_type: RecordType | None, in
         series.append({
             "id": key, "label": unit_by_id[key].number if key in unit_by_id else "Sem unidade",
             "sublabel": unit_by_id[key].description if key in unit_by_id else None,
-            "highlight": is_hl, "color": "#0b5cab" if is_hl else color,
+            "highlight": is_hl, "color": "#1b4f8a" if is_hl else color,
             "data": data, "variations": variations, "lines": lines,
         })
     return {
@@ -175,7 +175,7 @@ def _chart_by_type(db, store, types, months, idx, start, end) -> dict:
     for r in repo.manual_for_store(db, store.id, start, end):
         cur = totals[r.record_type_id]
         cur[idx[r.reference]] = (cur[idx[r.reference]] or 0) + float(r.value)
-    colors = ["#2f6f9f", "#7a8f5a", "#b08a3e", "#8a6aa3", "#4f9a94", "#a35d5d"]
+    colors = ["#1b4f8a", "#f47920", "#4f9a94", "#8a6aa3", "#b08a3e", "#7a8f5a"]
     series = []
     for i, (tid, data) in enumerate(sorted(totals.items(), key=lambda kv: types[kv[0]].sort_order)):
         series.append({"id": tid, "label": types[tid].name, "highlight": False, "color": colors[i % len(colors)],

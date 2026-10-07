@@ -19,7 +19,7 @@ from app.utils.timezone import local_today
 
 PARTIAL_RATIO = 0.6   # mês com menos de 60% das lojas (vs. o melhor mês) é tratado como parcial
 MIN_PREV_MONTHS = 3  # histórico mínimo de uma loja no período anterior para compará-la
-TYPE_COLORS = ["#2f6f9f", "#d08c3a", "#5b9a6b", "#8a6aa3", "#4f9a94", "#b0605f", "#7f8b9b", "#a89a3d"]
+TYPE_COLORS = ["#1b4f8a", "#f47920", "#4f9a94", "#8a6aa3", "#b08a3e", "#7a8f5a", "#7f8b9b", "#b0605f"]
 
 
 def _f(v) -> float | None:

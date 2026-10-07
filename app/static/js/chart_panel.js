@@ -70,7 +70,7 @@
         datasets: data.series.map((s) => ({
           label: s.label + (s.highlight ? ' (importada agora)' : ''), data: s.data, backgroundColor: s.color,
           borderRadius: 2, maxBarThickness: 46, order: s.highlight ? 0 : 1, _s: s,
-          borderColor: s.highlight ? '#073b73' : 'transparent', borderWidth: s.highlight ? 1.5 : 0,
+          borderColor: s.highlight ? '#10243f' : 'transparent', borderWidth: s.highlight ? 1.5 : 0,
         })),
       },
       options: {
