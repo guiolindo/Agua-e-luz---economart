@@ -15,23 +15,43 @@
 {% if user %}
 <div class="shell">
   <aside class="side" aria-label="Menu principal">
-    <div class="brand"><a href="/"><img src="/static/img/logo.png" alt="Economart" width="445" height="113"></a><small>Controle de Energia</small></div>
+    <div class="brand"><a href="/" aria-label="Economart"><img src="/static/img/logo.png" alt="Economart" width="445" height="113"></a></div>
     {% if not user.must_change_password %}<nav class="nav" aria-label="Principal">
-      {% if user.can_write %}<a class="cta" href="/import">Importar conta</a>{% endif %}
-      {% if user.can_see_executive %}<a href="/diretoria" class="{{ 'active' if path.startswith('/diretoria') }}" {% if path.startswith('/diretoria') %}aria-current="page"{% endif %}>Painel da diretoria</a>{% endif %}
-      {% if not user.is_director %}<a href="/" class="{{ 'active' if path == '/' }}" {% if path == '/' %}aria-current="page"{% endif %}>Painel</a>{% endif %}
-      <a href="/stores" class="{{ 'active' if path.startswith('/stores') or path.startswith('/units') }}" {% if path.startswith('/stores') or path.startswith('/units') %}aria-current="page"{% endif %}>Lojas</a>
-      {% if user.can_write %}<a href="/manual" class="{{ 'active' if path.startswith('/manual') }}" {% if path.startswith('/manual') %}aria-current="page"{% endif %}>Lançamento manual</a>{% endif %}
-      <a href="/ajuda" class="{{ 'active' if path.startswith('/ajuda') }}" {% if path.startswith('/ajuda') %}aria-current="page"{% endif %}>Ajuda</a>
-      {% if user.can_write %}<a href="/types" class="{{ 'active' if path.startswith('/types') }}" {% if path.startswith('/types') %}aria-current="page"{% endif %}>Tipos de registro</a>{% endif %}
+      {% if user.can_write %}<a class="cta" href="/import">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Importar conta</span></a>{% endif %}
+      {% if user.can_see_executive %}<a href="/diretoria" class="{{ 'active' if path.startswith('/diretoria') }}" {% if path.startswith('/diretoria') %}aria-current="page"{% endif %}>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-6 3 4 5-8"/></svg>
+        <span>Painel da diretoria</span></a>{% endif %}
+      {% if not user.is_director %}<a href="/" class="{{ 'active' if path == '/' }}" {% if path == '/' %}aria-current="page"{% endif %}>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        <span>Painel</span></a>{% endif %}
+      <a href="/stores" class="{{ 'active' if path.startswith('/stores') or path.startswith('/units') }}" {% if path.startswith('/stores') or path.startswith('/units') %}aria-current="page"{% endif %}>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9h16v11H4z"/><path d="M9 20v-6h6v6"/></svg>
+        <span>Lojas</span></a>
+      {% if user.can_write %}<a href="/manual" class="{{ 'active' if path.startswith('/manual') }}" {% if path.startswith('/manual') %}aria-current="page"{% endif %}>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Lançamento manual</span></a>{% endif %}
+      <a href="/ajuda" class="{{ 'active' if path.startswith('/ajuda') }}" {% if path.startswith('/ajuda') %}aria-current="page"{% endif %}>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg>
+        <span>Ajuda</span></a>
+      {% if user.can_write %}<a href="/types" class="{{ 'active' if path.startswith('/types') }}" {% if path.startswith('/types') %}aria-current="page"{% endif %}>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        <span>Tipos de registro</span></a>{% endif %}
       {% if user.is_admin %}<hr>
-      <a href="/admin/audit" class="{{ 'active' if path.startswith('/admin/audit') }}" {% if path.startswith('/admin/audit') %}aria-current="page"{% endif %}>Auditoria</a>
-      <a href="/admin/users" class="{{ 'active' if path.startswith('/admin') }}" {% if path.startswith('/admin') %}aria-current="page"{% endif %}>Usuários</a>{% endif %}
+      <a href="/admin/audit" class="{{ 'active' if path.startswith('/admin/audit') }}" {% if path.startswith('/admin/audit') %}aria-current="page"{% endif %}>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        <span>Auditoria</span></a>
+      <a href="/admin/users" class="{{ 'active' if path.startswith('/admin') and not path.startswith('/admin/audit') }}" {% if path.startswith('/admin') and not path.startswith('/admin/audit') %}aria-current="page"{% endif %}>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Usuários</span></a>{% endif %}
     </nav>{% endif %}
     <div class="side-foot">
-      {{ user.username }} · {{ {'admin': 'administrador', 'operator': 'funcionário', 'director': 'diretoria', 'viewer': 'consulta', 'user': 'funcionário'}.get(user.role, user.role) }}<br>
-      {% if not user.must_change_password %}<a href="/account/password" >Alterar senha</a><br>{% endif %}
-      <form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button>Sair</button></form>
+      <div class="whoami"><strong>{{ user.username }}</strong><span>{{ {'admin': 'administrador', 'operator': 'funcionário', 'director': 'diretoria', 'viewer': 'consulta', 'user': 'funcionário'}.get(user.role, user.role) }}</span></div>
+      <div class="side-actions">
+        {% if not user.must_change_password %}<a href="/account/password">Alterar senha</a>{% endif %}
+        <form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Sair</button></form>
+      </div>
     </div>
   </aside>
   <main class="main" id="content" tabindex="-1">
