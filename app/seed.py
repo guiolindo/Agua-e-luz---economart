@@ -11,8 +11,10 @@ log = logging.getLogger(__name__)
 
 DEFAULT_TYPES = [
     dict(code="cemig", name="CEMIG", kind="bill", sort_order=10, fields=[],
+         aliases=["COMPANHIA ENERGETICA DE MINAS GERAIS", "CEMIG DISTRIBUICAO"],
          description="Conta de energia da CEMIG (Minas Gerais), lida por foto."),
     dict(code="coelba", name="COELBA", kind="bill", sort_order=11, fields=[],
+         aliases=["COMPANHIA DE ELETRICIDADE DO ESTADO DA BAHIA"],
          description="Conta de energia da Coelba (Bahia), lida por foto."),
     dict(code="ll-energia", name="LL Energia", kind="manual", sort_order=20,
          fields=[{"key": "consumo_kwh", "label": "Consumo", "unit": "kWh"}],
@@ -29,8 +31,11 @@ DEFAULT_TYPES = [
 
 def seed(db: Session) -> None:
     for t in DEFAULT_TYPES:
-        if db.scalar(select(RecordType).where(RecordType.code == t["code"])) is None:
+        existing = db.scalar(select(RecordType).where(RecordType.code == t["code"]))
+        if existing is None:
             db.add(RecordType(**t))
+        elif not existing.aliases and t.get("aliases"):
+            existing.aliases = t["aliases"]  # bancos criados antes do campo existir
     settings = get_settings()
     if db.scalar(select(User).limit(1)) is None:
         password = settings.admin_password

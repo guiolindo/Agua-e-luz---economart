@@ -11,6 +11,7 @@ import time
 
 from app.config import get_settings
 from app.schemas.extraction import BillExtraction
+from app.utils.images import prepare_for_model
 
 log = logging.getLogger(__name__)
 
@@ -25,22 +26,32 @@ PROMPT = """Você é um extrator estruturado de dados de contas de energia elét
 - ZERO CHUTE: se um campo não estiver visível ou legível, devolva null. Nunca invente nem complete valores.
 - Números no formato brasileiro: ponto é milhar e vírgula é decimal ("20.505,00" -> 20505.00; "58.372" kWh -> 58372).
   Devolva sempre número JSON, sem "R$" nem separador de milhar.
+- Sinal negativo pode vir DEPOIS do número ("184,37-" = -184.37). Descontos/créditos são valores negativos.
 - Datas em YYYY-MM-DD. "reference_month" em YYYY-MM (campo "Referente a"/"Mês de referência"; SET/2026 -> 2026-09).
-- "utility": nome da distribuidora emissora (ex.: "CEMIG", "COELBA").
+- "utility": nome da distribuidora emissora como impresso no topo (ex.: "CEMIG", "Neoenergia Coelba").
 - "consumer_unit_number": o número da unidade consumidora / instalação / código do cliente exatamente como impresso
-  (CEMIG: "N.º DA UNIDADE CONSUMIDORA"; Coelba: "Código da instalação"/"Conta contrato"). Mantenha pontos e hífens.
+  (CEMIG e Coelba: "N.º/NÚMERO DA UNIDADE CONSUMIDORA", ex.: 9.089.187.028-65). NÃO confunda com nota fiscal, código de
+  débito em conta, nosso número, número do documento ou número do medidor. Mantenha pontos e hífens.
 - "total_value": o "Valor a pagar"/"Total a pagar" da fatura.
 - Consumo: se a conta separa ponta (HP) e fora ponta (HFP) (e HR), preencha consumption_hp_kwh / consumption_hfp_kwh /
   consumption_hr_kwh e demand_*_kw com os valores do MÊS de referência (primeira linha do histórico de consumo e/ou os
   itens faturados). Se a conta tem um consumo único (tarifa convencional), preencha só "consumption_kwh".
-- "line_items": os itens faturados, inclusive descontos (valores negativos).
+- Se houver tabela de MEDIDOR (grandezas/postos horários): "Energia Ativa" Ponta/Fora Ponta -> consumo HP/HFP em kWh e
+  "Demanda Ativa" Ponta/Fora Ponta -> demand_hp_kw / demand_hfp_kw (coluna de consumo/valor medido). A demanda
+  contratada ("Montante de Uso Contratado"/"Demanda Fora Ponta contratada") vai em contracted_demand_kw.
+- "pis_cofins_value": SOMA de PIS + COFINS (se a conta mostrar os dois separados, some). "icms_value": valor total de ICMS
+  do quadro de tributos (0 se for 0,00).
+- "line_items": os itens faturados, inclusive descontos (valores negativos). Se a mesma conta aparecer duplicada na
+  imagem (2 vias, canhotos, páginas repetidas), extraia UMA só vez, sem duplicar itens.
+- "customer_address": endereço do cliente/instalação como impresso.
 - "confidence": sua confiança (0 a 1) em unidade consumidora, mês, valor e datas. Use valores baixos para foto
   borrada, cortada, inclinada ou com reflexo.
 
 ## Anotações à mão
 - Se houver texto escrito À MÃO na folha (caneta/marcador, ex.: "CD 300", "SAJ"), copie-o em "handwritten_note".
   Sem texto manuscrito legível: null.
-- Marcações como √, X, riscos e destaques de marca-texto NÃO são dados e não mudam nenhum valor: ignore-os.
+- Carimbos (ex.: "LANÇADO", "PAGO"), assinaturas, rubricas, √, X, riscos e destaques de marca-texto NÃO são anotação de
+  loja nem dado: ignore-os e não os copie em "handwritten_note".
 - Nunca use a anotação à mão para preencher outros campos.
 {catalogo}
 Se o documento não for uma conta de energia, devolva todos os campos null."""
@@ -91,6 +102,7 @@ class GeminiService:
         from google import genai
         from google.genai import errors, types
 
+        data, mime_type = prepare_for_model(data, mime_type)
         client = genai.Client(api_key=self.api_key, http_options=types.HttpOptions(timeout=TIMEOUT_MS))
         contents = [types.Part.from_bytes(data=data, mime_type=mime_type), build_prompt(catalog)]
         config = types.GenerateContentConfig(response_mime_type="application/json", response_schema=BillExtraction,

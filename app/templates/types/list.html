@@ -12,6 +12,8 @@
     <div class="field"><label>Descrição</label><input type="text" name="description" value="{{ t.description or '' }}"></div>
     <div class="field"><label>Situação</label><select name="active"><option value="1" {{ 'selected' if t.active }}>Ativo</option><option value="" {{ 'selected' if not t.active }}>Inativo</option></select></div>
   </div>
+  {% if t.is_bill %}<div class="field"><label>Nomes alternativos na conta (separados por vírgula)</label><input type="text" name="aliases" value="{{ (t.aliases or [])|join(', ') }}">
+    <div class="hint">Como a distribuidora pode aparecer escrita na conta (ex.: razão social). Ajuda a IA a reconhecer o tipo.</div></div>{% endif %}
   {% if not t.is_bill %}<div class="field"><label>Campos extras (um por linha, ex.: “Horas de operação (h)”)</label><textarea name="fields">{{ fields_to_text(t.fields) }}</textarea></div>{% endif %}
   <button class="btn">Salvar</button>
 </form>

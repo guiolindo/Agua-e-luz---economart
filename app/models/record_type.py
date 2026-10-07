@@ -20,6 +20,8 @@ class RecordType(TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Campos numéricos extras de tipos manuais: [{"key": "horas", "label": "Horas", "unit": "h"}]
     fields: Mapped[list] = mapped_column(JSON, default=list)
+    # Nomes alternativos da distribuidora como aparecem na conta (ex.: razão social)
+    aliases: Mapped[list | None] = mapped_column(JSON, default=list, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=100)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 

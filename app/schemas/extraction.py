@@ -26,6 +26,7 @@ class BillExtraction(BaseModel):
         None, description="Número da unidade consumidora exatamente como impresso, ex.: 12.060.073.018-19"
     )
     customer_name: str | None = None
+    customer_address: str | None = Field(None, description="Endereço do cliente/instalação como impresso")
     reference_month: str | None = Field(None, description="Mês de referência no formato YYYY-MM (SET/2026 -> 2026-09)")
     issue_date: str | None = Field(None, description="Data de emissão da nota, YYYY-MM-DD")
     due_date: str | None = Field(None, description="Vencimento, YYYY-MM-DD")

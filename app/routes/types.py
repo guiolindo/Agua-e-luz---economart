@@ -72,13 +72,15 @@ def type_create(request: Request, name: str = Form(...), kind: str = Form("manua
 
 @router.post("/types/{type_id}", dependencies=[Depends(verify_csrf)])
 def type_update(request: Request, type_id: int, name: str = Form(...), description: str = Form(""),
-                fields: str = Form(""), active: str = Form(""), user: User = Depends(admin_required),
+                aliases: str = Form(""), fields: str = Form(""), active: str = Form(""), user: User = Depends(admin_required),
                 db: Session = Depends(get_db)):
     rt = db.get(RecordType, type_id)
     if not rt:
         raise HTTPException(404, "Tipo não encontrado.")
     rt.name, rt.description, rt.active = name.strip()[:120], clean_str(description), bool(active)
-    if not rt.is_bill:
+    if rt.is_bill:
+        rt.aliases = [a.strip()[:120] for a in aliases.replace(";", ",").split(",") if a.strip()][:10]
+    else:
         rt.fields = parse_fields(fields)
     audit_service.log(db, user.id, "update", "record_type", rt.id)
     db.commit()

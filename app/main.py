@@ -15,6 +15,7 @@ from app.routes import admin, auth, charts, dashboard, documents, imports, manua
 from app.security import LoginRequired
 from app.seed import seed
 from app.services.retention_service import retention_loop
+from app.utils.log_safety import install_log_redaction
 from app.web import render
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -42,6 +43,7 @@ def create_app() -> FastAPI:
         secret = secrets.token_hex(32)
         logging.getLogger(__name__).warning("SECRET_KEY vazio: chave temporária (sessões caem a cada reinício).")
 
+    install_log_redaction(settings.gemini_api_key)
     app = FastAPI(title="Controle de Energia", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(SessionMiddleware, secret_key=secret, https_only=not settings.debug, same_site="lax",
                        max_age=60 * 60 * 12)

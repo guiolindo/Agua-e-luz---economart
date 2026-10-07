@@ -1,6 +1,7 @@
 """Ciclo de vida de uma importação: upload -> extração (background) -> conferência -> persistência."""
 import logging
-from datetime import date
+import threading
+from datetime import date, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -17,6 +18,9 @@ from app.utils.parsing import normalize_uc
 from app.utils.uploads import sha256, validate_upload
 
 log = logging.getLogger(__name__)
+
+# Limita chamadas simultâneas ao Gemini (cota gratuita ~15/min): o excedente espera sua vez.
+_SLOTS = threading.BoundedSemaphore(max(1, get_settings().gemini_max_concurrency))
 
 BILL_FIELDS = [
     "reference", "issue_date", "due_date", "invoice_number", "series", "total_value", "days",
@@ -53,7 +57,8 @@ def run_import(import_id: int, extractor: Extractor | None = None, session_facto
         job.stage = "extracting"
         db.commit()
         try:
-            extraction = extractor.extract(job.document.data, job.document.content_type, store_catalog(db))
+            with _SLOTS:
+                extraction = extractor.extract(job.document.data, job.document.content_type, store_catalog(db))
         except ExtractionError as exc:
             _fail(db, job, str(exc))
             return
@@ -85,6 +90,17 @@ def store_catalog(db: Session) -> str | None:
         aliases = ", ".join(a for a in (s.aliases or []) if a)
         lines.append(f"- {s.code}" + (f" ({s.name})" if s.name else "") + (f" ← {aliases}" if aliases else ""))
     return "\n".join(lines) or None
+
+
+def expire_if_stale(db: Session, job: Import) -> bool:
+    """Importação 'processing' parada há muito tempo (processo reiniciado, travamento) vira falha com opção de retry."""
+    if job.status != "processing":
+        return False
+    updated = job.updated_at if job.updated_at.tzinfo else job.updated_at.replace(tzinfo=timezone.utc)
+    if utcnow() - updated < timedelta(minutes=get_settings().stale_import_minutes):
+        return False
+    _fail(db, job, "A análise demorou demais e foi interrompida. Clique em “Tentar novamente”.")
+    return True
 
 
 def _fail(db: Session, job: Import, message: str) -> None:

@@ -17,7 +17,8 @@
     <h2>Loja e unidade consumidora</h2>
     <div class="identbox" style="margin-bottom:12px">
       <div><div class="k">Unidade lida na conta{% if 'consumer_unit' in flagged %}<span class="flagtxt">conferir</span>{% endif %}</div><div class="v mono">{{ e.consumer_unit_number or 'Não identificada' }}</div></div>
-      <div><div class="k">Distribuidora / cliente</div><div class="v">{{ e.utility or '—' }}{% if e.customer_name %} · <span style="font-weight:400" class="small">{{ e.customer_name }}</span>{% endif %}</div></div>
+      <div><div class="k">Distribuidora / cliente</div><div class="v">{{ e.utility or '—' }}{% if e.customer_name %} · <span style="font-weight:400" class="small">{{ e.customer_name }}</span>{% endif %}</div>
+        {% if e.customer_address %}<div class="muted small" style="margin-top:2px">{{ e.customer_address }}</div>{% endif %}</div>
     </div>
     {% if errors.unit %}<div class="flash error">{{ errors.unit }}</div>{% endif %}
 

@@ -1,4 +1,5 @@
 import hashlib
+import re
 
 ALLOWED = {
     "jpg": "image/jpeg",
@@ -7,6 +8,9 @@ ALLOWED = {
     "webp": "image/webp",
     "pdf": "application/pdf",
 }
+
+
+MAX_PDF_PAGES = 10  # uma conta tem 1–2 páginas; PDFs enormes travam/estouram o tempo do modelo
 
 
 class UploadError(ValueError):
@@ -38,6 +42,10 @@ def validate_upload(filename: str, data: bytes, max_bytes: int) -> tuple[str, st
     real = sniff_content_type(data)
     if real is None or real != ALLOWED[ext]:
         raise UploadError("O conteúdo do arquivo não corresponde ao formato informado.")
+    if real == "application/pdf":
+        pages = len(re.findall(rb"/Type\s*/Page(?![s\w])", data))
+        if pages > MAX_PDF_PAGES:
+            raise UploadError(f"O PDF tem {pages} páginas. Envie apenas a(s) página(s) da conta (até {MAX_PDF_PAGES}).")
     safe = "".join(c for c in filename.replace("\\", "/").rsplit("/", 1)[-1] if c.isalnum() or c in "._- ")[:120]
     return safe or f"conta.{ext}", real
 

@@ -76,8 +76,16 @@ def type_for_utility(types, utility: str | None):
     for t in types:
         if not t.is_bill:
             continue
-        for candidate in (t.name, t.code):
+        for candidate in (t.name, t.code, *(t.aliases or [])):
             c = _norm(candidate)
             if c and c in key and (best is None or len(c) > best[0]):
                 best = (len(c), t)
     return best[1] if best else None
+
+
+# Carimbos/palavras comuns em contas que NÃO são anotação de loja.
+IGNORED_NOTES = {"LANCADO", "PAGO", "OK", "CONFERIDO", "BAIXADO", "RECEBIDO", "VISTO"}
+
+
+def is_stamp(note: str | None) -> bool:
+    return _norm(note) in IGNORED_NOTES

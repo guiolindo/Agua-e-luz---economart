@@ -18,7 +18,7 @@ ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decis�
 
 ## Distribuidoras, anotação à mão, retenção e impressão
 
-- **Várias distribuidoras:** CEMIG e COELBA já vêm cadastradas como tipos de conta. A IA lê a distribuidora da própria
+- **Várias distribuidoras:** CEMIG e COELBA (testada com a conta real “Neoenergia Coelba” de Feira de Santana) já vêm cadastradas como tipos de conta. A IA lê a distribuidora da própria
   conta; ao cadastrar uma unidade nova pela importação, o tipo é definido por ela. Para outra distribuidora, o admin cria
   um tipo “Conta de distribuidora” em *Tipos de registro* (o nome deve aparecer na conta, ex.: ENERGISA). Contas sem
   separação ponta/fora ponta usam o campo “Consumo único (kWh)”.
@@ -30,6 +30,12 @@ ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decis�
   “Original expirado”.
 - **Impressão:** em *Histórico da loja → Imprimir relatório* (A4 paisagem): resumo mensal, gráfico de barras com linha de
   variação e tabela Valor / Dias / Variação por tipo, no formato do relatório atual.
+- **Limites e travamentos do Gemini (também do lancamento-automatico):** fotos grandes são reduzidas (lado maior ≤ 3000 px)
+  e giradas conforme o EXIF antes do envio (o original guardado não muda); PDFs com mais de 10 páginas são recusados;
+  no máximo 2 análises simultâneas (cota gratuita ~15/min), com retentativa em 429/5xx; importação “processando” há
+  mais de 10 min vira falha com botão “Tentar novamente” (cobre reinício do servidor no meio da análise); chaves são
+  redigidas de qualquer log; modelos descontinuados (2.0-flash-exp, 2.5-flash, 2.5-flash-lite, 1.0-pro…) em
+  `GEMINI_MODEL` são trocados automaticamente por `gemini-3.5-flash-lite`.
 - **Gemini (lições do projeto lancamento-automatico):** erros traduzidos para português sem expor chave/URL, retentativa
   em 429/5xx, timeout de 120 s, “zero chute” e parsing tolerante do JSON.
 
@@ -57,7 +63,8 @@ Edite o `.env`:
 | `DATABASE_URL` | `sqlite:///app.db` (dev) ou a URL do PostgreSQL. `postgres://` é convertido automaticamente. |
 | `SECRET_KEY` | Obrigatória fora do `DEBUG`. Gere com `python -c "import secrets; print(secrets.token_hex(32))"`. |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Criam o administrador no primeiro start (se não existir nenhum usuário). Em `DEBUG` sem senha, usa `admin`/`admin`. |
-| `MAX_UPLOAD_MB` | Limite do upload (padrão 15). |
+| `MAX_UPLOAD_MB` | Limite do upload (padrão 12; o envio ao Gemini vai em base64, +33%, e o teto da requisição é ~20 MB). |
+| `GEMINI_MAX_CONCURRENCY` | Chamadas simultâneas ao Gemini (padrão 2). |
 | `DOCUMENT_RETENTION_DAYS` | Dias até a foto/PDF original ser apagada do banco (padrão 183 ≈ 6 meses). |
 
 ```bash
