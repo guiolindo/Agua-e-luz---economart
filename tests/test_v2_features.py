@@ -189,7 +189,7 @@ def test_print_report_has_summary_blocks_and_variation(client, db):
         client.post("/manual", {"store_id": store_id, "unit_id": unit.id, "type_id": cemig.id, "reference": f"2026-{m:02d}",
                                 "total_value": v, "days": "31"})
     html = client.get(f"/stores/{store_id}/report?start=2026-08&end=2026-09").text
-    assert "Relatório por loja" in html and "CD300" in html and "↑ 4,96%" in html and "Dias de consumo" in html
+    assert "GRÁFICO POR LOJA" in html and "CD300" in html and "↑ 4,96%" in html and "Dias de consumo" in html
     assert "R$ 20.505,00" in html and "data-print" in html
 
 
@@ -248,3 +248,26 @@ def test_bill_print_includes_original_photo_only_when_asked_and_available(client
 
 def test_bill_print_404_and_requires_login(client):
     assert client.get("/bills/9999/print").status_code == 404
+
+
+# ---------- folha de impressão: UMA folha com resumo + gráfico + dados ----------
+def test_print_sheet_is_a_single_sheet_with_summary_chart_and_info_for_one_supplier(client, db):
+    from scripts import seed_demo
+    seed_demo.main()
+    store = db.query(Store).filter_by(code="CD300").one()
+    html = client.get(f"/stores/{store.id}/report?start=2026-01&end=2026-10&by=due").text
+    assert html.count("<canvas") == 1 and 'data-fit="700"' in html                 # 1 gráfico, ajustado a 1 página
+    assert "RESUMO MENSAL" in html and "IMÓVEL: CEMIG" in html and "496.587,37" in html  # resumo de todos + 1 imóvel
+    assert 'class="infostrip"' in html and "12.060.073.018-19" in html and "Dias de consumo" in html
+    assert 'class="rblock pagebreak"' not in html
+
+
+def test_print_sheet_can_pick_the_supplier_or_print_all_one_per_sheet(client, db):
+    from scripts import seed_demo
+    seed_demo.main()
+    store = db.query(Store).filter_by(code="CD300").one()
+    ll = db.query(RecordType).filter_by(code="ll-energia").one()
+    one = client.get(f"/stores/{store.id}/report?start=2026-01&end=2026-09&type_id={ll.id}").text
+    assert "IMÓVEL: LL ENERGIA" in one and one.count("<canvas") == 1 and 'class="infostrip"' not in one
+    every = client.get(f"/stores/{store.id}/report?start=2026-01&end=2026-10&all=1").text
+    assert every.count("<canvas") == 6 and every.count("pagebreak") == 5 and "data-fit" not in every

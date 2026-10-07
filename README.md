@@ -38,7 +38,12 @@ ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decis�
   vencimento (a conta de SET/2026, que vence em outubro, cai na coluna out/2026). Lançamentos manuais aceitam “Vencimento”
   opcional; sem ele, entram no mês de referência. O relatório também filtra por fornecedor. `python -m scripts.seed_demo`
   reproduz a folha do CD300 (o teste confere o Total Geral ao centavo).
-- **Imprimir uma conta com gráficos:** em *Unidade → Contas → Imprimir* (ou `/bills/<id>/print`). A ficha A4 traz os dados
+- **Folha de impressão (uma página A4 paisagem)**, no formato da planilha atual: cabeçalho da loja, *Resumo mensal* de todos os
+  fornecedores com Total Geral, o *Imóvel/fornecedor* escolhido com faixa de informações da última conta, gráfico de barras com
+  linha de variação e a tabela Valor da fatura / Dias / Variação. Em *Histórico da loja → Imprimir relatório*; dá para escolher
+  o fornecedor e agrupar por referência ou vencimento (“um por folha” imprime uma folha para cada fornecedor). O conteúdo é
+  reduzido automaticamente só o necessário para caber em uma página.
+- **Imprimir uma conta com gráficos:** em *Unidade → Contas → Imprimir* (ou `/bills/<id>/print`). A ficha (uma página A4) traz os dados
   da conta, o comparativo com o mês anterior, os itens faturados e três gráficos dos últimos 12 meses (valor com linha de
   variação, consumo HP/HFP e demanda com a contratada), com o mês escolhido em destaque. Na própria tela dá para trocar
   de conta/mês e marcar “Incluir foto/PDF original” (se ainda não expirou).

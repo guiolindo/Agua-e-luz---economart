@@ -243,8 +243,9 @@ def unit_overview(db: Session, unit: ConsumerUnit) -> dict:
 
 
 def report_data(db: Session, store: Store, start: date | None = None, end: date | None = None,
-                by: str = "reference", type_id: int | None = None) -> dict:
-    """Dados do relatório impresso: um bloco por tipo de registro (gráfico de barras + variação + tabela)."""
+                by: str = "reference", type_id: int | None = None, all_types: bool = False) -> dict:
+    """Folha de impressão: resumo de todos os fornecedores + UM fornecedor (gráfico, variação, tabela e dados da conta).
+    `all_types=True` devolve um bloco por fornecedor (várias folhas)."""
     start, end = default_range(db, store.id, start, end)
     months = month_range(start, end)
     idx = {m: i for i, m in enumerate(months)}
@@ -260,9 +261,11 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
     qs, qe = _fetch_range(start, end, by)
     for b in repo.bills_for_units(db, list(units), qs, qe):
         m = month_of(b.reference, b.due_date, by)
-        if m not in idx or (type_id and b.record_type_id != type_id):
+        if m not in idx:
             continue
         blk = block(b.record_type_id)
+        if blk.get("latest") is None or b.reference >= blk["latest"].reference:
+            blk["latest"] = b
         i = idx[m]
         row = blk["rows"].setdefault(b.unit_id, [None] * n)
         row[i] = (row[i] or Decimal(0)) + b.total_value
@@ -272,7 +275,7 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
             blk["days"][i] = b.days
     for r in repo.manual_for_store(db, store.id, qs, qe):
         m = month_of(r.reference, r.due_date, by)
-        if m not in idx or (type_id and r.record_type_id != type_id):
+        if m not in idx:
             continue
         blk = block(r.record_type_id)
         i = idx[m]
@@ -281,19 +284,25 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
         row[i] = (row[i] or Decimal(0)) + r.value
         blk["totals"][i] = (blk["totals"][i] or Decimal(0)) + r.value
 
+    ordered = sorted(blocks, key=lambda t: types[t].sort_order)
+    available = [types[t] for t in ordered]
+    selected = type_id if type_id in blocks else next((t for t in ordered if types[t].is_bill), ordered[0] if ordered else None)
     out = []
     for tid, blk in sorted(blocks.items(), key=lambda kv: types[kv[0]].sort_order):
+        if not all_types and tid != selected:
+            continue
         totals = blk["totals"]
         vars_ = [variation(totals[i - 1] if i else None, t) for i, t in enumerate(totals)]
         rows = [{"label": units[k].number if k in units else "Total lançado", "values": v}
                 for k, v in sorted(blk["rows"].items(), key=lambda kv: (kv[0] is None, units[kv[0]].number if kv[0] in units else ""))]
         out.append({
             "type": blk["type"], "rows": rows if len(rows) > 1 else [], "totals": totals, "variations": vars_,
+            "latest": blk.get("latest"),
             "days": None if blk["days_conflict"] or not any(d is not None for d in blk["days"]) else blk["days"],
             "chart": {"labels": [fmt.month_short(m) for m in months], "values": [float(t) if t is not None else None for t in totals],
                       "variation": [float(v.pct) if v.pct is not None else None for v in vars_]},
         })
-    return {"months": months, "start": start, "end": end, "blocks": out, "by": by, "type_id": type_id,
+    return {"months": months, "start": start, "end": end, "blocks": out, "by": by, "type_id": selected, "available": available, "all_types": all_types,
             "summary": store_summary(db, store, start, end, by)}
 
 

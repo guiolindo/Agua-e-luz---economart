@@ -16,7 +16,8 @@
   </form>
 </div>
 
-<div class="report bill-print">
+<div class="report bill-print sheet">
+<div class="fitbox" data-fit="1030">
   <header class="report-head">
     <div><h1>{{ rtype.name if rtype else 'Conta de energia' }} — {{ bill.reference|month_label }}</h1>
       <div class="muted">{{ store.code }}{% if store.name %} — {{ store.name }}{% endif %} · Unidade <strong class="mono">{{ unit.number }}</strong>{% if unit.description %} · {{ unit.description }}{% endif %}</div></div>
@@ -57,10 +58,11 @@
     <div class="rchart"><canvas id="c-value" role="img" aria-label="Valor da fatura por mês"></canvas></div>
   </section>
   <div class="grid cols-2" style="gap:14px">
-    <section class="rblock"><h2>Consumo (kWh)</h2><div class="rchart sm"><canvas id="c-cons" role="img" aria-label="Consumo por mês"></canvas></div></section>
+    {% if has_split or has_single %}<section class="rblock"><h2>Consumo (kWh)</h2><div class="rchart sm"><canvas id="c-cons" role="img" aria-label="Consumo por mês"></canvas></div></section>{% endif %}
     {% if has_demand %}<section class="rblock"><h2>Demanda (kW)</h2><div class="rchart sm"><canvas id="c-dem" role="img" aria-label="Demanda por mês"></canvas></div></section>{% endif %}
   </div>
 
+</div>{# /fitbox: só a folha é ajustada; a foto original vai na página seguinte #}
   {% if include_doc and bill.document and bill.document.available %}
   <section class="rblock pagebreak"><h2>Documento original</h2>
     {% if bill.document.content_type == 'application/pdf' %}<p class="muted">O original é um PDF e não pode ser embutido na impressão. Abra-o em <a href="/documents/{{ bill.document_id }}">Ver documento original</a>.</p>
@@ -90,7 +92,7 @@
   const consSets = d.has_split ? [
     { label: 'Ponta (HP)', data: s.hp, backgroundColor: hl('#7f8b9b'), stack: 'c' }, { label: 'Fora ponta (HFP)', data: s.hfp, backgroundColor: hl('#b7c0cc'), stack: 'c' } ]
     : [ { label: 'Consumo (kWh)', data: s.single, backgroundColor: hl(GRAY) } ];
-  charts.push(new Chart(cons, { type: 'bar', data: { labels: d.labels, datasets: consSets },
+  if (cons) charts.push(new Chart(cons, { type: 'bar', data: { labels: d.labels, datasets: consSets },
     options: { ...common, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { callback: (v) => nf.format(v) } } } } }));
   const dem = document.getElementById('c-dem');
   if (dem) charts.push(new Chart(dem, { data: { labels: d.labels, datasets: [

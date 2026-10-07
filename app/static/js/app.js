@@ -17,3 +17,14 @@ document.addEventListener('change', (e) => {
     location.href = '/bills/' + t.value + '/print' + (doc && doc.checked ? '?doc=1' : '');
   }
 });
+
+// Folha de impressão de uma página: reduz (zoom) só o necessário para caber na altura útil do papel.
+function fitSheets() {
+  document.querySelectorAll('[data-fit]').forEach((el) => {
+    el.style.removeProperty('--fit');
+    const h = el.scrollHeight, max = parseFloat(el.dataset.fit);
+    el.style.setProperty('--fit', Math.min(1, max / h).toFixed(3));
+  });
+}
+window.addEventListener('load', () => setTimeout(fitSheets, 50));
+window.addEventListener('beforeprint', fitSheets);

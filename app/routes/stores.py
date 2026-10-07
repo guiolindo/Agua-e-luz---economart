@@ -158,11 +158,10 @@ def unit_page(request: Request, unit_id: int, indicator: str | None = None, user
 
 @router.get("/stores/{store_id}/report")
 def store_report(request: Request, store_id: int, start: str | None = None, end: str | None = None,
-                 by: str = "reference", type_id: int | None = None, user: User = Depends(current_user), db: Session = Depends(get_db)):
+                 by: str = "reference", type_id: int | None = None, all: int = 0, user: User = Depends(current_user), db: Session = Depends(get_db)):
     from datetime import datetime, timezone
 
     store = _store_or_404(db, store_id)
     by = "due" if by == "due" else "reference"
-    data = chart_service.report_data(db, store, parse_reference(start), parse_reference(end), by, type_id)
-    return render(request, "stores/report.html", user=user, store=store, generated=datetime.now(timezone.utc),
-                  types=list_record_types(db, only_active=False), **data)
+    data = chart_service.report_data(db, store, parse_reference(start), parse_reference(end), by, type_id, bool(all))
+    return render(request, "stores/report.html", user=user, store=store, generated=datetime.now(timezone.utc), **data)

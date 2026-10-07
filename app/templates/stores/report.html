@@ -1,41 +1,51 @@
 {% extends "base.html" %}
 {% from "macros.html" import variation %}
-{% block title %}Relatório {{ store.code }} · Controle de Energia{% endblock %}
+{% block title %}Folha de impressão {{ store.code }} · Controle de Energia{% endblock %}
 {% block content %}
 <div class="page-head no-print">
-  <div><div class="crumbs"><a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div><h1>Relatório para impressão</h1></div>
+  <div><div class="crumbs"><a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div><h1>Folha de impressão</h1>
+    <div class="muted">Uma folha A4 com resumo, gráfico, informações e dados — pronta para imprimir.</div></div>
   <form method="get" class="actions">
     <label for="s" style="margin:0">De</label><input id="s" type="month" name="start" value="{{ start.strftime('%Y-%m') }}" style="width:auto">
     <label for="e" style="margin:0">Até</label><input id="e" type="month" name="end" value="{{ end.strftime('%Y-%m') }}" style="width:auto">
     <label for="by" style="margin:0">Agrupar por</label>
     <select id="by" name="by" style="width:auto"><option value="reference" {{ 'selected' if by == 'reference' }}>Mês de referência</option><option value="due" {{ 'selected' if by == 'due' }}>Mês de vencimento</option></select>
-    <label for="t" style="margin:0">Fornecedor</label>
-    <select id="t" name="type_id" style="width:auto"><option value="">Todos</option>{% for t in types %}<option value="{{ t.id }}" {{ 'selected' if type_id == t.id }}>{{ t.name }}</option>{% endfor %}</select>
+    <label for="t" style="margin:0">Imóvel / fornecedor</label>
+    <select id="t" name="type_id" style="width:auto">{% for t in available %}<option value="{{ t.id }}" {{ 'selected' if type_id == t.id }}>{{ t.name }}</option>{% endfor %}</select>
+    <label style="margin:0;font-weight:400"><input type="checkbox" name="all" value="1" {{ 'checked' if all_types }}> um por folha (todos)</label>
     <button class="btn">Atualizar</button><button class="btn primary" type="button" data-print>Imprimir</button>
   </form>
 </div>
 
-<div class="report">
+<div class="report sheet" {% if not all_types %}data-fit="{{ 700 }}"{% endif %}>
   <header class="report-head">
-    <h1>ENERGIA — Relatório por loja</h1>
+    <h1>ENERGIA — GRÁFICO POR LOJA</h1>
     <div class="report-meta"><div><span class="muted">LOJA:</span> <strong>{{ store.code }}</strong>{% if store.name %} — {{ store.name }}{% endif %}</div>
       <div><span class="muted">Período:</span> {{ start|month_label }} a {{ end|month_label }} · <span class="muted">por</span> {{ 'mês de vencimento' if by == 'due' else 'mês de referência' }}</div>
       <div class="muted small">Emitido em {{ generated.strftime('%d/%m/%Y %H:%M') }} por {{ user.username }}</div></div>
   </header>
 
-  {% set summary = summary %}
   <section class="rblock">
-    <h2>Resumo mensal — total geral da loja (R$)</h2>
+    <h2>RESUMO MENSAL — TOTAL GERAL DA LOJA (R$)</h2>
     {% if summary.rows %}<table class="rtable">
-      <thead><tr><th>Tipo</th>{% for m in months %}<th class="num">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
+      <thead><tr><th>Fornecedor</th>{% for m in months %}<th class="num">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
       <tbody>{% for r in summary.rows %}<tr><td>{{ r.type.name }}</td>{% for v in r['values'] %}<td class="num">{{ v|num(2) if v is not none else '' }}</td>{% endfor %}<td class="num">{{ r.total|num(2) }}</td></tr>{% endfor %}</tbody>
       <tfoot><tr><td>Total geral</td>{% for t in summary.totals %}<td class="num">{{ t|num(2) if t is not none else '' }}</td>{% endfor %}<td class="num">{{ summary.grand_total|num(2) }}</td></tr></tfoot>
     </table>{% else %}<p class="muted">Sem registros no período.</p>{% endif %}
   </section>
 
   {% for b in blocks %}
-  <section class="rblock">
-    <h2>{{ b.type.name }} — {{ store.code }}</h2>
+  <section class="rblock {{ 'pagebreak' if all_types and not loop.first }}">
+    <h2>IMÓVEL: {{ b.type.name|upper }} — {{ store.code }}</h2>
+    {% if b.latest %}{% set l = b.latest %}
+    <div class="infostrip">
+      <span><em>Unidade</em> <b class="mono">{{ l.unit.number }}</b></span><span><em>Última conta</em> <b>{{ l.reference|month_label }}</b></span>
+      {% if l.due_date %}<span><em>Vencimento</em> <b>{{ l.due_date|date_br }}</b></span>{% endif %}<span><em>Valor</em> <b>{{ l.total_value|brl }}</b></span>
+      {% if l.consumption_total is not none %}<span><em>Consumo</em> <b>{{ l.consumption_total|num(0) }} kWh</b></span>{% endif %}
+      {% if l.demand_hp is not none or l.demand_hfp is not none %}<span><em>Demanda HP/HFP</em> <b>{{ l.demand_hp|num(0) }} / {{ l.demand_hfp|num(0) }} kW</b></span>{% endif %}
+      {% if l.contracted_demand is not none %}<span><em>Contratada</em> <b>{{ l.contracted_demand|num(0) }} kW</b></span>{% endif %}
+      {% if l.days is not none %}<span><em>Dias</em> <b>{{ l.days }}</b></span>{% endif %}
+    </div>{% endif %}
     <div class="rchart"><canvas data-chart='{{ b.chart|tojson }}' aria-label="Gráfico {{ b.type.name }}" role="img"></canvas></div>
     <table class="rtable">
       <thead><tr><th></th>{% for m in months %}<th class="num">{{ m|month_label }}</th>{% endfor %}</tr></thead>
@@ -47,7 +57,7 @@
       </tbody>
     </table>
   </section>
-  {% endfor %}
+  {% else %}<p class="muted">Nenhum registro deste fornecedor no período.</p>{% endfor %}
 </div>
 {% endblock %}
 {% block scripts %}

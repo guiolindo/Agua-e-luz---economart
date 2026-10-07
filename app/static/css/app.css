@@ -125,3 +125,12 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 .report { max-width: calc(277mm + 52px); margin: 0 auto; }            /* relatório: A4 paisagem, margens de 10mm */
 .report.bill-print { max-width: calc(190mm + 52px); }                 /* ficha: A4 retrato */
 @media print { .report, .report.bill-print { max-width: none; margin: 0; } }
+
+/* Folha de impressão (uma página): compacta e com ajuste automático (--fit calculado em app.js) */
+.sheet .report-head { padding-bottom: 4px; margin-bottom: 8px; } .sheet .report-head h1 { font-size: 17px; }
+.sheet .rblock { margin-bottom: 10px; } .sheet .rblock h2 { font-size: 12px; margin: 0 0 4px; padding-bottom: 2px; letter-spacing: .02em; }
+.sheet .rtable th, .sheet .rtable td { padding: 2px 6px; } .sheet .rchart { height: 200px; margin-bottom: 4px; }
+.sheet.bill-print .rchart { height: 170px; } .sheet.bill-print .rchart.sm { height: 130px; }
+.infostrip { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 11px; background: #f6f8fa; border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; margin-bottom: 6px; }
+.infostrip em { font-style: normal; color: var(--muted); margin-right: 4px; }
+@media print { [data-fit] { zoom: var(--fit, 1); } .sheet { break-inside: avoid; } }
