@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Contas e lançamentos · Economart Energia{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <h1>Contas e lançamentos</h1>
+  <div class="muted">Todas as contas e lançamentos em um só lugar — procure, abra o PDF, imprima ou edite sem clicar em várias telas.</div>
+</div></div>
+
+<form class="card" method="get" action="/notas" data-no-loading>
+  <div class="row row-4">
+    <div class="field"><label for="q">Buscar</label>
+      <input id="q" type="search" name="q" value="{{ q }}" placeholder="Loja, unidade, nº da nota, mês (ex.: SET/2026)…" autocomplete="off" autofocus></div>
+    <div class="field"><label for="store_id">Loja</label>
+      <select id="store_id" name="store_id"><option value="">Todas</option>
+        {% for s in stores %}<option value="{{ s.id }}" {{ 'selected' if store_id == s.id }}>{{ s.label }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="type_id">Tipo</label>
+      <select id="type_id" name="type_id"><option value="">Todos</option>
+        {% for t in types %}<option value="{{ t.id }}" {{ 'selected' if type_id == t.id }}>{{ t.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="origin">Origem</label>
+      <select id="origin" name="origin"><option value="">Todas</option>
+        <option value="bill" {{ 'selected' if origin == 'bill' }}>Conta (lida por foto)</option>
+        <option value="manual" {{ 'selected' if origin == 'manual' }}>Lançamento manual</option></select></div>
+  </div>
+  <div class="row row-4">
+    <div class="field"><label for="start">De</label><input id="start" type="month" name="start" value="{{ start }}"></div>
+    <div class="field"><label for="end">Até</label><input id="end" type="month" name="end" value="{{ end }}"></div>
+    <div class="field" style="align-self:end"><button class="btn primary" style="width:100%">Filtrar</button></div>
+    <div class="field" style="align-self:end"><a class="btn" href="/notas" style="width:100%">Limpar</a></div>
+  </div>
+</form>
+
+<section class="card flush">
+  <div style="padding:14px 18px 0;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px">
+    <h2 style="margin:0">{{ total }} registro(s){% if total > rows|length %} · mostrando os {{ rows|length }} mais recentes{% endif %}</h2>
+    {% if user.can_write %}<div class="actions">
+      <a class="btn sm" href="/import">Importar conta</a>
+      <a class="btn sm" href="/manual">Novo lançamento manual</a>
+    </div>{% endif %}
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Mês</th><th>Loja</th><th>Unidade / tipo</th><th class="num">Valor</th><th>Vencimento</th><th>Origem</th><th><span class="sr">Ações</span></th></tr></thead>
+    <tbody>{% set ns = namespace(m='') %}{% for r in rows %}
+      {% set lbl = r.reference|month_label %}
+      {% if lbl != ns.m %}{% set ns.m = lbl %}<tr class="group-row"><td colspan="7">{{ lbl }}</td></tr>{% endif %}
+      <tr>
+        <td class="nowrap"><strong>{{ lbl }}</strong></td>
+        <td><a href="/stores/{{ r.store_id }}"><strong>{{ r.store_code }}</strong></a></td>
+        <td>{% if r.unit_id %}<a href="/units/{{ r.unit_id }}" class="mono">{{ r.unit_number }}</a>{% else %}<span class="muted">—</span>{% endif %}
+          <div class="muted small">{{ r.type_name }}{% if r.invoice_number %} · NF {{ r.invoice_number }}{% endif %}</div></td>
+        <td class="num"><strong>{{ r.value|brl }}</strong></td>
+        <td class="nowrap">{{ r.due_date|date_br if r.due_date else '—' }}</td>
+        <td><span class="badge{% if r.origin == 'bill' %} ok{% endif %}">{{ 'Foto/IA' if r.origin == 'bill' else 'Manual' }}</span></td>
+        <td class="right nowrap">
+          {% if r.doc_id %}<a class="btn sm" href="/documents/{{ r.doc_id }}" target="_blank" rel="noopener" title="Abre o PDF/foto original em uma aba nova">PDF</a>{% endif %}
+          {% if r.bill_id %}<a class="btn sm" href="/bills/{{ r.bill_id }}/print" target="_blank" rel="noopener">Imprimir</a>{% endif %}
+          {% if user.can_write %}<a class="btn sm" href="/manual?{{ 'bill=' ~ r.bill_id if r.bill_id else 'record=' ~ r.record_id }}">Editar</a>{% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="7"><div class="empty"><strong>Nenhuma conta encontrada</strong>Ajuste os filtros ou importe uma conta.</div></td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+{% endblock %}

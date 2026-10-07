@@ -38,6 +38,9 @@
       {% if not user.is_director %}<a href="/" class="{{ 'active' if path == '/' }}" {% if path == '/' %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
         <span>Painel</span></a>{% endif %}
+      <a href="/notas" class="{{ 'active' if path.startswith('/notas') or path.startswith('/bills') }}" {% if path.startswith('/notas') or path.startswith('/bills') %}aria-current="page"{% endif %}>
+        <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+        <span>Contas</span></a>
       <a href="/stores" class="{{ 'active' if path.startswith('/stores') or path.startswith('/units') }}" {% if path.startswith('/stores') or path.startswith('/units') %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9h16v11H4z"/><path d="M9 20v-6h6v6"/></svg>
         <span>Lojas</span></a>
@@ -69,7 +72,7 @@
   <main class="main" id="content" tabindex="-1">
     {% if not user.must_change_password %}<div class="topbar no-print">
       {# "Novo ponto de energia" só faz sentido como atalho rápido no painel/lojas/ajuda. Em telas que já tratam cadastros, importação ou lançamento, vira ruído. #}
-      {% set show_point_btn = user.can_write and not (path.startswith('/import') or path.startswith('/manual') or path.startswith('/admin') or path.startswith('/types') or path.startswith('/account') or path.startswith('/points')) %}
+      {% set show_point_btn = user.can_write and not (path.startswith('/import') or path.startswith('/manual') or path.startswith('/admin') or path.startswith('/types') or path.startswith('/account') or path.startswith('/points') or path.startswith('/notas')) %}
       {% if show_point_btn %}<button class="btn sm" type="button" data-open-point>+ Novo ponto de energia</button>{% endif %}
       {% if user.gets_due_alerts %}
       <div class="bellwrap">
@@ -98,9 +101,9 @@
   {% if user.can_write %}<a href="/import" class="m-bn-fab {{ 'active' if path.startswith('/import') }}" {% if path.startswith('/import') %}aria-current="page"{% endif %} aria-label="Importar conta">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
   </a>{% endif %}
-  {% if user.can_write %}<a href="/manual" class="m-bn-item {{ 'active' if path.startswith('/manual') }}" {% if path.startswith('/manual') %}aria-current="page"{% endif %}>
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-    <span>Lançar</span></a>{% endif %}
+  <a href="/notas" class="m-bn-item {{ 'active' if path.startswith('/notas') }}" {% if path.startswith('/notas') %}aria-current="page"{% endif %}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+    <span>Contas</span></a>
   <button type="button" class="m-bn-item" data-drawer-toggle aria-label="Mais opções">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
     <span>Mais</span></button>
