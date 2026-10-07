@@ -13,8 +13,20 @@
 <body data-login="{{ login_stamp }}">
 <a class="skip" href="#content">Ir para o conteúdo</a>
 {% if user %}
+{# Topbar mobile: só aparece em telas <= 800px. Hamburger abre o drawer (a mesma .side), bell e logo. #}
+<header class="m-topbar no-print" aria-hidden="false">
+  <button class="m-ham" type="button" aria-label="Abrir menu" aria-controls="side" aria-expanded="false" data-drawer-toggle>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="m-brand" href="/" aria-label="Economart Energia"><img src="/static/img/logo.png" alt="Economart"></a>
+  {% if user.gets_due_alerts %}<button class="m-bell iconbtn" type="button" id="bell-m" aria-label="Vencimentos" aria-haspopup="true" aria-expanded="false">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+    <span class="count" id="bell-count-m" hidden></span>
+  </button>{% else %}<span class="m-spacer" aria-hidden="true"></span>{% endif %}
+</header>
+<div class="drawer-backdrop" data-drawer-toggle hidden></div>
 <div class="shell">
-  <aside class="side" aria-label="Menu principal">
+  <aside class="side" id="side" aria-label="Menu principal">
     <div class="brand"><a href="/" aria-label="Economart"><img src="/static/img/logo.png" alt="Economart" width="445" height="113"></a></div>
     {% if not user.must_change_password %}<nav class="nav" aria-label="Principal">
       {% if user.can_write %}<a class="cta" href="/import">
@@ -70,6 +82,27 @@
     {% block content %}{% endblock %}
   </main>
 </div>
+{% if not user.must_change_password %}{# Bottom nav mobile: ícones principais + FAB central (Importar). Só visível em <= 800px. #}
+<nav class="m-bottomnav no-print" aria-label="Atalhos principais">
+  {% if not user.is_director %}<a href="/" class="m-bn-item {{ 'active' if path == '/' }}" {% if path == '/' %}aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+    <span>Painel</span></a>
+  {% elif user.can_see_executive %}<a href="/diretoria" class="m-bn-item {{ 'active' if path.startswith('/diretoria') }}" {% if path.startswith('/diretoria') %}aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-6 3 4 5-8"/></svg>
+    <span>Diretoria</span></a>{% endif %}
+  <a href="/stores" class="m-bn-item {{ 'active' if path.startswith('/stores') or path.startswith('/units') }}" {% if path.startswith('/stores') or path.startswith('/units') %}aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9h16v11H4z"/><path d="M9 20v-6h6v6"/></svg>
+    <span>Lojas</span></a>
+  {% if user.can_write %}<a href="/import" class="m-bn-fab {{ 'active' if path.startswith('/import') }}" {% if path.startswith('/import') %}aria-current="page"{% endif %} aria-label="Importar conta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+  </a>{% endif %}
+  {% if user.can_write %}<a href="/manual" class="m-bn-item {{ 'active' if path.startswith('/manual') }}" {% if path.startswith('/manual') %}aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    <span>Lançar</span></a>{% endif %}
+  <button type="button" class="m-bn-item" data-drawer-toggle aria-label="Mais opções">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+    <span>Mais</span></button>
+</nav>{% endif %}
 <div id="toasts" class="toasts no-print" aria-live="polite" aria-atomic="false"></div>
 {% if user.can_write %}<dialog id="point-dialog" class="dialog" aria-labelledby="point-title"><button class="iconbtn dclose" type="button" data-close-dialog aria-label="Fechar">×</button><div id="point-dialog-body"></div></dialog>{% endif %}
 {% else %}

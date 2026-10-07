@@ -10,8 +10,10 @@
     <div class="field {{ 'error' if errors.number }}"><label for="pt-num">Nº da unidade consumidora *</label>
       <input id="pt-num" name="number" type="text" inputmode="numeric" autocomplete="off" required placeholder="12.060.073.018-19" value="{{ form.get('number', '') }}">
       {% if errors.number %}<div class="err">{{ errors.number }}</div>{% endif %}</div>
-    <div class="field"><label for="pt-type">Distribuidora</label>
-      <select id="pt-type" name="record_type_id">{% for t in types %}<option value="{{ t.id }}" {{ 'selected' if default_type and default_type.id == t.id }}>{{ t.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="pt-type">Companhia distribuidora</label>
+      <select id="pt-type" name="record_type_id">{% for t in types %}<option value="{{ t.id }}" {{ 'selected' if default_type and default_type.id == t.id }}>{{ t.name }}</option>{% endfor %}</select>
+      <div class="hint">Só distribuidoras (CEMIG, COELBA, …) — a conta é lida da foto.
+        <strong>CEMIG Geração e Transmissão</strong>, LL Energia, gerador e manutenção não têm unidade consumidora: lance em <a href="/manual">Lançamento manual</a>.</div></div>
   </div>
   <div class="field"><label for="pt-desc">Descrição (opcional)</label><input id="pt-desc" name="description" type="text" maxlength="200" placeholder="Ex.: Padaria, galpão 2…" value="{{ form.get('description', '') }}"></div>
   <div class="field {{ 'error' if errors.due_date }}"><label for="pt-due">Data de vencimento *</label>

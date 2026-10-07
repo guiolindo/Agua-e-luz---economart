@@ -216,3 +216,38 @@ document.querySelectorAll('[data-login-form]').forEach((f) => f.addEventListener
     el.insertBefore(span, el.firstChild);
   });
 })();
+
+// Drawer mobile: hamburger abre/fecha o menu lateral; backdrop e Esc fecham.
+(function () {
+  const body = document.body;
+  const open = () => { body.classList.add('drawer-open'); document.querySelector('[aria-controls="side"]')?.setAttribute('aria-expanded', 'true'); };
+  const close = () => { body.classList.remove('drawer-open'); document.querySelector('[aria-controls="side"]')?.setAttribute('aria-expanded', 'false'); };
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-drawer-toggle]');
+    if (t) { e.preventDefault(); body.classList.contains('drawer-open') ? close() : open(); return; }
+    // Clicou num link dentro do drawer -> fecha
+    if (body.classList.contains('drawer-open') && e.target.closest('.side a')) close();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  // Fecha ao redimensionar pra desktop (evita que o drawer-open fique travado)
+  matchMedia('(min-width: 801px)').addEventListener?.('change', (ev) => { if (ev.matches) close(); });
+})();
+
+// Sino de vencimentos no mobile: espelha o estado do sino desktop (mesmo endpoint, mesmo contador).
+(function () {
+  const mBell = document.getElementById('bell-m');
+  const mCount = document.getElementById('bell-count-m');
+  const dCount = document.getElementById('bell-count');
+  if (!mBell || !mCount) return;
+  const sync = () => {
+    if (!dCount) return;
+    const hidden = dCount.hidden;
+    mCount.hidden = hidden;
+    mCount.textContent = dCount.textContent;
+  };
+  // Observa mudanças no contador desktop (JS existente atualiza aquele)
+  if (dCount) new MutationObserver(sync).observe(dCount, { attributes: true, childList: true, characterData: true, subtree: true });
+  sync();
+  // Clicar no sino mobile dispara o click no sino desktop (abre o mesmo painel)
+  mBell.addEventListener('click', () => document.getElementById('bell')?.click());
+})();
