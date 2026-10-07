@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% from "macros.html" import variation as var %}
+{% block title %}Conta {{ bill.reference|month_label }} · {{ unit.number }}{% endblock %}
+{% block content %}
+<style>@page { size: A4 portrait; margin: 10mm; }</style>
+<div class="page-head no-print">
+  <div><div class="crumbs"><a href="/units/{{ unit.id }}">{{ unit.number }}</a> /</div><h1>Imprimir conta</h1></div>
+  <form method="get" class="actions">
+    <label for="b" style="margin:0">Conta</label>
+    <select id="b" style="width:auto" onchange="location.href='/bills/' + this.value + '/print' + (document.getElementById('doc').checked ? '?doc=1' : '')">
+      {% for b in all_bills %}<option value="{{ b.id }}" {{ 'selected' if b.id == bill.id }}>{{ b.reference|month_label }} · {{ b.total_value|brl }}</option>{% endfor %}
+    </select>
+    {% if bill.document and bill.document.available %}<label style="margin:0;font-weight:400"><input id="doc" type="checkbox" name="doc" value="1" {{ 'checked' if include_doc }} onchange="this.form.submit()"> Incluir foto/PDF original</label>
+    {% else %}<input id="doc" type="checkbox" hidden>{% endif %}
+    <button class="btn primary" type="button" onclick="window.print()">Imprimir</button>
+  </form>
+</div>
+
+<div class="report bill-print">
+  <header class="report-head">
+    <div><h1>{{ rtype.name if rtype else 'Conta de energia' }} — {{ bill.reference|month_label }}</h1>
+      <div class="muted">{{ store.code }}{% if store.name %} — {{ store.name }}{% endif %} · Unidade <strong class="mono">{{ unit.number }}</strong>{% if unit.description %} · {{ unit.description }}{% endif %}</div></div>
+    <div class="report-meta"><div class="small muted">Origem: {{ 'foto/IA' if bill.source == 'import' else 'lançamento manual' }}</div>
+      <div class="small muted">Impresso por {{ user.username }}</div></div>
+  </header>
+
+  <div class="grid cols-4 kpis">
+    {% for k in kpis %}<div class="kpi"><div class="label">{{ k.label }}</div><div class="value">{{ k.text }}</div>
+      <div class="sub">{{ var(k.variation) }} <span class="muted">vs. {{ prev_bill.reference|month_label if prev_bill else 'mês anterior' }}</span></div></div>{% endfor %}
+  </div>
+
+  <section class="rblock">
+    <h2>Dados da conta</h2>
+    <table class="rtable kv"><tbody>
+      <tr><th>Referência</th><td>{{ bill.reference|month_label }}</td><th>Vencimento</th><td>{{ bill.due_date|date_br }}</td><th>Emissão</th><td>{{ bill.issue_date|date_br }}</td></tr>
+      <tr><th>Nota fiscal</th><td>{{ bill.invoice_number or '—' }}{% if bill.series %} · série {{ bill.series }}{% endif %}</td><th>Modalidade</th><td>{{ bill.tariff_modality or '—' }}</td><th>Classe</th><td>{{ bill.bill_class or '—' }}{% if bill.subclass %} / {{ bill.subclass }}{% endif %}</td></tr>
+      <tr><th>Leitura anterior</th><td>{{ bill.previous_reading_date|date_br }}</td><th>Leitura atual</th><td>{{ bill.current_reading_date|date_br }}</td><th>Dias</th><td>{{ bill.days if bill.days is not none else '—' }}</td></tr>
+      <tr><th>Consumo HP / HFP</th><td>{{ bill.consumption_hp|num(2) }} / {{ bill.consumption_hfp|num(2) }} kWh</td><th>Demanda HP / HFP</th><td>{{ bill.demand_hp|num(2) }} / {{ bill.demand_hfp|num(2) }} kW</td><th>Demanda contratada</th><td>{{ bill.contracted_demand|num(2) }} kW</td></tr>
+      <tr><th>PIS/COFINS</th><td>{{ bill.pis_cofins_value|brl }}</td><th>ICMS</th><td>{{ bill.icms_value|brl }}</td><th>Consumo único</th><td>{{ bill.consumption_kwh|num(2) }}{{ ' kWh' if bill.consumption_kwh is not none }}</td></tr>
+    </tbody></table>
+    {% if bill.notes %}<p class="small muted" style="margin:6px 0 0">{{ bill.notes }}</p>{% endif %}
+  </section>
+
+  {% if items %}
+  <section class="rblock">
+    <h2>Itens faturados</h2>
+    <table class="rtable"><thead><tr><th>Item</th><th class="num">Qtd</th><th class="num">Preço unit.</th><th class="num">Valor (R$)</th></tr></thead>
+      <tbody>{% for i in items %}<tr><td>{{ i.description }}</td><td class="num">{{ i.quantity|num(2) if i.quantity is not none else '' }} {{ i.unit or '' }}</td>
+        <td class="num">{{ i.unit_price if i.unit_price is not none else '' }}</td><td class="num">{{ i.value|num(2) if i.value is not none else '' }}</td></tr>{% endfor %}</tbody>
+      <tfoot><tr><td colspan="3">Total da fatura</td><td class="num">{{ bill.total_value|num(2) }}</td></tr></tfoot></table>
+    {% if items_sum != bill.total_value %}<p class="small muted">Soma dos itens lidos: R$ {{ items_sum|num(2) }} (diferente do total: itens podem não estar completos).</p>{% endif %}
+  </section>
+  {% endif %}
+
+  <section class="rblock">
+    <h2>Valor da fatura e variação — últimos 12 meses</h2>
+    <div class="rchart"><canvas id="c-value" role="img" aria-label="Valor da fatura por mês"></canvas></div>
+  </section>
+  <div class="grid cols-2" style="gap:14px">
+    <section class="rblock"><h2>Consumo (kWh)</h2><div class="rchart sm"><canvas id="c-cons" role="img" aria-label="Consumo por mês"></canvas></div></section>
+    {% if has_demand %}<section class="rblock"><h2>Demanda (kW)</h2><div class="rchart sm"><canvas id="c-dem" role="img" aria-label="Demanda por mês"></canvas></div></section>{% endif %}
+  </div>
+
+  {% if include_doc and bill.document and bill.document.available %}
+  <section class="rblock pagebreak"><h2>Documento original</h2>
+    {% if bill.document.content_type == 'application/pdf' %}<p class="muted">O original é um PDF e não pode ser embutido na impressão. Abra-o em <a href="/documents/{{ bill.document_id }}">Ver documento original</a>.</p>
+    {% else %}<img class="orig" src="/documents/{{ bill.document_id }}" alt="Foto da conta original">{% endif %}
+  </section>{% endif %}
+</div>
+<script type="application/json" id="bill-data">{{ {'labels': labels, 'selected': selected, 'series': series, 'has_split': has_split, 'has_single': has_single}|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/vendor/chart.umd.min.js"></script>
+<script>
+(function () {
+  if (typeof Chart === 'undefined') return;
+  const d = JSON.parse(document.getElementById('bill-data').textContent), s = d.series;
+  const nf = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+  const GRAY = '#9aa5b4', BLUE = '#0b5cab', DARK = '#073b73';
+  const hl = (base) => d.labels.map((_, i) => i === d.selected ? DARK : base);
+  const common = { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom' } } };
+  const charts = [];
+  charts.push(new Chart(document.getElementById('c-value'), {
+    data: { labels: d.labels, datasets: [
+      { type: 'bar', label: 'Valor da fatura (R$)', data: s.value, backgroundColor: hl(GRAY), maxBarThickness: 40, borderRadius: 2, yAxisID: 'y' },
+      { type: 'line', label: 'Variação (%)', data: s.variation, borderColor: BLUE, backgroundColor: BLUE, borderWidth: 2, pointRadius: 3, spanGaps: true, yAxisID: 'y1' } ] },
+    options: { ...common, scales: { y: { beginAtZero: true, ticks: { callback: (v) => 'R$ ' + nf.format(v) } },
+      y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: (v) => v + '%' } } } } }));
+  const cons = document.getElementById('c-cons');
+  const consSets = d.has_split ? [
+    { label: 'Ponta (HP)', data: s.hp, backgroundColor: hl('#7f8b9b'), stack: 'c' }, { label: 'Fora ponta (HFP)', data: s.hfp, backgroundColor: hl('#b7c0cc'), stack: 'c' } ]
+    : [ { label: 'Consumo (kWh)', data: s.single, backgroundColor: hl(GRAY) } ];
+  charts.push(new Chart(cons, { type: 'bar', data: { labels: d.labels, datasets: consSets },
+    options: { ...common, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { callback: (v) => nf.format(v) } } } } }));
+  const dem = document.getElementById('c-dem');
+  if (dem) charts.push(new Chart(dem, { data: { labels: d.labels, datasets: [
+      { type: 'bar', label: 'HP', data: s.dhp, backgroundColor: hl('#7f8b9b'), maxBarThickness: 22 },
+      { type: 'bar', label: 'HFP', data: s.dhfp, backgroundColor: hl('#b7c0cc'), maxBarThickness: 22 },
+      { type: 'line', label: 'Contratada', data: s.contracted, borderColor: BLUE, borderDash: [5, 4], pointRadius: 0, spanGaps: true } ] },
+    options: { ...common, scales: { y: { beginAtZero: true } } } }));
+  window.addEventListener('beforeprint', () => charts.forEach((c) => c.resize()));
+})();
+</script>
+{% endblock %}

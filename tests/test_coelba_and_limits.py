@@ -15,7 +15,11 @@ from app.services import import_service
 from app.services.extraction_service import MockExtractor
 from app.services.gemini_service import parse_response_text
 from app.services.import_service import expire_if_stale
-from app.services.matching_service import find_unit_by_number, is_stamp, type_for_utility
+from app.services.matching_service import (
+    find_unit_by_number,
+    is_stamp,
+    type_for_utility,
+)
 from app.utils.images import prepare_for_model
 from app.utils.log_safety import RedactKeysFilter, redact
 from app.utils.uploads import UploadError, validate_upload

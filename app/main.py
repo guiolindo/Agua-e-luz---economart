@@ -11,7 +11,17 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app import database, models  # noqa: F401  (registra os modelos no metadata)
 from app.config import get_settings
-from app.routes import admin, auth, charts, dashboard, documents, imports, manual, stores, types
+from app.routes import (
+    admin,
+    auth,
+    charts,
+    dashboard,
+    documents,
+    imports,
+    manual,
+    stores,
+    types,
+)
 from app.security import LoginRequired
 from app.seed import seed
 from app.services.retention_service import retention_loop

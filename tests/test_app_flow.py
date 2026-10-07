@@ -26,6 +26,7 @@ def _form_from_review(html):
 
 def test_requires_login(client):
     from fastapi.testclient import TestClient
+
     from app.main import app
     anon = TestClient(app)
     r = anon.get("/stores", follow_redirects=False)

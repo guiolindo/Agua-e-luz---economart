@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -11,8 +12,13 @@ from app.models import ConsumerUnit, Document, EnergyBill, RecordType, Store
 from app.models.mixins import utcnow
 from app.services import import_service
 from app.services.extraction_service import MockExtractor
-from app.services.gemini_service import (ExtractionError, GeminiService, build_prompt, message_for_code,
-                                         parse_response_text)
+from app.services.gemini_service import (
+    ExtractionError,
+    GeminiService,
+    build_prompt,
+    message_for_code,
+    parse_response_text,
+)
 from app.services.matching_service import find_store_by_hint, type_for_utility
 from app.services.retention_service import purge_expired_documents
 from tests.test_app_flow import _form_from_review, _make_store, _upload
@@ -197,3 +203,48 @@ def test_ensure_columns_adds_missing_nullable_columns(tmp_path):
     with eng.begin() as c:
         cols = {r[1] for r in c.execute(text("PRAGMA table_info(stores)"))}
     assert "aliases" in cols
+
+
+# ---------- impressão de uma conta com gráficos ----------
+def _seed_bills(client, db):
+    store_id = _make_store(client)
+    unit = db.query(ConsumerUnit).one()
+    cemig = db.query(RecordType).filter_by(code="cemig").one()
+    for m, v in ((7, "18835.58"), (8, "19536.31"), (9, "20505.00")):
+        client.post("/manual", {"store_id": store_id, "unit_id": unit.id, "type_id": cemig.id, "reference": f"2026-{m:02d}",
+                                "total_value": v, "days": "30", "consumption_hp": "5.388", "consumption_hfp": "58.372",
+                                "demand_hp": "132", "demand_hfp": "181", "contracted_demand": "210"})
+    return unit
+
+
+def test_bill_print_page_shows_selected_bill_variation_and_charts(client, db):
+    unit = _seed_bills(client, db)
+    sep = db.query(EnergyBill).filter_by(unit_id=unit.id).order_by(EnergyBill.reference.desc()).first()
+    r = client.get(f"/bills/{sep.id}/print")
+    assert r.status_code == 200
+    html = r.text
+    assert "SET/2026" in html and "R$ 20.505,00" in html and "↑ 4,96%" in html and "vs. AGO/2026" in html
+    assert 'id="c-value"' in html and 'id="c-cons"' in html and 'id="c-dem"' in html and "window.print()" in html
+    assert html.count("<option value=") >= 3                              # seletor para trocar de conta/mês
+    payload = json.loads(re.search(r'id="bill-data">(.*?)</script>', html, re.S).group(1))
+    assert payload["selected"] == 11 and payload["labels"][11] == "SET/26"   # mês da conta em destaque no gráfico
+    assert payload["series"]["value"][9:] == [18835.58, 19536.31, 20505.0] and payload["series"]["contracted"][11] == 210.0
+    assert client.get(f"/units/{unit.id}").text.count("/print") == 3      # botão Imprimir em cada conta
+
+
+def test_bill_print_includes_original_photo_only_when_asked_and_available(client, png, db):
+    _make_store(client)
+    job = _upload(client, png)
+    client.post(f"/import/{job}/confirm", {**_form_from_review(client.get(f"/import/{job}/review").text), "unit_mode": "matched"})
+    bill = db.query(EnergyBill).one()
+    assert "Documento original" not in client.get(f"/bills/{bill.id}/print").text
+    with_doc = client.get(f"/bills/{bill.id}/print?doc=1").text
+    assert f'src="/documents/{bill.document_id}"' in with_doc and "Itens faturados" in with_doc
+    doc = db.get(Document, bill.document_id)
+    doc.data, doc.purged_at = None, utcnow()
+    db.commit()
+    assert f'src="/documents/{bill.document_id}"' not in client.get(f"/bills/{bill.id}/print?doc=1").text  # expirado
+
+
+def test_bill_print_404_and_requires_login(client):
+    assert client.get("/bills/9999/print").status_code == 404

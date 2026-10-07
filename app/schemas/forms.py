@@ -4,7 +4,13 @@ from datetime import date
 from decimal import Decimal
 
 from app.schemas.extraction import BillExtraction
-from app.utils.parsing import clean_str, parse_date, parse_decimal, parse_int, parse_reference
+from app.utils.parsing import (
+    clean_str,
+    parse_date,
+    parse_decimal,
+    parse_int,
+    parse_reference,
+)
 
 DATE_FIELDS = ["issue_date", "due_date", "previous_reading_date", "current_reading_date", "next_reading_date"]
 MONEY_FIELDS = ["total_value", "pis_cofins_value", "icms_value"]

@@ -28,6 +28,10 @@ ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decis�
 - **Retenção:** a foto/PDF fica no PostgreSQL por 6 meses e então é apagada automaticamente (rotina na subida e a cada
   6 h; manual: `python -m scripts.purge_documents`). Os dados lidos, valores e gráficos permanecem; a tela mostra
   “Original expirado”.
+- **Imprimir uma conta com gráficos:** em *Unidade → Contas → Imprimir* (ou `/bills/<id>/print`). A ficha A4 traz os dados
+  da conta, o comparativo com o mês anterior, os itens faturados e três gráficos dos últimos 12 meses (valor com linha de
+  variação, consumo HP/HFP e demanda com a contratada), com o mês escolhido em destaque. Na própria tela dá para trocar
+  de conta/mês e marcar “Incluir foto/PDF original” (se ainda não expirou).
 - **Impressão:** em *Histórico da loja → Imprimir relatório* (A4 paisagem): resumo mensal, gráfico de barras com linha de
   variação e tabela Valor / Dias / Variação por tipo, no formato do relatório atual.
 - **Limites e travamentos do Gemini (também do lancamento-automatico):** fotos grandes são reduzidas (lado maior ≤ 3000 px)

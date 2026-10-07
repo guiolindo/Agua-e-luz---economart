@@ -5,7 +5,11 @@ import pytest
 
 from app.schemas.forms import extraction_to_form, low_confidence_fields, parse_bill_form
 from app.services.extraction_service import MockExtractor
-from app.services.gemini_service import ExtractionError, GeminiService, parse_response_text
+from app.services.gemini_service import (
+    ExtractionError,
+    GeminiService,
+    parse_response_text,
+)
 
 FIXTURE = Path(__file__).parent / "fixtures" / "cemig_set_2026.json"
 

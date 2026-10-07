@@ -114,3 +114,9 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
   body { background: #fff; font-size: 11px; } .side, .no-print, .flash { display: none !important; } .shell { display: block; } .main { padding: 0; }
   .report { border: 0; padding: 0; } .rtable th { background: #fff; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ficha da conta (A4 retrato) */
+.rchart.sm { height: 190px; } .kpis { margin-bottom: 14px; } .bill-print .kpi .value { font-size: 18px; }
+.rtable.kv th { background: #fff; color: var(--muted); font-weight: 600; width: 13%; } .rtable.kv td { width: 20%; }
+.orig { max-width: 100%; max-height: 240mm; display: block; margin: 0 auto; } .pagebreak { break-before: page; }
+@media print { .bill-print .kpi { border-color: #ccc; } .bill-print .cols-2 { grid-template-columns: 1fr 1fr; } .bill-print .cols-4 { grid-template-columns: repeat(4, 1fr); } }

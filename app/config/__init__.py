@@ -3,7 +3,6 @@ from functools import lru_cache
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
 OBSOLETE_MODELS = {"gemini-2.0-flash-exp", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.0-pro",
                    "gemini-pro", "gemini-pro-vision"}

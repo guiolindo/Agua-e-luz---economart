@@ -270,3 +270,44 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
                       "variation": [float(v.pct) if v.pct is not None else None for v in vars_]},
         })
     return {"months": months, "start": start, "end": end, "blocks": out, "summary": store_summary(db, store, start, end)}
+
+
+def bill_print_data(db: Session, bill, months_back: int = 11) -> dict:
+    """Ficha de uma conta + séries dos últimos 12 meses da mesma unidade (mês da conta em destaque)."""
+    end = bill.reference
+    start = add_months(end, -months_back)
+    months = month_range(start, end)
+    idx = {m: i for i, m in enumerate(months)}
+    n = len(months)
+    series = {k: [None] * n for k in ("value", "hp", "hfp", "single", "dhp", "dhfp", "contracted")}
+    for b in repo.bills_for_units(db, [bill.unit_id], start, end, bill.record_type_id):
+        i = idx[b.reference]
+        series["value"][i] = float(b.total_value)
+        series["hp"][i] = float(b.consumption_hp) if b.consumption_hp is not None else None
+        series["hfp"][i] = float(b.consumption_hfp) if b.consumption_hfp is not None else None
+        series["single"][i] = float(b.consumption_kwh) if b.consumption_kwh is not None else None
+        series["dhp"][i] = float(b.demand_hp) if b.demand_hp is not None else None
+        series["dhfp"][i] = float(b.demand_hfp) if b.demand_hfp is not None else None
+        series["contracted"][i] = float(b.contracted_demand) if b.contracted_demand is not None else None
+    sel = idx[bill.reference]
+    series["variation"] = [
+        (lambda v: float(v.pct) if v.pct is not None else None)(
+            variation(series["value"][i - 1] if i else None, series["value"][i])) for i in range(n)]
+    prev = repo.bills_for_units(db, [bill.unit_id], None, add_months(end, -1), bill.record_type_id)
+    prev_bill = prev[-1] if prev else None
+
+    def kpi(label, ind_key):
+        ind = next(i for i in BILL_INDICATORS if i.key == ind_key)
+        cur = ind.getter(bill)
+        return {"label": label, "text": ind.format(cur), "variation": variation(ind.getter(prev_bill) if prev_bill else None, cur)}
+
+    return {
+        "labels": [fmt.month_short(m) for m in months], "selected": sel, "series": series,
+        "has_split": any(v is not None for v in series["hp"] + series["hfp"]),
+        "has_single": any(v is not None for v in series["single"]),
+        "has_demand": any(v is not None for v in series["dhp"] + series["dhfp"]),
+        "kpis": [kpi("Valor da fatura", "total_value"), kpi("Consumo total", "consumption_total"),
+                 kpi("Demanda HFP", "demand_hfp"), kpi("Dias", "days")],
+        "prev_bill": prev_bill,
+        "all_bills": repo.bills_for_units(db, [bill.unit_id], None, None, bill.record_type_id)[::-1],
+    }

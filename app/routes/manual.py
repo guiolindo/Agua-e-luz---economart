@@ -1,4 +1,6 @@
 
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
@@ -154,3 +156,19 @@ def record_delete(request: Request, record_id: int, user: User = Depends(admin_r
     db.commit()
     flash(request, "Lançamento excluído.", "info")
     return RedirectResponse(f"/stores/{store_id}", status_code=303)
+
+
+@router.get("/bills/{bill_id}/print")
+def bill_print(request: Request, bill_id: int, doc: int = 0, user: User = Depends(current_user),
+               db: Session = Depends(get_db)):
+    from app.services import chart_service
+    from app.services.calculation_service import variation
+
+    bill = db.get(EnergyBill, bill_id)
+    if not bill:
+        raise HTTPException(404, "Conta não encontrada.")
+    data = chart_service.bill_print_data(db, bill)
+    items = bill.line_items or []
+    return render(request, "bills/print.html", user=user, bill=bill, unit=bill.unit, store=bill.unit.store,
+                  rtype=db.get(RecordType, bill.record_type_id), include_doc=bool(doc), items=items,
+                  items_sum=sum((Decimal(str(i.get("value") or 0)) for i in items), Decimal(0)), variation=variation, **data)

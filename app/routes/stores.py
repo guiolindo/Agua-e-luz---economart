@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import ConsumerUnit, Store, User
-from app.repositories.stores import default_bill_type, get_store_by_code, list_record_types, list_stores
+from app.repositories.stores import (
+    default_bill_type,
+    get_store_by_code,
+    list_record_types,
+    list_stores,
+)
 from app.security import admin_required, current_user, verify_csrf
 from app.services import audit_service, chart_service
 from app.services.import_service import UnitConflict, create_unit
