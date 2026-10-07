@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import RecordType, User
 from app.repositories.stores import list_record_types
-from app.security import admin_required, verify_csrf
+from app.security import verify_csrf, writer_required
 from app.services import audit_service
 from app.utils.parsing import clean_str
 from app.web import flash, render
@@ -43,7 +43,7 @@ def fields_to_text(fields: list[dict]) -> str:
 
 
 @router.get("/types")
-def types_page(request: Request, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+def types_page(request: Request, user: User = Depends(writer_required), db: Session = Depends(get_db)):
     return render(request, "types/list.html", user=user, types=list_record_types(db, only_active=False),
                   fields_to_text=fields_to_text)
 
@@ -51,7 +51,7 @@ def types_page(request: Request, user: User = Depends(admin_required), db: Sessi
 @router.post("/types", dependencies=[Depends(verify_csrf)])
 def type_create(request: Request, name: str = Form(...), kind: str = Form("manual"), description: str = Form(""),
                 fields: str = Form(""),
-                user: User = Depends(admin_required), db: Session = Depends(get_db)):
+                user: User = Depends(writer_required), db: Session = Depends(get_db)):
     code = _slug(name)
     if not code:
         flash(request, "Informe o nome do tipo.", "error")
@@ -72,7 +72,7 @@ def type_create(request: Request, name: str = Form(...), kind: str = Form("manua
 
 @router.post("/types/{type_id}", dependencies=[Depends(verify_csrf)])
 def type_update(request: Request, type_id: int, name: str = Form(...), description: str = Form(""),
-                aliases: str = Form(""), fields: str = Form(""), active: str = Form(""), user: User = Depends(admin_required),
+                aliases: str = Form(""), fields: str = Form(""), active: str = Form(""), user: User = Depends(writer_required),
                 db: Session = Depends(get_db)):
     rt = db.get(RecordType, type_id)
     if not rt:

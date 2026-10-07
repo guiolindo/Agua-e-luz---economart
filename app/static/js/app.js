@@ -35,6 +35,7 @@ window.addEventListener('beforeprint', fitSheets);
   if (!meta) return;
   const csrf = meta.content, TOAST_MS = 15000;
   const $ = (id) => document.getElementById(id);
+  if (!$('bell')) return;   // primeiro acesso (troca de senha): sem sino, sem avisos
   const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   const dateBR = (iso) => iso.split('-').reverse().join('/');
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

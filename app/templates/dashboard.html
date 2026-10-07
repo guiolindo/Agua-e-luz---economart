@@ -9,8 +9,8 @@
 </div>
 
 {% if stores == 0 %}<section class="card"><h2>Primeiros passos</h2>
-  <ol class="steps-help"><li>{% if user.is_admin %}<a href="/stores/new">Cadastre a primeira loja</a>{% else %}Peça ao administrador para cadastrar as lojas{% endif %} (código, nome e região).</li>
-    <li>{% if user.is_admin %}Adicione as unidades consumidoras da loja{% else %}Aguarde o cadastro das unidades consumidoras{% endif %}, ou use <strong>+ Novo ponto de energia</strong>.</li>
+  <ol class="steps-help"><li>{% if user.can_write %}<a href="/stores/new">Cadastre a primeira loja</a>{% else %}Peça a um funcionário para cadastrar as lojas{% endif %} (código, nome e região).</li>
+    <li>{% if user.can_write %}Adicione as unidades consumidoras da loja{% else %}Aguarde o cadastro das unidades consumidoras pelo funcionário{% endif %}, ou use <strong>+ Novo ponto de energia</strong>.</li>
     <li>Clique em <strong>Importar conta</strong> e envie a foto ou o PDF da primeira conta.</li></ol></section>{% endif %}
 <div class="grid cols-4" style="margin-bottom:16px">
   <div class="kpi"><div class="label">Lojas ativas</div><div class="value">{{ stores }}</div></div>
@@ -42,7 +42,7 @@
         <td class="num muted">{{ s.units|length }} unid.</td></tr>{% endfor %}
     </tbody></table></div>
     {% else %}<p class="muted" style="padding:0 18px 16px">Nenhuma loja cadastrada.
-      {% if user.is_admin %}<a href="/stores/new">Cadastrar a primeira loja</a>{% endif %}</p>{% endif %}
+      {% if user.can_write %}<a href="/stores/new">Cadastrar a primeira loja</a>{% endif %}</p>{% endif %}
   </section>
 </div>
 {% endblock %}

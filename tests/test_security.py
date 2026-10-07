@@ -197,15 +197,17 @@ def test_viewer_can_read_and_print_but_not_write(client, png):
     assert v.get("/types").status_code == 403 and v.get("/admin/users").status_code == 403
 
 
-def test_operator_cannot_reach_admin_areas_and_cannot_create_stores(client):
+def test_operator_manages_energy_but_not_users_or_audit(client):
     pw = _create_user(client, "otavio", "operator")
     o = _new_client()
     _login(o, "otavio", pw)
     o.post("/account/password", {"current_password": pw, "new_password": "Operador-forte-2026", "confirm": "Operador-forte-2026"})
-    assert o.get("/import").status_code == 200
-    for url in ("/types", "/admin/users", "/admin/audit", "/stores/new"):
+    o.refresh()
+    assert o.get("/import").status_code == 200 and o.get("/types").status_code == 200 and o.get("/stores/new").status_code == 200
+    assert o.post("/stores", {"code": "X1"}).status_code == 303                       # funcionário cadastra filial
+    for url in ("/admin/users", "/admin/audit"):                                        # acessos e auditoria: só o administrador
         assert o.get(url).status_code == 403
-    assert o.post("/stores", {"code": "X1"}).status_code == 403
+    assert o.post("/admin/users", {"username": "intruso", "role": "admin"}).status_code == 403
 
 
 def test_last_admin_cannot_be_demoted_or_deactivated(client, db):

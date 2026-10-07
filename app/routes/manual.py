@@ -10,7 +10,7 @@ from app.database import get_db
 from app.models import ConsumerUnit, EnergyBill, ManualRecord, RecordType, User
 from app.repositories.stores import list_record_types, list_stores
 from app.schemas.forms import bill_to_form, parse_bill_form
-from app.security import admin_required, current_user, verify_csrf, writer_required
+from app.security import current_user, verify_csrf, writer_required
 from app.services import audit_service
 from app.services.duplicate_service import find_bill_duplicates, find_manual_duplicates
 from app.services.import_service import save_bill
@@ -135,7 +135,7 @@ async def manual_save(request: Request, user: User = Depends(writer_required), d
 
 
 @router.post("/manual/bills/{bill_id}/delete", dependencies=[Depends(verify_csrf)])
-def bill_delete(request: Request, bill_id: int, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+def bill_delete(request: Request, bill_id: int, user: User = Depends(writer_required), db: Session = Depends(get_db)):
     bill = db.get(EnergyBill, bill_id)
     if not bill:
         raise HTTPException(404, "Conta não encontrada.")
@@ -149,7 +149,7 @@ def bill_delete(request: Request, bill_id: int, user: User = Depends(admin_requi
 
 
 @router.post("/manual/records/{record_id}/delete", dependencies=[Depends(verify_csrf)])
-def record_delete(request: Request, record_id: int, user: User = Depends(admin_required),
+def record_delete(request: Request, record_id: int, user: User = Depends(writer_required),
                   db: Session = Depends(get_db)):
     rec = db.get(ManualRecord, record_id)
     if not rec:

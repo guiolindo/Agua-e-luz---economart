@@ -8,8 +8,8 @@ Este guia tem duas partes: **(A) como colocar o sistema no ar** (feito uma vez, 
 
 | Perfil | O que faz | Onde cai ao entrar |
 |---|---|---|
-| **Administrador** | Cria os usuários, cadastra lojas, unidades e tipos, vê tudo, inclusive a auditoria. | Painel |
-| **Funcionário** | Envia a foto ou o PDF das contas, confere, lança valores manuais, cadastra novos pontos de energia, dá baixa nos vencimentos, imprime. | Painel |
+| **Administrador** | Cria e gerencia os **usuários e perfis** (senha provisória, redefinir senha, desativar) e acompanha a **Auditoria**. Também consegue fazer tudo que o funcionário faz, mas esse não é o seu papel no dia a dia. | Painel |
+| **Funcionário** | É o **responsável por toda a gestão de energia da empresa**: cadastra lojas/filiais, unidades consumidoras e fornecedores; envia as contas (foto/PDF); faz os lançamentos manuais; corrige ou exclui o que foi lançado errado; cuida dos vencimentos; imprime. | Painel |
 | **Diretoria** | Só consulta: painel executivo com comparação entre lojas, abre as lojas e imprime. Não altera nada. | Painel da diretoria |
 | **Consulta** | Só visualiza e imprime. | Painel |
 
@@ -94,19 +94,11 @@ Copie o resultado: é a **DOCUMENT_ENCRYPTION_KEY** (ela criptografa as fotos e 
 
 # PARTE B — Usando o sistema
 
-## B1. Configuração inicial (administrador)
+## B1. Primeiros acessos e cadastros
 
-**1. Cadastrar as lojas.** Menu **Lojas → Nova loja**. Informe:
+### Passo 1 — O administrador cria os acessos
 
-- **Código** (ex.: `CD300`) e **nome**;
-- **Região/UF** (ex.: `MG`, `BA`): é usada para comparar regiões no painel da diretoria;
-- **Apelidos** (ex.: `CD 300, CD Rib Neves`): ajudam a ler anotações escritas à mão nas contas.
-
-**2. Cadastrar as unidades consumidoras (pontos de energia).** Dentro da loja, **Cadastro → Adicionar unidade**, ou, de qualquer tela, **+ Novo ponto de energia** (veja B4). Cada unidade tem o **número da unidade consumidora** exatamente como está na conta (ex.: `12.060.073.018-19`).
-
-**3. Conferir os tipos de registro.** Menu **Tipos de registro**. Já vêm cadastrados: CEMIG, COELBA, CEMIG Geração e Transmissão, LL Energia, Câmara de Comercialização de Energia, Compra de combustível para gerador e Manutenção de Gerador. Para outra distribuidora (ex.: ENERGISA) crie um tipo **"Conta de distribuidora"**; para outros custos, **"Lançamento manual"**.
-
-**4. Criar os usuários.** Menu **Usuários → Novo usuário**:
+O papel do administrador é cuidar de **quem entra e com qual perfil**. Menu **Usuários → Novo usuário**:
 
 1. Digite o nome de usuário e escolha o **perfil** (Funcionário, Diretoria, Consulta ou Administrador).
 2. Clique em **Criar usuário**. Aparece uma **senha provisória de 4 dígitos**, mostrada **uma única vez**. Anote e entregue à pessoa.
@@ -118,6 +110,22 @@ Sobre a senha provisória de 4 dígitos:
 - Depois de 3 tentativas erradas a conta é bloqueada por 15 minutos.
 - Se a pessoa não entrou a tempo ou esqueceu a senha: **Usuários → Redefinir senha** gera outra de 4 dígitos.
 - Para desligar alguém que saiu da empresa: **Usuários → Desativar** (as sessões abertas caem na hora).
+
+### Passo 2 — O funcionário faz os cadastros
+
+O funcionário é o responsável por manter tudo de energia da empresa, então é ele quem cadastra:
+
+**1. Lojas/filiais.** Menu **Lojas → Nova loja**. Informe:
+
+- **Código** (ex.: `CD300`) e **nome**;
+- **Região/UF** (ex.: `MG`, `BA`): é usada para comparar regiões no painel da diretoria;
+- **Apelidos** (ex.: `CD 300, CD Rib Neves`): ajudam a ler anotações escritas à mão nas contas.
+
+**2. Unidades consumidoras (pontos de energia).** Dentro da loja, **Cadastro → Adicionar unidade**, ou, de qualquer tela, **+ Novo ponto de energia** (veja B4). Cada unidade tem o **número da unidade consumidora** exatamente como está na conta (ex.: `12.060.073.018-19`).
+
+**3. Fornecedores (tipos de registro).** Menu **Tipos de registro**. Já vêm cadastrados: CEMIG, COELBA, CEMIG Geração e Transmissão, LL Energia, Câmara de Comercialização de Energia, Compra de combustível para gerador e Manutenção de Gerador. Para outra distribuidora (ex.: ENERGISA) crie um tipo **"Conta de distribuidora"**; para outros custos, **"Lançamento manual"**.
+
+Se algo for cadastrado errado, o próprio funcionário corrige. Tudo fica registrado na **Auditoria** (quem fez, o quê e quando), que o administrador acompanha.
 
 ## B2. Enviar uma conta (funcionário)
 
@@ -149,7 +157,7 @@ Para fornecedores sem foto (LL Energia, Câmara, combustível, manutenção) e p
 3. Informe o **mês**, o **valor** e, se quiser, o **vencimento** (usado para agrupar pelo mês de vencimento). Campos extras aparecem conforme o tipo (ex.: litros, horas).
 4. **Salvar**. Se já existir lançamento para o mesmo período, o sistema pergunta se é para substituir.
 
-Para corrigir uma conta: **Lojas → (loja) → (unidade) → Contas → Editar**. Excluir é só com o administrador.
+Para corrigir uma conta: **Lojas → (loja) → (unidade) → Contas → Editar**. O funcionário também pode **excluir** uma conta ou lançamento errado (a exclusão fica registrada na Auditoria).
 
 ## B4. Novo ponto de energia e aviso de vencimento
 
@@ -203,7 +211,7 @@ Na janela de impressão do navegador:
 - O sistema **desloga sozinho** depois de 60 minutos parado.
 - Depois de 5 senhas erradas a conta é bloqueada por 15 minutos (3 se ainda estiver com a senha provisória).
 - Esqueceu a senha? Peça ao administrador: **Usuários → Redefinir senha**.
-- O administrador acompanha tudo em **Auditoria** (quem entrou, tentativas falhas, bloqueios, trocas de senha e alterações). O endereço de IP aparece apenas como um código, nunca em claro.
+- O administrador acompanha tudo em **Auditoria** (quem entrou, tentativas falhas, bloqueios, trocas de senha e o que cada pessoa alterou, inclusive cadastros e exclusões do funcionário). O endereço de IP aparece apenas como um código, nunca em claro.
 - Revise **Usuários** todo mês e desative quem saiu.
 - Guarde a `SECRET_KEY`, a `DOCUMENT_ENCRYPTION_KEY` e a chave do Gemini num cofre de senhas.
 
@@ -214,7 +222,7 @@ Na janela de impressão do navegador:
 | Ao chegar uma conta | Importar, conferir, salvar | Funcionário |
 | Ao entrar no sistema | Olhar o aviso/sino de vencimentos; dar "Já paguei" | Funcionário |
 | Todo mês | Lançar os fornecedores manuais (LL, Câmara, combustível, manutenção) | Funcionário |
-| Todo mês | Conferir **Pendências** no Painel | Funcionário / Administrador |
+| Todo mês | Conferir **Pendências** no Painel | Funcionário |
 | Mensal | Abrir o Painel da diretoria e imprimir, se necessário | Diretoria |
 | Mensal | Revisar usuários ativos e a Auditoria | Administrador |
 | Trimestral | Testar a restauração do backup do banco | Administrador |
@@ -247,8 +255,8 @@ Na janela de impressão do navegador:
 3. [ ] Gerar o domínio e confirmar que a tela de login abre.
 4. [ ] Entrar como `admin` e trocar a senha.
 5. [ ] Ativar o backup do banco.
-6. [ ] Cadastrar as lojas (com região) e as unidades.
-7. [ ] Criar o usuário da diretoria e os dos funcionários; entregar as senhas provisórias de 4 dígitos.
+6. [ ] **Administrador:** criar o usuário da diretoria e os dos funcionários; entregar as senhas provisórias de 4 dígitos.
+7. [ ] **Funcionário:** entrar (trocando a senha), cadastrar as lojas (com região) e as unidades.
 8. [ ] **Importar 3 ou 4 contas reais** (CEMIG e Coelba, foto e PDF) e conferir a leitura com cuidado.
 9. [ ] Lançar o histórico dos meses anteriores (manual) para os gráficos fazerem sentido.
 10. [ ] Imprimir uma folha da loja e uma ficha de conta para conferir o resultado no papel.

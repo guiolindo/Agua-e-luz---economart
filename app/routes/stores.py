@@ -10,7 +10,7 @@ from app.repositories.stores import (
     list_record_types,
     list_stores,
 )
-from app.security import admin_required, current_user, verify_csrf
+from app.security import current_user, verify_csrf, writer_required
 from app.services import audit_service, chart_service
 from app.services.import_service import UnitConflict, create_unit
 from app.utils.parsing import clean_str, normalize_uc, parse_reference
@@ -42,14 +42,14 @@ def stores_list(request: Request, user: User = Depends(current_user), db: Sessio
 
 
 @router.get("/stores/new")
-def store_new(request: Request, user: User = Depends(admin_required)):
+def store_new(request: Request, user: User = Depends(writer_required)):
     return render(request, "stores/form.html", user=user, store=None)
 
 
 @router.post("/stores", dependencies=[Depends(verify_csrf)])
 def store_create(request: Request, code: str = Form(...), name: str = Form(""), location: str = Form(""),
                  aliases: str = Form(""), notes: str = Form(""), region: str = Form(""),
-                 user: User = Depends(admin_required), db: Session = Depends(get_db)):
+                 user: User = Depends(writer_required), db: Session = Depends(get_db)):
     code = code.strip().upper()
     if not code:
         flash(request, "Informe o código da loja.", "error")
@@ -86,7 +86,7 @@ def store_history(request: Request, store_id: int, type_id: int | None = None, i
 
 
 @router.get("/stores/{store_id}/settings")
-def store_settings(request: Request, store_id: int, user: User = Depends(admin_required),
+def store_settings(request: Request, store_id: int, user: User = Depends(writer_required),
                    db: Session = Depends(get_db)):
     return render(request, "stores/settings.html", user=user, store=_store_or_404(db, store_id),
                   types=list_record_types(db))
@@ -95,7 +95,7 @@ def store_settings(request: Request, store_id: int, user: User = Depends(admin_r
 @router.post("/stores/{store_id}/edit", dependencies=[Depends(verify_csrf)])
 def store_edit(request: Request, store_id: int, name: str = Form(""), location: str = Form(""),
                aliases: str = Form(""), notes: str = Form(""), active: str = Form(""), region: str = Form(""),
-               user: User = Depends(admin_required), db: Session = Depends(get_db)):
+               user: User = Depends(writer_required), db: Session = Depends(get_db)):
     store = _store_or_404(db, store_id)
     store.name, store.location, store.notes = clean_str(name, 200), clean_str(location, 200), clean_str(notes)
     store.aliases = parse_aliases(aliases)
@@ -110,7 +110,7 @@ def store_edit(request: Request, store_id: int, name: str = Form(""), location: 
 @router.post("/stores/{store_id}/units", dependencies=[Depends(verify_csrf)])
 def unit_add(request: Request, store_id: int, number: str = Form(...), description: str = Form(""),
              internal_code: str = Form(""), record_type_id: int | None = Form(None),
-             user: User = Depends(admin_required), db: Session = Depends(get_db)):
+             user: User = Depends(writer_required), db: Session = Depends(get_db)):
     store = _store_or_404(db, store_id)
     try:
         unit = create_unit(db, store.id, number, clean_str(description, 200), record_type_id, user.id)
@@ -126,7 +126,7 @@ def unit_add(request: Request, store_id: int, number: str = Form(...), descripti
 @router.post("/units/{unit_id}/edit", dependencies=[Depends(verify_csrf)])
 def unit_edit(request: Request, unit_id: int, number: str = Form(...), description: str = Form(""),
               internal_code: str = Form(""), notes: str = Form(""), record_type_id: int | None = Form(None),
-              active: str = Form(""), user: User = Depends(admin_required), db: Session = Depends(get_db)):
+              active: str = Form(""), user: User = Depends(writer_required), db: Session = Depends(get_db)):
     unit = db.get(ConsumerUnit, unit_id)
     if not unit:
         raise HTTPException(404, "Unidade não encontrada.")

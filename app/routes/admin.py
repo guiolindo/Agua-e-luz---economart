@@ -16,10 +16,10 @@ from app.web import flash, render
 
 router = APIRouter()
 ROLES = {
-    "operator": "Funcionário — envia fotos/PDF das contas e lança",
+    "operator": "Funcionário — responsável por toda a gestão de energia (lojas, unidades, contas, lançamentos)",
     "director": "Diretoria — painel executivo, só consulta",
     "viewer": "Consulta — só visualiza e imprime",
-    "admin": "Administrador — cria usuários e cadastros",
+    "admin": "Administrador — cria usuários e perfis, auditoria",
 }
 
 

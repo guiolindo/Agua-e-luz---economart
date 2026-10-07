@@ -8,7 +8,7 @@
   <div class="actions">{% if user.can_write %}<a class="btn primary" href="/import?store_id={{ store.id }}">Importar conta</a>{% endif %}
     <a class="btn" id="print-link" href="/stores/{{ store.id }}/report?start={{ start.strftime('%Y-%m') }}&end={{ end.strftime('%Y-%m') }}">Imprimir relatório</a>
     {% if user.can_write %}<a class="btn" href="/manual?store_id={{ store.id }}">Lançamento manual</a>{% endif %}
-    {% if user.is_admin %}<a class="btn" href="/stores/{{ store.id }}/settings">Cadastro</a>{% endif %}</div>
+    {% if user.can_write %}<a class="btn" href="/stores/{{ store.id }}/settings">Cadastro</a>{% endif %}</div>
 </div>
 
 {% set state = {'view': view, 'type_id': chosen.id if chosen else None, 'indicator': indicator, 'start': start.strftime('%Y-%m'),
@@ -36,7 +36,7 @@
     <tbody>{% for u in store.units %}<tr class="{{ 'hl' if highlight == u.id }}"><td class="mono"><a href="/units/{{ u.id }}">{{ u.number }}</a></td>
       <td>{{ u.description or '—' }}{% if not u.active %} <span class="badge">Inativa</span>{% endif %}</td>
       <td class="right"><a class="btn sm" href="/units/{{ u.id }}">Ver unidade</a></td></tr>
-    {% else %}<tr><td colspan="3" class="muted">Nenhuma unidade cadastrada.{% if user.is_admin %} <a href="/stores/{{ store.id }}/settings">Cadastrar</a>.{% endif %}</td></tr>{% endfor %}
+    {% else %}<tr><td colspan="3" class="muted">Nenhuma unidade cadastrada.{% if user.can_write %} <a href="/stores/{{ store.id }}/settings">Cadastrar</a>.{% endif %}</td></tr>{% endfor %}
   </tbody></table></div>
 </section>
 {% endblock %}

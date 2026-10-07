@@ -26,8 +26,8 @@ ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decis�
 
 | Perfil | O que faz |
 |---|---|
-| **Administrador** | Cria os usuários (senha provisória exibida uma vez) e os cadastros (lojas, unidades, tipos); vê tudo, inclusive a diretoria e a auditoria. |
-| **Funcionário** | Envia as fotos/PDF das contas, confere, preenche lançamentos manuais, imprime. Não vê o painel da diretoria. |
+| **Administrador** | Cria e gerencia usuários e perfis (senha provisória de 4 dígitos, redefinir, desativar) e acompanha a auditoria. Também pode operar o sistema, mas o dia a dia é do funcionário. |
+| **Funcionário** | **Responsável por toda a gestão de energia**: cadastra lojas/filiais, unidades e fornecedores; envia as contas (foto/PDF); lança manualmente; corrige/exclui; cuida dos vencimentos; imprime. Não vê o painel da diretoria nem a administração de usuários. |
 | **Diretoria** | Só consulta. Ao entrar cai no **Painel da diretoria** (`/diretoria`) e pode abrir lojas e imprimir; não importa nem edita nada. |
 | **Consulta** | Só visualiza e imprime. |
 

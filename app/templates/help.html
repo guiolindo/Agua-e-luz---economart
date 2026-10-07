@@ -18,6 +18,12 @@
       <li>Escolha a loja, informe o número da unidade consumidora e a <strong>data de vencimento</strong>.</li>
       <li>Pronto: todo mês, no dia do vencimento, ao entrar no sistema aparece um aviso do lado (some sozinho em 15 segundos). O <strong>sino</strong> guarda a lista; marque <strong>Já paguei</strong> para dar baixa.</li>
     </ol></section>
+  <section class="card"><h2>Cadastros: lojas, unidades e fornecedores</h2>
+    <p>O funcionário é responsável por manter tudo de energia da empresa:</p>
+    <ul><li><strong>Lojas/filiais:</strong> <em>Lojas → Nova loja</em> (código, nome, região/UF e apelidos como “CD 300”).</li>
+      <li><strong>Unidades consumidoras:</strong> dentro da loja, <em>Cadastro → Adicionar unidade</em>, ou <strong>+ Novo ponto de energia</strong> de qualquer tela.</li>
+      <li><strong>Fornecedores:</strong> <em>Tipos de registro</em> (ex.: outra distribuidora ou outro custo).</li>
+      <li><strong>Correções:</strong> editar ou excluir uma conta/lançamento errado (fica registrado na auditoria).</li></ul></section>
   <section class="card"><h2>Lançamento manual</h2>
     <p>Use para fornecedores sem foto (LL Energia, Câmara, combustível, manutenção…) e para meses antigos: <strong>Lançamento manual</strong> → loja, tipo, mês e valor. O vencimento é opcional.</p></section>
   {% endif %}
@@ -27,10 +33,10 @@
   {% endif %}
   {% if user.is_admin %}
   <section class="card"><h2>Administração</h2>
-    <ul><li><strong>Usuários:</strong> crie funcionários, diretoria e consulta. A senha provisória aparece uma única vez e deve ser trocada no primeiro acesso.</li>
-      <li><strong>Lojas e unidades:</strong> cadastre as lojas (com região/UF e apelidos como “CD 300”) e as unidades consumidoras.</li>
-      <li><strong>Tipos de registro:</strong> crie novos fornecedores (ex.: outra distribuidora).</li>
-      <li><strong>Auditoria:</strong> quem entrou, falhas de login e alterações.</li></ul></section>
+    <p>O papel do administrador é cuidar dos acessos:</p>
+    <ul><li><strong>Usuários:</strong> crie funcionários, diretoria e consulta. A senha provisória (4 dígitos) aparece uma única vez, vale 48 horas e deve ser trocada no primeiro acesso.</li>
+      <li><strong>Redefinir senha e desativar</strong> quem saiu da empresa.</li>
+      <li><strong>Auditoria:</strong> quem entrou, falhas de login e o que cada pessoa alterou.</li></ul></section>
   {% endif %}
   <section class="card"><h2>Imprimir</h2>
     <p><strong>Lojas → (loja) → Imprimir relatório:</strong> folha A4 com resumo, gráfico e dados do fornecedor escolhido.<br>
