@@ -95,6 +95,16 @@ def _mk(y: int, m: int) -> date | None:
         return None
 
 
+def parse_due_day(raw) -> tuple[int | None, bool]:
+    """Dia de vencimento mensal (1-31). Devolve (valor, ok). Vazio = sem vencimento (None, True)."""
+    text = ("" if raw is None else str(raw)).strip()
+    if not text:
+        return None, True
+    if text.isdigit() and 1 <= int(text) <= 31:
+        return int(text), True
+    return None, False
+
+
 def clean_str(value, max_len: int | None = None) -> str | None:
     if value is None:
         return None

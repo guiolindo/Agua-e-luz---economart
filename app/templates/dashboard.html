@@ -20,6 +20,15 @@
     <div class="sub muted">{% if last_store %}Última importação: <a href="/stores/{{ last_store.id }}">{{ last_store.code }}</a>{% else %}Nenhuma importação ainda{% endif %}</div></div>
 </div>
 
+{% if user.can_write and units_no_due_total %}
+<section class="card" aria-labelledby="nodue"><div class="card-head"><h2 id="nodue" style="margin:0">Pontos de energia sem dia de vencimento ({{ units_no_due_total }})</h2></div>
+  <p class="muted" style="margin:0 0 8px">Nada está travado: eles funcionam normalmente. Defina o dia para receber o aviso de vencimento todo mês.</p>
+  <div class="tablewrap"><table><tbody>
+    {% for u in units_no_due %}<tr><td><a href="/stores/{{ u.store_id }}"><strong>{{ u.store.code }}</strong></a></td><td class="mono">{{ u.number }}</td><td class="muted">{{ u.description or '' }}</td>
+      <td class="right"><a class="btn sm" href="/units/{{ u.id }}/edit">Definir vencimento</a></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% if units_no_due_total > 8 %}<p class="muted small" style="margin:8px 0 0">Mostrando 8 de {{ units_no_due_total }}. Veja o restante em <a href="/stores">Lojas</a>.</p>{% endif %}</section>
+{% endif %}
 <div class="grid cols-main">
   <section class="card flush">
     <div style="padding:14px 18px 0"><h2>Pendências de {{ month|month_label }}</h2></div>

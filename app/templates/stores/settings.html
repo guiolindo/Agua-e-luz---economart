@@ -21,17 +21,13 @@
 
 <div class="card flush">
   <div style="padding:14px 18px 0"><h2>Unidades consumidoras</h2></div>
-  {% for u in store.units %}<form method="post" action="/units/{{ u.id }}/edit" id="uf{{ u.id }}">{{ csrf(csrf_token) }}</form>{% endfor %}
   <div class="tablewrap"><table>
-    <thead><tr><th>Número</th><th>Descrição</th><th>Cód. interno</th><th>Tipo</th><th>Situação</th><th><span class="sr">Ações</span></th></tr></thead>
+    <thead><tr><th>Número</th><th>Descrição</th><th>Distribuidora</th><th>Vencimento</th><th>Situação</th><th><span class="sr">Ações</span></th></tr></thead>
     <tbody>{% for u in store.units %}
-      <tr>
-        <td><input form="uf{{ u.id }}" type="text" name="number" value="{{ u.number }}" required style="min-width:170px"></td>
-        <td><input form="uf{{ u.id }}" type="text" name="description" value="{{ u.description or '' }}"></td>
-        <td><input form="uf{{ u.id }}" type="text" name="internal_code" value="{{ u.internal_code or '' }}" style="width:110px"></td>
-        <td><select form="uf{{ u.id }}" name="record_type_id">{% for t in types %}{% if t.is_bill %}<option value="{{ t.id }}" {{ 'selected' if u.record_type_id == t.id }}>{{ t.name }}</option>{% endif %}{% endfor %}</select></td>
-        <td><select form="uf{{ u.id }}" name="active" style="width:auto"><option value="1" {{ 'selected' if u.active }}>Ativa</option><option value="" {{ 'selected' if not u.active }}>Inativa</option></select></td>
-        <td class="right nowrap"><button form="uf{{ u.id }}" class="btn sm">Salvar</button> <a class="btn sm" href="/units/{{ u.id }}">Abrir</a></td></tr>
+      <tr><td class="mono"><a href="/units/{{ u.id }}">{{ u.number }}</a></td><td>{{ u.description or '—' }}</td><td>{{ u.record_type.name if u.record_type else '—' }}</td>
+        <td>{% if u.due_day %}todo dia {{ u.due_day }}{% else %}<a class="badge warn" href="/units/{{ u.id }}/edit" title="Defina o dia para receber o aviso de vencimento">Sem vencimento · definir</a>{% endif %}</td>
+        <td>{% if u.active %}<span class="badge ok">Ativa</span>{% else %}<span class="badge">Inativa</span>{% endif %}</td>
+        <td class="right nowrap"><a class="btn sm" href="/units/{{ u.id }}/edit">Editar</a> <a class="btn sm" href="/units/{{ u.id }}">Abrir</a></td></tr>
     {% else %}<tr><td colspan="6" class="muted">Nenhuma unidade cadastrada. Adicione abaixo.</td></tr>{% endfor %}
     </tbody></table></div>
   <form method="post" action="/stores/{{ store.id }}/units" style="padding:16px 18px;border-top:1px solid var(--line)">
@@ -40,8 +36,10 @@
       <div class="field"><label>Nº da unidade consumidora *</label><input type="text" name="number" required placeholder="12.060.073.018-19"></div>
       <div class="field"><label>Descrição</label><input type="text" name="description"></div>
       <div class="field"><label>Código interno / fase</label><input type="text" name="internal_code"></div>
-      <div class="field"><label>Tipo</label><select name="record_type_id">{% for t in types %}{% if t.is_bill %}<option value="{{ t.id }}">{{ t.name }}</option>{% endif %}{% endfor %}</select></div>
+      <div class="field"><label for="add-type">Distribuidora</label><select id="add-type" name="record_type_id">{% for t in types %}{% if t.is_bill %}<option value="{{ t.id }}">{{ t.name }}</option>{% endif %}{% endfor %}</select></div>
     </div>
+    <div class="row row-4"><div class="field"><label for="due_day">Dia de vencimento da conta</label>{% set due_value = None %}{% include "units/_dueday.html" %}
+      <div class="hint" id="due-hint">Opcional. Com o dia definido, o funcionário é avisado todo mês.</div></div></div>
     <button class="btn primary">Adicionar unidade</button>
   </form>
 </div>

@@ -121,7 +121,9 @@ O funcionário é o responsável por manter tudo de energia da empresa, então �
 - **Região/UF** (ex.: `MG`, `BA`): é usada para comparar regiões no painel da diretoria;
 - **Apelidos** (ex.: `CD 300, CD Rib Neves`): ajudam a ler anotações escritas à mão nas contas.
 
-**2. Unidades consumidoras (pontos de energia).** Dentro da loja, **Cadastro → Adicionar unidade**, ou, de qualquer tela, **+ Novo ponto de energia** (veja B4). Cada unidade tem o **número da unidade consumidora** exatamente como está na conta (ex.: `12.060.073.018-19`).
+**2. Unidades consumidoras (pontos de energia).** Dentro da loja, **Cadastro → Adicionar unidade** (com o **dia de vencimento da conta**, opcional), ou, de qualquer tela, **+ Novo ponto de energia** (veja B4). Cada unidade tem o **número da unidade consumidora** exatamente como está na conta (ex.: `12.060.073.018-19`).
+
+**Para editar uma unidade já criada** (número, descrição, distribuidora, dia de vencimento, situação): abra a unidade e clique em **Editar unidade**, ou use **Editar** na lista de unidades da loja. Unidades criadas sem vencimento **continuam funcionando normalmente**; apenas não geram aviso até você definir o dia (o painel do funcionário lista quais ainda estão sem vencimento).
 
 **3. Fornecedores (tipos de registro).** Menu **Tipos de registro**. Já vêm cadastrados: CEMIG, COELBA, CEMIG Geração e Transmissão, LL Energia, Câmara de Comercialização de Energia, Compra de combustível para gerador e Manutenção de Gerador. Para outra distribuidora (ex.: ENERGISA) crie um tipo **"Conta de distribuidora"**; para outros custos, **"Lançamento manual"**.
 
@@ -170,10 +172,11 @@ De **qualquer tela**, clique em **+ Novo ponto de energia** (canto superior dire
 
 **Como funciona o aviso:**
 
-- Ao entrar no sistema, aparece **do lado direito** um aviso: **"Vence hoje"** (e **"Venceu há N dias"**, por até 15 dias). Ele **some sozinho em 15 segundos**. Se passar o mouse por cima, o tempo pausa.
+- Quem recebe o aviso é **o funcionário** (administrador, diretoria e consulta não veem o sino nem os avisos). Ao entrar no sistema, aparece **do lado direito** um aviso: **"Vence hoje"** (e **"Venceu há N dias"**, por até 15 dias). Ele **some sozinho em 15 segundos**. Se passar o mouse por cima, o tempo pausa.
 - Ele aparece **uma vez por login, por dia**.
 - O **sino** (canto superior direito) guarda a lista de vencimentos, inclusive "vence amanhã". Clique em **Já paguei** para dar baixa daquele vencimento; no mês seguinte o aviso volta.
 - Contas importadas por foto/PDF ensinam o dia de vencimento ao ponto automaticamente.
+- Para mudar o dia depois, ou remover o vencimento: **Editar unidade**.
 
 ## B5. Painel da diretoria
 

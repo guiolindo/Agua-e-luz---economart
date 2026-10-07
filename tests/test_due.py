@@ -127,21 +127,25 @@ def test_quick_add_available_to_employee_not_to_director_or_viewer(client, db):
 
 # ---------------------------------------------------------------- API do aviso/sino
 def test_api_due_lists_today_and_ack_removes_it(client, db):
+    func = _user(client, "func5", "operator")
     u = _unit(db, ds.local_today().day)
-    data = client.get("/api/due").json()
+    data = func.get("/api/due").json()
     item = next(i for i in data["items"] if i["unit_id"] == u.id)
     assert item["status"] == "today" and item["label"] == "Vence hoje" and data["can_ack"] is True and data["today"] == _today_iso()
-    assert client.post(f"/api/due/{u.id}/ack").json()["ok"] is True
-    assert not [i for i in client.get("/api/due").json()["items"] if i["unit_id"] == u.id and i["status"] != "soon"]
+    assert func.post(f"/api/due/{u.id}/ack").json()["ok"] is True
+    assert not [i for i in func.get("/api/due").json()["items"] if i["unit_id"] == u.id and i["status"] != "soon"]
     assert db.query(AuditLog).filter_by(action="due_ack", entity_id=u.id).count() == 1
 
 
-def test_director_sees_reminders_but_cannot_acknowledge(client, db):
+def test_only_the_employee_is_notified_not_admin_director_or_viewer(client, db):
     u = _unit(db, ds.local_today().day)
-    diretor = _user(client, "dir8", "director")
-    data = diretor.get("/api/due").json()
-    assert data["can_ack"] is False and any(i["unit_id"] == u.id for i in data["items"])
-    assert diretor.post(f"/api/due/{u.id}/ack").status_code == 403
+    func = _user(client, "func6", "operator")
+    assert any(i["unit_id"] == u.id for i in func.get("/api/due").json()["items"])
+    assert 'id="bell"' in func.get("/stores").text and 'aria-label="Vencimentos' in func.get("/stores").text
+    for who in (client, _user(client, "dir8", "director"), _user(client, "con8", "viewer")):       # admin, diretoria, consulta
+        assert who.get("/api/due").status_code == 403
+        assert who.post(f"/api/due/{u.id}/ack").status_code == 403
+        assert 'id="bell"' not in who.get("/stores").text and "Vencimentos" not in who.get("/stores").text.split("<main")[1].split("<h1")[0]
 
 
 def test_api_due_requires_login_and_csrf(client, db):
@@ -165,6 +169,5 @@ def test_bill_import_teaches_the_unit_its_due_day(client, png, db):
 def test_help_page_is_role_aware(client):
     html = client.get("/ajuda").text
     assert "Novo ponto de energia" in html and "Administração" in html and "Painel da diretoria" in html
-    assert 'id="bell"' in client.get("/").text and 'aria-label="Vencimentos' in client.get("/").text
     assert "Ir para o conteúdo" in client.get("/").text                                  # link de acessibilidade
     assert timedelta(0) is not None

@@ -44,10 +44,11 @@ cria lojas **fictícias** para visualizar o painel.
 - **+ Novo ponto de energia** (canto superior direito, em qualquer tela; admin e funcionário): loja, nº da unidade consumidora,
   distribuidora e **data de vencimento**. O ponto passa a vencer todo mês nesse dia (dia 31 em mês curto cai no último dia).
   Contas importadas ou lançadas também ensinam o dia de vencimento ao ponto.
-- **Aviso de vencimento:** ao entrar no sistema, aparece um aviso do lado — “Vence hoje” (e “Venceu há N dias”, por até 15 dias) —
+- **Editar unidade e vencimento:** abra a unidade → **Editar unidade** (ou **Editar** na lista da loja). O cadastro pela loja também tem o dia de vencimento (opcional); unidades sem vencimento seguem funcionando e aparecem no painel do funcionário com o convite para definir.
+- **Aviso de vencimento:** (somente para o **funcionário**) ao entrar no sistema, aparece um aviso do lado — “Vence hoje” (e “Venceu há N dias”, por até 15 dias) —
   que **some sozinho em 15 segundos** (passar o mouse ou focar com o teclado pausa; aparece uma vez por login por dia). O **sino**
   guarda a lista (inclui “vence amanhã/em N dias”); **Já paguei** dá baixa daquele vencimento. “Hoje” é o dia do Brasil
-  (America/Sao_Paulo), não o do servidor. Diretoria e consulta veem os avisos, mas não dão baixa.
+  (America/Sao_Paulo), não o do servidor. Administrador, diretoria e consulta não recebem os avisos.
 - **Usabilidade/acessibilidade:** link “Ir para o conteúdo”, navegação por teclado com foco visível, rótulos em todos os campos,
   mensagens de erro/sucesso anunciadas a leitores de tela (sucessos somem sozinhos), botões que mostram “Salvando…” e não permitem
   duplo clique, busca nas listas, estados vazios com orientação, página **Ajuda** por perfil e respeito a `prefers-reduced-motion`.

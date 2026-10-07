@@ -184,3 +184,6 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 .chips { display: flex; gap: 8px; margin: 0 0 6px; } .chip { flex: 1; border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; display: flex; flex-direction: column; background: #fff; min-width: 0; }
 .chip .clabel { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); } .chip .cvalue { font-size: 14px; font-weight: 700; } .chip .csub { font-size: 9.5px; color: var(--muted); }
 .sheet-foot { display: flex; justify-content: space-between; gap: 12px; font-size: 9.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 4px; margin-top: 6px; }
+
+/* o atributo hidden precisa vencer qualquer display definido em classe (ex.: selo do sino quando não há pendências) */
+[hidden] { display: none !important; }

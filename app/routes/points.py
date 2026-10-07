@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import ConsumerUnit, RecordType, User
 from app.repositories.stores import default_bill_type, list_record_types, list_stores
-from app.security import current_user, verify_csrf, writer_required
+from app.security import alerts_required, verify_csrf, writer_required
 from app.services import audit_service, due_service
 from app.services.import_service import UnitConflict, create_unit
 from app.utils.parsing import clean_str, normalize_uc, parse_date
@@ -72,14 +72,14 @@ def point_create(request: Request, store_id: int = Form(...), number: str = Form
 
 
 @router.get("/api/due")
-def api_due(user: User = Depends(current_user), db: Session = Depends(get_db)):
+def api_due(user: User = Depends(alerts_required), db: Session = Depends(get_db)):
     items = due_service.due_items(db)
     return JSONResponse({"today": due_service.local_today().isoformat(), "items": [i.as_dict() for i in items],
-                         "can_ack": user.can_write})
+                         "can_ack": True})
 
 
 @router.post("/api/due/{unit_id}/ack", dependencies=[Depends(verify_csrf)])
-def api_due_ack(unit_id: int, user: User = Depends(writer_required), db: Session = Depends(get_db)):
+def api_due_ack(unit_id: int, user: User = Depends(alerts_required), db: Session = Depends(get_db)):
     unit = db.get(ConsumerUnit, unit_id)
     if unit is None:
         raise HTTPException(404, "Unidade não encontrada.")

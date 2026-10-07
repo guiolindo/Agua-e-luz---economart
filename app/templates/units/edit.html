@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Editar unidade {{ unit.number }} · Controle de Energia{% endblock %}
+{% block content %}
+{% from "macros.html" import csrf %}
+<div class="page-head"><div><div class="crumbs"><a href="/stores">Lojas</a> / <a href="/stores/{{ store.id }}">{{ store.code }}</a> / <a href="/units/{{ unit.id }}">{{ unit.number }}</a> /</div>
+  <h1>Editar unidade consumidora</h1><div class="muted">Corrija os dados do ponto de energia e defina o dia em que a conta vence.</div></div></div>
+
+<form class="card" method="post" action="/units/{{ unit.id }}/edit" style="max-width:720px">
+  {{ csrf(csrf_token) }}
+  <div class="row row-2">
+    <div class="field"><label for="store_id">Loja</label>
+      <select id="store_id" name="store_id">{% for s in stores %}<option value="{{ s.id }}" {{ 'selected' if s.id == unit.store_id }}>{{ s.label }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="number">Nº da unidade consumidora *</label><input id="number" name="number" type="text" required value="{{ unit.number }}" autocomplete="off"></div>
+  </div>
+  <div class="row row-2">
+    <div class="field"><label for="description">Descrição</label><input id="description" name="description" type="text" maxlength="200" value="{{ unit.description or '' }}"></div>
+    <div class="field"><label for="internal_code">Código interno / fase</label><input id="internal_code" name="internal_code" type="text" maxlength="60" value="{{ unit.internal_code or '' }}"></div>
+  </div>
+  <div class="row row-2">
+    <div class="field"><label for="record_type_id">Distribuidora</label>
+      <select id="record_type_id" name="record_type_id">{% for t in types %}<option value="{{ t.id }}" {{ 'selected' if unit.record_type_id == t.id }}>{{ t.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="due_day">Dia de vencimento da conta</label>
+      {% set due_value = unit.due_day %}{% include "units/_dueday.html" %}
+      <div class="hint" id="due-hint">{% if next_due %}Próximo vencimento: <strong>{{ next_due|date_br }}</strong>. {% endif %}Todo mês, neste dia, o funcionário é avisado ao entrar no sistema. Opcional.</div></div>
+  </div>
+  <div class="field"><label for="notes">Observações</label><textarea id="notes" name="notes">{{ unit.notes or '' }}</textarea></div>
+  <div class="field"><label for="active">Situação</label>
+    <select id="active" name="active" style="max-width:220px"><option value="1" {{ 'selected' if unit.active }}>Ativa</option><option value="" {{ 'selected' if not unit.active }}>Inativa (não gera aviso)</option></select></div>
+  <div class="actions"><button class="btn primary">Salvar alterações</button><a class="btn" href="/units/{{ unit.id }}">Cancelar</a></div>
+</form>
+{% endblock %}

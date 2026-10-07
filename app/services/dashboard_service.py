@@ -26,7 +26,11 @@ def overview(db: Session, month: date | None = None) -> dict:
         bill = db.get(EnergyBill, last_import.bill_id)
         if bill:
             last_store = bill.unit.store
+    no_due = list(db.scalars(select(ConsumerUnit).join(Store, Store.id == ConsumerUnit.store_id)
+                             .where(ConsumerUnit.active.is_(True), Store.active.is_(True), ConsumerUnit.due_day.is_(None))
+                             .order_by(Store.code, ConsumerUnit.number)))
     return {
+        "units_no_due": no_due[:8], "units_no_due_total": len(no_due),
         "month": month, "stores": stores, "units": units, "records_in_month": bills_in_month + manual_in_month,
         "pending": pending, "last_import": last_import, "last_store": last_store,
     }

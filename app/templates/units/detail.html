@@ -4,8 +4,9 @@
 {% block content %}
 <div class="page-head">
   <div><div class="crumbs"><a href="/stores">Lojas</a> / <a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div>
-    <h1>{{ store.code }} · Unidade {{ unit.number }}</h1><div class="muted">{{ rtype.name if rtype else '' }}{% if unit.description %} · {{ unit.description }}{% endif %}</div></div>
-  <div class="actions">{% if user.can_write %}<a class="btn primary" href="/import?store_id={{ store.id }}">Importar conta</a><a class="btn" href="/manual?store_id={{ store.id }}">Lançamento manual</a>{% endif %}</div>
+    <h1>{{ store.code }} · Unidade {{ unit.number }}</h1><div class="muted">{{ rtype.name if rtype else '' }}{% if unit.description %} · {{ unit.description }}{% endif %}
+      {% if unit.due_day %} · <span class="badge" title="O funcionário é avisado neste dia, todo mês">Vence todo dia {{ unit.due_day }}</span>{% elif user.can_write %} · <a class="badge warn" href="/units/{{ unit.id }}/edit">Sem dia de vencimento · definir</a>{% endif %}</div></div>
+  <div class="actions">{% if user.can_write %}<a class="btn" href="/units/{{ unit.id }}/edit">Editar unidade</a><a class="btn primary" href="/import?store_id={{ store.id }}">Importar conta</a><a class="btn" href="/manual?store_id={{ store.id }}">Lançamento manual</a>{% endif %}</div>
 </div>
 
 {% if last %}

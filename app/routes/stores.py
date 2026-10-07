@@ -11,9 +11,9 @@ from app.repositories.stores import (
     list_stores,
 )
 from app.security import current_user, verify_csrf, writer_required
-from app.services import audit_service, chart_service
+from app.services import audit_service, chart_service, due_service
 from app.services.import_service import UnitConflict, create_unit
-from app.utils.parsing import clean_str, normalize_uc, parse_reference
+from app.utils.parsing import clean_str, normalize_uc, parse_due_day, parse_reference
 from app.web import flash, render
 
 router = APIRouter()
@@ -109,40 +109,69 @@ def store_edit(request: Request, store_id: int, name: str = Form(""), location: 
 
 @router.post("/stores/{store_id}/units", dependencies=[Depends(verify_csrf)])
 def unit_add(request: Request, store_id: int, number: str = Form(...), description: str = Form(""),
-             internal_code: str = Form(""), record_type_id: int | None = Form(None),
+             internal_code: str = Form(""), record_type_id: int | None = Form(None), due_day: str = Form(""),
              user: User = Depends(writer_required), db: Session = Depends(get_db)):
     store = _store_or_404(db, store_id)
+    day, ok = parse_due_day(due_day)
+    if not ok:
+        flash(request, "Dia de vencimento inválido (use de 1 a 31).", "error")
+        return RedirectResponse(f"/stores/{store_id}/settings", status_code=303)
     try:
         unit = create_unit(db, store.id, number, clean_str(description, 200), record_type_id, user.id)
-        unit.internal_code = clean_str(internal_code, 60)
+        unit.internal_code, unit.due_day = clean_str(internal_code, 60), day
         db.commit()
-        flash(request, f"Unidade {unit.number} adicionada.")
+        flash(request, f"Unidade {unit.number} adicionada." + (f" Vence todo dia {day}." if day else
+              " Defina o dia de vencimento (Editar) para receber o aviso."))
     except UnitConflict as exc:
         db.rollback()
         flash(request, str(exc), "error")
     return RedirectResponse(f"/stores/{store_id}/settings", status_code=303)
 
 
-@router.post("/units/{unit_id}/edit", dependencies=[Depends(verify_csrf)])
-def unit_edit(request: Request, unit_id: int, number: str = Form(...), description: str = Form(""),
-              internal_code: str = Form(""), notes: str = Form(""), record_type_id: int | None = Form(None),
-              active: str = Form(""), user: User = Depends(writer_required), db: Session = Depends(get_db)):
+@router.get("/units/{unit_id}/edit")
+def unit_edit_page(request: Request, unit_id: int, user: User = Depends(writer_required), db: Session = Depends(get_db)):
     unit = db.get(ConsumerUnit, unit_id)
     if not unit:
         raise HTTPException(404, "Unidade não encontrada.")
+    nxt = due_service.next_occurrence(unit.due_day, due_service.local_today()) if unit.due_day else None
+    return render(request, "units/edit.html", user=user, unit=unit, store=unit.store, stores=list_stores(db),
+                  types=[t for t in list_record_types(db) if t.is_bill], next_due=nxt, errors={}, form=None)
+
+
+@router.post("/units/{unit_id}/edit", dependencies=[Depends(verify_csrf)])
+async def unit_edit(request: Request, unit_id: int, number: str = Form(...), description: str = Form(""),
+                    internal_code: str = Form(""), notes: str = Form(""), record_type_id: int | None = Form(None),
+                    active: str = Form(""), store_id: int | None = Form(None),
+                    user: User = Depends(writer_required), db: Session = Depends(get_db)):
+    unit = db.get(ConsumerUnit, unit_id)
+    if not unit:
+        raise HTTPException(404, "Unidade não encontrada.")
+    # FastAPI trata campo vazio como ausente: lê o formulário bruto para separar "não mexer" de "limpar o vencimento"
+    form = await request.form()
+    due_day = form.get("due_day") if "due_day" in form else None
     key = normalize_uc(number)
     clash = db.query(ConsumerUnit).filter(ConsumerUnit.number_normalized == key, ConsumerUnit.id != unit.id).first()
-    if not key or clash:
-        flash(request, "Número de unidade inválido ou já cadastrado.", "error")
-    else:
-        unit.number, unit.number_normalized = number.strip(), key
-        unit.description, unit.internal_code, unit.notes = (clean_str(description, 200), clean_str(internal_code, 60),
-                                                           clean_str(notes))
-        unit.record_type_id, unit.active = record_type_id, bool(active)
-        audit_service.log(db, user.id, "update", "consumer_unit", unit.id)
-        db.commit()
-        flash(request, "Unidade atualizada.")
-    return RedirectResponse(f"/stores/{unit.store_id}/settings", status_code=303)
+    day, day_ok = parse_due_day(due_day) if due_day is not None else (unit.due_day, True)   # None = campo ausente: não altera
+    if not key or clash or not day_ok:
+        flash(request, "Dia de vencimento inválido (use de 1 a 31)." if not day_ok else
+              "Número de unidade inválido ou já cadastrado.", "error")
+        return RedirectResponse(f"/units/{unit.id}/edit", status_code=303)
+    before = {"number": unit.number, "due_day": unit.due_day, "active": unit.active, "store_id": unit.store_id}
+    unit.number, unit.number_normalized = number.strip(), key
+    unit.description, unit.internal_code, unit.notes = (clean_str(description, 200), clean_str(internal_code, 60),
+                                                       clean_str(notes))
+    unit.record_type_id, unit.active = record_type_id, bool(active)
+    if store_id and db.get(Store, store_id):
+        unit.store_id = store_id
+    if day != unit.due_day:
+        unit.due_ack = None          # mudou o dia: o aviso do novo vencimento volta a valer
+    unit.due_day = day
+    audit_service.log(db, user.id, "update", "consumer_unit", unit.id,
+                      {"before": before, "after": {"number": unit.number, "due_day": day, "active": unit.active,
+                                                   "store_id": unit.store_id}})
+    db.commit()
+    flash(request, "Unidade atualizada." + (f" Vence todo dia {day}." if day else " Sem dia de vencimento (não gera aviso)."))
+    return RedirectResponse(f"/units/{unit.id}", status_code=303)
 
 
 @router.get("/units/{unit_id}")

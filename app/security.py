@@ -179,6 +179,12 @@ def director_required(user: User = Depends(current_user)) -> User:
     return user
 
 
+def alerts_required(user: User = Depends(current_user)) -> User:
+    if not user.gets_due_alerts:
+        raise HTTPException(status_code=403, detail="Os avisos de vencimento são destinados ao funcionário.")
+    return user
+
+
 def writer_required(user: User = Depends(current_user)) -> User:
     if not user.can_write:
         raise HTTPException(status_code=403, detail="Seu perfil é somente de consulta.")

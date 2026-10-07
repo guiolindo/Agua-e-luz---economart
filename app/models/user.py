@@ -37,6 +37,11 @@ class User(TimestampMixin, Base):
         return self.role in ("director", "admin")
 
     @property
+    def gets_due_alerts(self) -> bool:
+        """Os avisos de vencimento são do funcionário (responsável pela gestão de energia)."""
+        return self.role in ("operator", "user")
+
+    @property
     def can_write(self) -> bool:
         """Importar/lançar. 'viewer' só consulta e imprime."""
         return self.role in ("admin", "operator", "user")
