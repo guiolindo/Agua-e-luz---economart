@@ -91,6 +91,8 @@ Manutenção de Gerador são semeados.
 pytest
 ```
 
+Para rodar contra PostgreSQL (como no Railway): `TEST_DATABASE_URL=postgresql://usuario@localhost:5432/banco_de_teste pytest` — o banco precisa ser UTF-8 e será recriado a cada teste.
+
 Cobrem variação %, parsing de valores/datas brasileiros, matching UC → loja (e sugestões para erro de leitura),
 duplicidade, parsing/validação da resposta do Gemini, upload (magic bytes), cálculos dos gráficos e o fluxo HTTP completo
 de importação — todos sem chamar a API (o Gemini é substituído por `MockExtractor`).
