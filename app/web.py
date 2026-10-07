@@ -21,6 +21,7 @@ def flash(request: Request, message: str, level: str = "ok") -> None:
 def render(request: Request, name: str, status_code: int = 200, **ctx):
     ctx.setdefault("user", None)
     ctx["csrf_token"] = csrf_token(request)
+    ctx["csp_nonce"] = getattr(request.state, "csp_nonce", "")
     ctx["flashes"] = request.session.pop("flash", [])
     ctx["path"] = request.url.path
     return templates.TemplateResponse(request, name, ctx, status_code=status_code)

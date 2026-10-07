@@ -22,6 +22,18 @@ class Settings(BaseSettings):
     admin_username: str = "admin"
     admin_password: str = ""
 
+    # --- Segurança
+    document_encryption_key: str = ""   # Fernet; várias chaves separadas por vírgula = rotação (a 1ª cifra)
+    pseudonym_key: str = ""             # HMAC dos IPs no log de auditoria (LGPD); cai em SECRET_KEY se vazio
+    trusted_proxy_count: int = 1        # nº de proxies à frente (Railway = 1) para descobrir o IP real
+    max_login_attempts: int = 5
+    login_block_minutes: int = 15
+    session_idle_minutes: int = 60
+    session_max_hours: int = 12
+    min_password_length: int = 10
+    rate_limit_enabled: bool = True
+    csrf_allowed_origins: str = ""      # origens extras permitidas em POST (CSV); normalmente vazio
+
     # O envio inline ao Gemini vai em base64 (+33%) e o limite da requisição é ~20 MB: 12 MB brutos deixam folga.
     max_upload_mb: int = 12
     gemini_max_concurrency: int = 2  # a cota gratuita (~15 pedidos/min) estoura com rajadas

@@ -17,7 +17,7 @@
   </ol><p class="muted small" style="margin-bottom:0">Normalmente leva alguns segundos. Você pode manter esta página aberta.</p></div>
 {% endif %}
 {% endblock %}
-{% block scripts %}{% if job.status == 'processing' %}<script>
+{% block scripts %}{% if job.status == 'processing' %}<script nonce="{{ csp_nonce }}">
 (function () {
   const ol = document.getElementById('steps'), order = [...ol.children].map((li) => li.dataset.step);
   function paint(stage) {

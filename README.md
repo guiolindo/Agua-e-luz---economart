@@ -6,6 +6,8 @@ a IA (Gemini) lê os dados, o sistema descobre sozinho a **loja e a unidade cons
 
 Stack: Python · FastAPI · SQLAlchemy 2 · Jinja2 · Chart.js (embutido em `static/js/vendor`) · SQLite (dev) / PostgreSQL (produção).
 
+> **Segurança:** veja [`SECURITY.md`](SECURITY.md). Em produção (`DEBUG=false`) o servidor só inicia com `SECRET_KEY`, `DOCUMENT_ENCRYPTION_KEY` e PostgreSQL configurados.
+
 ## Fluxo principal
 
 ```
@@ -66,7 +68,9 @@ Edite o `.env`:
 | `EXTRACTION_PROVIDER` | `gemini` (real) ou `mock` (responde sempre com `tests/fixtures/cemig_set_2026.json`, sem custo). |
 | `DATABASE_URL` | `sqlite:///app.db` (dev) ou a URL do PostgreSQL. `postgres://` é convertido automaticamente. |
 | `SECRET_KEY` | Obrigatória fora do `DEBUG`. Gere com `python -c "import secrets; print(secrets.token_hex(32))"`. |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Criam o administrador no primeiro start (se não existir nenhum usuário). Em `DEBUG` sem senha, usa `admin`/`admin`. |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Criam o administrador no primeiro start (se não existir nenhum usuário). Em produção a senha precisa ter ≥12 caracteres e não ser fraca. Em `DEBUG` sem senha, usa `admin`/`admin`. |
+| `DOCUMENT_ENCRYPTION_KEY` | Chave Fernet que criptografa fotos/PDFs no banco (obrigatória em produção). |
+| `TRUSTED_PROXY_COUNT` | Proxies à frente do app (Railway = 1), para o IP real. |
 | `MAX_UPLOAD_MB` | Limite do upload (padrão 12; o envio ao Gemini vai em base64, +33%, e o teto da requisição é ~20 MB). |
 | `GEMINI_MAX_CONCURRENCY` | Chamadas simultâneas ao Gemini (padrão 2). |
 | `DOCUMENT_RETENTION_DAYS` | Dias até a foto/PDF original ser apagada do banco (padrão 183 ≈ 6 meses). |
@@ -94,8 +98,8 @@ de importação — todos sem chamar a API (o Gemini é substituído por `MockEx
 1. Crie um projeto no Railway a partir deste repositório do GitHub (build automático via Nixpacks; `railway.json` e `Procfile` já definem o start).
 2. Adicione o plugin **PostgreSQL**. No serviço web, em *Variables*, referencie `DATABASE_URL` do Postgres.
 3. Defina as variáveis do serviço web (atalho: abra *Variables → Raw Editor* e cole o conteúdo de `railway.env.example`, preenchendo `GEMINI_API_KEY`, `SECRET_KEY` e `ADMIN_PASSWORD`):
-   `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.5-flash-lite`, `EXTRACTION_PROVIDER=gemini`, `SECRET_KEY`, `DEBUG=false`,
-   `ADMIN_USERNAME`, `ADMIN_PASSWORD`.
+   `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.5-flash-lite`, `EXTRACTION_PROVIDER=gemini`, `SECRET_KEY`, `DOCUMENT_ENCRYPTION_KEY`,
+   `DEBUG=false`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`.
 4. Gere um domínio público (*Settings → Networking*). O healthcheck é `/health`.
 
 As imagens das contas ficam **no banco** (tabela `documents`), então não é preciso volume e nada se perde em redeploys.
@@ -140,6 +144,6 @@ tests/               pytest + fixtures/cemig_set_2026.json
 
 - Migrações: `create_all` + adição automática de colunas novas anuláveis (`ensure_columns`). Mudanças maiores exigem Alembic.
 - Importação em lote e exportação (Excel/CSV/PDF) não foram implementadas; a arquitetura (`Import` + `run_import`) já comporta.
-- Sem limitação de tentativas de login e sem recuperação de senha (o admin cria/desativa usuários em *Usuários*).
+- Sem 2FA e sem recuperação de senha por e-mail (o admin redefine em *Usuários*). Veja o risco residual em `SECURITY.md`.
 - A leitura por IA nunca foi validada aqui com a API real do Gemini (sem chave neste ambiente): os testes usam o mock.
   Antes de usar em produção, importe algumas contas reais e confira a tela de revisão.

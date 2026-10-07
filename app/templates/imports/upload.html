@@ -33,7 +33,7 @@
   </section>
 </div>
 {% endblock %}
-{% block scripts %}<script>
+{% block scripts %}<script nonce="{{ csp_nonce }}">
 (function () {
   const input = document.getElementById('file'), drop = document.getElementById('drop'), go = document.getElementById('go'),
         picked = document.getElementById('picked'), prev = document.getElementById('preview');

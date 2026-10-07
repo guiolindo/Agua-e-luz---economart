@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import RecordType, User
-from app.security import hash_password
+from app.security import hash_password, validate_password
 
 log = logging.getLogger(__name__)
 
@@ -43,6 +43,10 @@ def seed(db: Session) -> None:
             password = "admin"
             log.warning("ADMIN_PASSWORD vazio: usando senha 'admin' (apenas DEBUG).")
         if password:
+            if not settings.debug:
+                err = validate_password(password, settings.admin_username, min_length=12)
+                if err:
+                    raise RuntimeError(f"ADMIN_PASSWORD recusada: {err} (em produção: mínimo 12 caracteres)")
             db.add(User(username=settings.admin_username, password_hash=hash_password(password), role="admin"))
         else:
             log.warning("Nenhum usuário existe e ADMIN_PASSWORD não foi definido: defina-o para criar o admin.")

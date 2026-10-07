@@ -11,6 +11,7 @@ from app.models import ConsumerUnit, Document, EnergyBill, Import, Store
 from app.models.mixins import utcnow
 from app.schemas.extraction import BillExtraction
 from app.services import audit_service
+from app.services.crypto_service import CryptoError, encrypt
 from app.services.extraction_service import Extractor, get_extractor
 from app.services.gemini_service import ExtractionError
 from app.services.matching_service import find_unit_by_number
@@ -33,8 +34,9 @@ BILL_FIELDS = [
 def create_import(db: Session, filename: str, data: bytes, user_id: int | None,
                   store_hint_id: int | None = None) -> Import:
     safe_name, content_type = validate_upload(filename, data, get_settings().max_upload_bytes)
+    stored, encrypted = encrypt(data)
     doc = Document(filename=safe_name, content_type=content_type, size=len(data), sha256=sha256(data),
-                   data=data, uploaded_by=user_id)
+                   data=stored, encrypted=encrypted, uploaded_by=user_id)
     db.add(doc)
     db.flush()
     job = Import(document_id=doc.id, store_hint_id=store_hint_id, created_by=user_id)
@@ -58,8 +60,8 @@ def run_import(import_id: int, extractor: Extractor | None = None, session_facto
         db.commit()
         try:
             with _SLOTS:
-                extraction = extractor.extract(job.document.data, job.document.content_type, store_catalog(db))
-        except ExtractionError as exc:
+                extraction = extractor.extract(job.document.plain(), job.document.content_type, store_catalog(db))
+        except (ExtractionError, CryptoError) as exc:
             _fail(db, job, str(exc))
             return
         except Exception:

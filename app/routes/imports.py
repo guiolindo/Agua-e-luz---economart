@@ -17,7 +17,7 @@ from app.database import get_db
 from app.models import ConsumerUnit, Import, User
 from app.repositories.stores import default_bill_type, list_record_types, list_stores
 from app.schemas.forms import extraction_to_form, low_confidence_fields, parse_bill_form
-from app.security import current_user, verify_csrf
+from app.security import verify_csrf, writer_required
 from app.services import audit_service
 from app.services.duplicate_service import find_bill_duplicates
 from app.services.import_service import (
@@ -50,7 +50,7 @@ def _job_or_404(db: Session, import_id: int) -> Import:
 
 
 @router.get("/import")
-def import_page(request: Request, store_id: int | None = None, user: User = Depends(current_user),
+def import_page(request: Request, store_id: int | None = None, user: User = Depends(writer_required),
                 db: Session = Depends(get_db)):
     recent = db.scalars(select(Import).order_by(Import.id.desc()).limit(8)).all()
     return render(request, "imports/upload.html", user=user, stores=list_stores(db, only_active=True),
@@ -59,7 +59,7 @@ def import_page(request: Request, store_id: int | None = None, user: User = Depe
 
 @router.post("/import", dependencies=[Depends(verify_csrf)])
 async def import_upload(request: Request, background: BackgroundTasks, file: UploadFile = File(...),
-                        store_id: int | None = Form(None), user: User = Depends(current_user),
+                        store_id: int | None = Form(None), user: User = Depends(writer_required),
                         db: Session = Depends(get_db)):
     from app.services.import_service import create_import
 
@@ -76,7 +76,7 @@ async def import_upload(request: Request, background: BackgroundTasks, file: Upl
 
 
 @router.get("/import/{import_id}")
-def import_progress(request: Request, import_id: int, user: User = Depends(current_user),
+def import_progress(request: Request, import_id: int, user: User = Depends(writer_required),
                     db: Session = Depends(get_db)):
     job = _job_or_404(db, import_id)
     expire_if_stale(db, job)
@@ -86,14 +86,14 @@ def import_progress(request: Request, import_id: int, user: User = Depends(curre
 
 
 @router.get("/import/{import_id}/status")
-def import_status(import_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+def import_status(import_id: int, user: User = Depends(writer_required), db: Session = Depends(get_db)):
     job = _job_or_404(db, import_id)
     expire_if_stale(db, job)
     return JSONResponse({"status": job.status, "stage": job.stage, "error": job.error})
 
 
 @router.post("/import/{import_id}/retry", dependencies=[Depends(verify_csrf)])
-def import_retry(import_id: int, background: BackgroundTasks, user: User = Depends(current_user),
+def import_retry(import_id: int, background: BackgroundTasks, user: User = Depends(writer_required),
                  db: Session = Depends(get_db)):
     job = _job_or_404(db, import_id)
     if job.status == "failed":
@@ -104,7 +104,7 @@ def import_retry(import_id: int, background: BackgroundTasks, user: User = Depen
 
 
 @router.post("/import/{import_id}/cancel", dependencies=[Depends(verify_csrf)])
-def import_cancel(request: Request, import_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+def import_cancel(request: Request, import_id: int, user: User = Depends(writer_required), db: Session = Depends(get_db)):
     job = _job_or_404(db, import_id)
     if job.status != "confirmed":
         job.status = "cancelled"
@@ -144,7 +144,7 @@ def _review_ctx(db: Session, job: Import, form: dict, errors: dict | None = None
 
 
 @router.get("/import/{import_id}/review")
-def review(request: Request, import_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+def review(request: Request, import_id: int, user: User = Depends(writer_required), db: Session = Depends(get_db)):
     job = _job_or_404(db, import_id)
     if job.status != "ready":
         return RedirectResponse(f"/import/{job.id}", status_code=303)
@@ -158,7 +158,7 @@ def review(request: Request, import_id: int, user: User = Depends(current_user),
 
 
 @router.post("/import/{import_id}/confirm", dependencies=[Depends(verify_csrf)])
-async def confirm(request: Request, import_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+async def confirm(request: Request, import_id: int, user: User = Depends(writer_required), db: Session = Depends(get_db)):
     job = _job_or_404(db, import_id)
     if job.status != "ready":
         raise HTTPException(409, "Esta importação já foi finalizada ou descartada.")

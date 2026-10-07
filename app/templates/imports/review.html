@@ -68,7 +68,7 @@
   </section>
 
   <div class="actions"><button class="btn primary">Confirmar e salvar</button>
-    <button class="btn danger" type="submit" form="cancel" onclick="return confirm('Descartar esta importação?')">Descartar importação</button></div>
+    <button class="btn danger" type="submit" form="cancel" data-confirm="Descartar esta importação?">Descartar importação</button></div>
 </form>
 
 <aside class="docpane">
@@ -82,7 +82,7 @@
 </div>
 <form id="cancel" method="post" action="/import/{{ job.id }}/cancel">{{ csrf(csrf_token) }}</form>
 {% endblock %}
-{% block scripts %}<script>
+{% block scripts %}<script nonce="{{ csp_nonce }}">
 document.querySelectorAll('.unit-choice').forEach((box) => {
   const radio = box.querySelector('input[type=radio]');
   box.addEventListener('focusin', () => { radio.checked = true; });

@@ -8,3 +8,4 @@ pydantic-settings>=2.4
 google-genai>=1.0
 psycopg[binary]>=3.2
 pillow>=10.4
+cryptography>=42

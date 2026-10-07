@@ -7,12 +7,12 @@
   <div><div class="crumbs"><a href="/units/{{ unit.id }}">{{ unit.number }}</a> /</div><h1>Imprimir conta</h1></div>
   <form method="get" class="actions">
     <label for="b" style="margin:0">Conta</label>
-    <select id="b" style="width:auto" onchange="location.href='/bills/' + this.value + '/print' + (document.getElementById('doc').checked ? '?doc=1' : '')">
+    <select id="b" style="width:auto" data-bill-switch>
       {% for b in all_bills %}<option value="{{ b.id }}" {{ 'selected' if b.id == bill.id }}>{{ b.reference|month_label }} · {{ b.total_value|brl }}</option>{% endfor %}
     </select>
-    {% if bill.document and bill.document.available %}<label style="margin:0;font-weight:400"><input id="doc" type="checkbox" name="doc" value="1" {{ 'checked' if include_doc }} onchange="this.form.submit()"> Incluir foto/PDF original</label>
+    {% if bill.document and bill.document.available %}<label style="margin:0;font-weight:400"><input id="doc" type="checkbox" name="doc" value="1" {{ 'checked' if include_doc }} data-autosubmit> Incluir foto/PDF original</label>
     {% else %}<input id="doc" type="checkbox" hidden>{% endif %}
-    <button class="btn primary" type="button" onclick="window.print()">Imprimir</button>
+    <button class="btn primary" type="button" data-print>Imprimir</button>
   </form>
 </div>
 
@@ -71,7 +71,7 @@
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/vendor/chart.umd.min.js"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   if (typeof Chart === 'undefined') return;
   const d = JSON.parse(document.getElementById('bill-data').textContent), s = d.series;

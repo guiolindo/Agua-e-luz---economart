@@ -7,7 +7,7 @@
   <form method="get" class="actions">
     <label for="s" style="margin:0">De</label><input id="s" type="month" name="start" value="{{ start.strftime('%Y-%m') }}" style="width:auto">
     <label for="e" style="margin:0">Até</label><input id="e" type="month" name="end" value="{{ end.strftime('%Y-%m') }}" style="width:auto">
-    <button class="btn">Atualizar</button><button class="btn primary" type="button" onclick="window.print()">Imprimir</button>
+    <button class="btn">Atualizar</button><button class="btn primary" type="button" data-print>Imprimir</button>
   </form>
 </div>
 
@@ -48,7 +48,7 @@
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/vendor/chart.umd.min.js"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   if (typeof Chart === 'undefined') return;
   const nf = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });

@@ -10,7 +10,7 @@ from app.database import get_db
 from app.models import ConsumerUnit, EnergyBill, ManualRecord, RecordType, User
 from app.repositories.stores import list_record_types, list_stores
 from app.schemas.forms import bill_to_form, parse_bill_form
-from app.security import admin_required, current_user, verify_csrf
+from app.security import admin_required, current_user, verify_csrf, writer_required
 from app.services import audit_service
 from app.services.duplicate_service import find_bill_duplicates, find_manual_duplicates
 from app.services.import_service import save_bill
@@ -33,7 +33,7 @@ def _ctx(db: Session, **extra) -> dict:
 
 @router.get("/manual")
 def manual_page(request: Request, bill: int | None = None, record: int | None = None,
-                store_id: int | None = None, user: User = Depends(current_user), db: Session = Depends(get_db)):
+                store_id: int | None = None, user: User = Depends(writer_required), db: Session = Depends(get_db)):
     extra: dict = {"sel_store": store_id}
     if bill:
         b = db.get(EnergyBill, bill)
@@ -52,7 +52,7 @@ def manual_page(request: Request, bill: int | None = None, record: int | None = 
 
 
 @router.post("/manual", dependencies=[Depends(verify_csrf)])
-async def manual_save(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+async def manual_save(request: Request, user: User = Depends(writer_required), db: Session = Depends(get_db)):
     posted = {k: v for k, v in (await request.form()).items() if isinstance(v, str)}
     edit_bill_id, edit_record_id = posted.get("edit_bill"), posted.get("edit_record")
     rtype = db.get(RecordType, int(posted["type_id"])) if (posted.get("type_id") or "").isdigit() else None

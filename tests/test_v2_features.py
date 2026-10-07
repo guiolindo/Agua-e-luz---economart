@@ -190,7 +190,7 @@ def test_print_report_has_summary_blocks_and_variation(client, db):
                                 "total_value": v, "days": "31"})
     html = client.get(f"/stores/{store_id}/report?start=2026-08&end=2026-09").text
     assert "Relatório por loja" in html and "CD300" in html and "↑ 4,96%" in html and "Dias de consumo" in html
-    assert "R$ 20.505,00" in html and "window.print()" in html
+    assert "R$ 20.505,00" in html and "data-print" in html
 
 
 # ---------- migração leve de colunas ----------
@@ -224,7 +224,7 @@ def test_bill_print_page_shows_selected_bill_variation_and_charts(client, db):
     assert r.status_code == 200
     html = r.text
     assert "SET/2026" in html and "R$ 20.505,00" in html and "↑ 4,96%" in html and "vs. AGO/2026" in html
-    assert 'id="c-value"' in html and 'id="c-cons"' in html and 'id="c-dem"' in html and "window.print()" in html
+    assert 'id="c-value"' in html and 'id="c-cons"' in html and 'id="c-dem"' in html and "data-print" in html
     assert html.count("<option value=") >= 3                              # seletor para trocar de conta/mês
     payload = json.loads(re.search(r'id="bill-data">(.*?)</script>', html, re.S).group(1))
     assert payload["selected"] == 11 and payload["labels"][11] == "SET/26"   # mês da conta em destaque no gráfico

@@ -9,9 +9,16 @@ from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import database, models  # noqa: F401  (registra os modelos no metadata)
+from app import database, models, security  # noqa: F401  (models registra as tabelas no metadata)
 from app.config import get_settings
+from app.middleware import (
+    BodySizeLimitMiddleware,
+    CSRFOriginMiddleware,
+    RateLimitMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.routes import (
+    account,
     admin,
     auth,
     charts,
@@ -22,8 +29,9 @@ from app.routes import (
     stores,
     types,
 )
-from app.security import LoginRequired
+from app.security import LoginRequired, MustChangePassword
 from app.seed import seed
+from app.startup_checks import security_problems
 from app.services.retention_service import retention_loop
 from app.utils.log_safety import install_log_redaction
 from app.web import render
@@ -46,20 +54,28 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    problems = security_problems(settings)
+    if problems:
+        raise RuntimeError("Configuração insegura — o servidor não inicia em produção sem corrigir:\n - " +
+                           "\n - ".join(problems))
     secret = settings.secret_key
-    if not secret:
-        if not settings.debug:
-            raise RuntimeError("SECRET_KEY é obrigatório fora do modo DEBUG.")
+    if not secret:  # só chega aqui em DEBUG
         secret = secrets.token_hex(32)
         logging.getLogger(__name__).warning("SECRET_KEY vazio: chave temporária (sessões caem a cada reinício).")
+    security.configure(secret)
 
     install_log_redaction(settings.gemini_api_key)
     app = FastAPI(title="Controle de Energia", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
-    app.add_middleware(SessionMiddleware, secret_key=secret, https_only=not settings.debug, same_site="lax",
-                       max_age=60 * 60 * 12)
+    # Ordem: o último adicionado é o mais externo (cabeçalhos envolvem tudo; a sessão fica por dentro).
+    app.add_middleware(SessionMiddleware, secret_key=secret, session_cookie="energia_session",
+                       https_only=not settings.debug, same_site="strict", max_age=settings.session_max_hours * 3600)
+    app.add_middleware(CSRFOriginMiddleware)
+    app.add_middleware(BodySizeLimitMiddleware)
+    app.add_middleware(RateLimitMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware)
     app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-    for module in (auth, dashboard, stores, types, imports, manual, charts, documents, admin):
+    for module in (auth, account, dashboard, stores, types, imports, manual, charts, documents, admin):
         app.include_router(module.router)
 
     @app.get("/health", include_in_schema=False)
@@ -69,6 +85,16 @@ def create_app() -> FastAPI:
     @app.exception_handler(LoginRequired)
     async def _login_required(request: Request, exc: LoginRequired):
         return RedirectResponse(f"/login?next={request.url.path}", status_code=303)
+
+    @app.exception_handler(MustChangePassword)
+    async def _must_change(request: Request, exc: MustChangePassword):
+        return RedirectResponse("/account/password", status_code=303)
+
+    @app.exception_handler(Exception)
+    async def _unexpected(request: Request, exc: Exception):
+        logging.getLogger(__name__).exception("Erro não tratado em %s %s", request.method, request.url.path)
+        return render(request, "error.html", status_code=500, code=500,
+                      message="Ocorreu um erro inesperado. Tente novamente; se persistir, avise o administrador.")
 
     @app.exception_handler(HTTPException)
     async def _http_error(request: Request, exc: HTTPException):
