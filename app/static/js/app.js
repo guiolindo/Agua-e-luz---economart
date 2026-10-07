@@ -129,11 +129,24 @@ document.addEventListener('submit', (e) => {
     if (b.form !== f) return; b.dataset.label = b.textContent; setTimeout(() => { b.disabled = true; b.classList.add('loading'); b.textContent = 'Salvando…'; }, 0); });
 });
 window.addEventListener('pageshow', (e) => { if (e.persisted) document.querySelectorAll('button.loading').forEach((b) => { b.disabled = false; b.classList.remove('loading'); b.textContent = b.dataset.label; }); });
-// Busca rápida em listas (data-filter="#alvo tr")
+// Busca rápida em listas (data-filter="#alvo tr"). Linhas de grupo (.group-row)
+// aparecem apenas quando há pelo menos uma linha filha visível.
 document.addEventListener('input', (e) => {
   const t = e.target; if (!t.matches('[data-filter]')) return;
   const q = t.value.trim().toLowerCase(); let shown = 0;
-  document.querySelectorAll(t.dataset.filter).forEach((row) => { const hit = !q || row.textContent.toLowerCase().includes(q); row.hidden = !hit; if (hit) shown++; });
+  const rows = Array.from(document.querySelectorAll(t.dataset.filter));
+  rows.forEach((row) => {
+    if (row.classList.contains('group-row')) return;  // avaliadas depois
+    const blob = row.dataset.filterBlob || row.textContent;
+    const hit = !q || blob.toLowerCase().includes(q);
+    row.hidden = !hit; if (hit) shown++;
+  });
+  // Esconde cabeçalhos de grupo sem nenhuma linha visível abaixo (até o próximo grupo)
+  let cur = null;
+  rows.forEach((row) => {
+    if (row.classList.contains('group-row')) { cur = row; cur.hidden = true; return; }
+    if (cur && !row.hidden) cur.hidden = false;
+  });
   const out = document.getElementById(t.dataset.count); if (out) out.textContent = shown + ' resultado(s)';
 });
 

@@ -348,3 +348,8 @@ body.drawer-open { overflow: hidden; }
 .var { display: inline-flex; align-items: center; gap: 2px; }
 
 .flash .flash-ico { color: currentColor; opacity: .9; }
+
+/* Linha de agrupamento em tabelas (ex.: mês de referência nos lançamentos manuais) */
+.group-row td { background: #f6f8fb; color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 8px 14px; border-top: 1px solid var(--line); }
+.group-row:first-child td { border-top: 0; }
+.searchbox input[type=search] { max-width: 100%; }

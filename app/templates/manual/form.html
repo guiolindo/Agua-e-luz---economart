@@ -57,13 +57,18 @@
 </form>
 
 <aside aria-label="Últimos lançamentos">
-  <section class="card flush"><div style="padding:14px 18px 0"><h2>Últimos lançamentos manuais</h2></div>
-    <div class="tablewrap"><table><tbody>
-      {% for r in recent_manual %}<tr><td><strong>{{ r.store.code }}</strong> · {{ r.record_type.name }}<div class="muted small">{{ r.reference|month_label }}</div></td>
-        <td class="num">{{ r.value|brl }}</td><td class="right"><a class="btn sm" href="/manual?record={{ r.id }}">Editar</a></td></tr>{% endfor %}
-      {% for b in recent_bills %}<tr><td><strong>{{ b.unit.number }}</strong> · Conta<div class="muted small">{{ b.reference|month_label }}</div></td>
-        <td class="num">{{ b.total_value|brl }}</td><td class="right"><a class="btn sm" href="/manual?bill={{ b.id }}">Editar</a></td></tr>{% endfor %}
-      {% if not recent_manual and not recent_bills %}<tr><td class="muted">Nenhum lançamento manual ainda.</td></tr>{% endif %}
+  <section class="card flush"><div style="padding:14px 18px 0">
+    <h2 style="margin-bottom:6px">Últimos lançamentos manuais</h2>
+    {% if recent_manual or recent_bills %}<div class="field searchbox" style="margin:0 0 8px"><label for="qm" class="sr">Buscar lançamento</label>
+      <input id="qm" type="search" placeholder="Buscar por loja, tipo ou mês (ex.: CD300, LL, AGO/2026)…" data-filter="#manual-body tr" autocomplete="off"></div>{% endif %}</div>
+    {# Agrupa por mês de referência para dar hierarquia visual. Mescla contas (bill) e lançamentos manuais em uma única linha do tempo, mais novo primeiro. #}
+    {% set items = [] %}{% for r in recent_manual %}{% set _ = items.append((r.reference, r.reference|month_label, r.store.code ~ ' · ' ~ r.record_type.name, r.store.code ~ ' ' ~ r.record_type.name ~ ' ' ~ (r.reference|month_label), r.value, '/manual?record=' ~ r.id)) %}{% endfor %}{% for b in recent_bills %}{% set _ = items.append((b.reference, b.reference|month_label, b.unit.number ~ ' · Conta', (b.unit.number or '') ~ ' Conta ' ~ (b.reference|month_label), b.total_value, '/manual?bill=' ~ b.id)) %}{% endfor %}
+    {% set items = items|sort(attribute=0, reverse=true) %}{% set ns = namespace(month='') %}
+    <div class="tablewrap"><table><tbody id="manual-body">
+      {% for ref, lbl, title, blob, value, href in items %}
+        {% if lbl != ns.month %}{% set ns.month = lbl %}<tr class="group-row"><td colspan="3" data-filter-match="{{ lbl }}">{{ lbl }}</td></tr>{% endif %}
+        <tr data-filter-blob="{{ blob|lower }}"><td>{{ title }}</td><td class="num">{{ value|brl }}</td><td class="right"><a class="btn sm" href="{{ href }}">Editar</a></td></tr>
+      {% else %}<tr><td class="muted">Nenhum lançamento manual ainda.</td></tr>{% endfor %}
     </tbody></table></div></section>
 </aside>
 </div>

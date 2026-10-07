@@ -68,7 +68,9 @@
   </aside>
   <main class="main" id="content" tabindex="-1">
     {% if not user.must_change_password %}<div class="topbar no-print">
-      {% if user.can_write %}<button class="btn sm" type="button" data-open-point>+ Novo ponto de energia</button>{% endif %}
+      {# "Novo ponto de energia" só faz sentido como atalho rápido no painel/lojas/ajuda. Em telas que já tratam cadastros, importação ou lançamento, vira ruído. #}
+      {% set show_point_btn = user.can_write and not (path.startswith('/import') or path.startswith('/manual') or path.startswith('/admin') or path.startswith('/types') or path.startswith('/account') or path.startswith('/points')) %}
+      {% if show_point_btn %}<button class="btn sm" type="button" data-open-point>+ Novo ponto de energia</button>{% endif %}
       {% if user.gets_due_alerts %}
       <div class="bellwrap">
         <button class="iconbtn" type="button" id="bell" aria-label="Vencimentos" aria-haspopup="true" aria-expanded="false">
