@@ -1,4 +1,5 @@
 """Configuração do Jinja2 e helper de renderização."""
+import hashlib
 from pathlib import Path
 
 from fastapi import Request
@@ -10,8 +11,22 @@ from app.utils import formatting as fmt
 from app.utils.timezone import dt_br
 
 BASE_DIR = Path(__file__).resolve().parent
+
+
+def _asset_version() -> str:
+    """Hash curto do app.css + app.js para derrotar o cache do browser quando
+    o CSS/JS mudam (templates vão incluir ?v={{ ASSET_VERSION }} nos links)."""
+    h = hashlib.sha1()
+    for rel in ("static/css/app.css", "static/js/app.js"):
+        p = BASE_DIR / rel
+        if p.exists():
+            h.update(p.read_bytes())
+    return h.hexdigest()[:10]
+
+
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["retention_days"] = get_settings().document_retention_days
+templates.env.globals["ASSET_VERSION"] = _asset_version()
 templates.env.filters.update(brl=fmt.brl, num=fmt.num, pct=fmt.pct, month_label=fmt.month_label, date_br=fmt.date_br, dt_br=dt_br)
 
 
