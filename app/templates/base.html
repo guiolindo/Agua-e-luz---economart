@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Controle de Energia{% endblock %}</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+{% if user %}
+<div class="shell">
+  <aside class="side">
+    <div class="brand">Controle de Energia<small>Contas e custos por loja</small></div>
+    <nav class="nav" aria-label="Principal">
+      <a class="cta" href="/import">Importar conta</a>
+      <a href="/" class="{{ 'active' if path == '/' }}">Painel</a>
+      <a href="/stores" class="{{ 'active' if path.startswith('/stores') or path.startswith('/units') }}">Lojas</a>
+      <a href="/manual" class="{{ 'active' if path.startswith('/manual') }}">Lançamento manual</a>
+      {% if user.is_admin %}<hr>
+      <a href="/types" class="{{ 'active' if path.startswith('/types') }}">Tipos de registro</a>
+      <a href="/admin/users" class="{{ 'active' if path.startswith('/admin') }}">Usuários</a>{% endif %}
+    </nav>
+    <div class="side-foot">
+      {{ user.username }}{% if user.is_admin %} · admin{% endif %}<br>
+      <form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button>Sair</button></form>
+    </div>
+  </aside>
+  <main class="main">
+    {% for f in flashes %}<div class="flash {{ f.level }}" role="status">{{ f.text }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% else %}
+  {% block bare %}{% endblock %}
+{% endif %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

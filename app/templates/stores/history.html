@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "macros.html" import variation %}
+{% block title %}{{ store.code }} · Controle de Energia{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><div class="crumbs"><a href="/stores">Lojas</a> /</div><h1>{{ store.code }} — Histórico</h1>
+    <div class="muted">{{ store.name or '' }}{% if store.location %} · {{ store.location }}{% endif %}</div></div>
+  <div class="actions"><a class="btn primary" href="/import?store_id={{ store.id }}">Importar conta</a>
+    <a class="btn" href="/manual?store_id={{ store.id }}">Lançamento manual</a>
+    {% if user.is_admin %}<a class="btn" href="/stores/{{ store.id }}/settings">Cadastro</a>{% endif %}</div>
+</div>
+
+{% set state = {'view': view, 'type_id': chosen.id if chosen else None, 'indicator': indicator, 'start': start.strftime('%Y-%m'),
+                'end': end.strftime('%Y-%m'), 'highlight': highlight, 'unit_id': unit_id} %}
+{% set chart_url = '/api/stores/' ~ store.id ~ '/chart' %}{% set title = 'Evolução mensal' %}
+{% include "partials/chart_panel.html" with context %}
+
+<section class="card flush">
+  <div style="padding:14px 18px 0"><h2>Resumo mensal — total da loja (R$)</h2></div>
+  {% if summary.rows %}
+  <div class="tablewrap"><table>
+    <thead><tr><th>Tipo</th>{% for m in summary.months %}<th class="num">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
+    <tbody>{% for r in summary.rows %}<tr><td>{{ r.type.name }}</td>
+      {% for v in r['values'] %}<td class="num">{{ v|brl if v is not none else '—' }}</td>{% endfor %}<td class="num"><strong>{{ r.total|brl }}</strong></td></tr>{% endfor %}</tbody>
+    <tfoot><tr><td>Total geral</td>{% for t in summary.totals %}<td class="num">{{ t|brl if t is not none else '—' }}</td>{% endfor %}<td class="num">{{ summary.grand_total|brl }}</td></tr>
+      <tr><td class="muted" style="font-weight:400">Variação</td>{% for v in summary.variations %}<td class="num">{{ variation(v) }}</td>{% endfor %}<td></td></tr></tfoot>
+  </table></div>
+  {% else %}<p class="muted" style="padding:0 18px 16px">Ainda não há registros para esta loja no período.</p>{% endif %}
+</section>
+
+<section class="card flush">
+  <div style="padding:14px 18px 0"><h2>Unidades consumidoras</h2></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Número</th><th>Descrição</th><th></th></tr></thead>
+    <tbody>{% for u in store.units %}<tr class="{{ 'hl' if highlight == u.id }}"><td class="mono"><a href="/units/{{ u.id }}">{{ u.number }}</a></td>
+      <td>{{ u.description or '—' }}{% if not u.active %} <span class="badge">Inativa</span>{% endif %}</td>
+      <td class="right"><a class="btn sm" href="/units/{{ u.id }}">Ver unidade</a></td></tr>
+    {% else %}<tr><td colspan="3" class="muted">Nenhuma unidade cadastrada.{% if user.is_admin %} <a href="/stores/{{ store.id }}/settings">Cadastrar</a>.{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

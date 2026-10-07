@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "macros.html" import field, csrf %}
+{% block title %}Nova loja · Controle de Energia{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="crumbs"><a href="/stores">Lojas</a> /</div><h1>Nova loja</h1></div></div>
+<form class="card" method="post" action="/stores" style="max-width:640px">
+  {{ csrf(csrf_token) }}
+  {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
+  {% set f = form or {} %}
+  {{ field("code", "Código da loja", f, {}, required=true, placeholder="Ex.: CD300", hint="Identificador curto e único.") }}
+  {{ field("name", "Nome / descrição", f, {}) }}
+  {{ field("location", "Localização", f, {}) }}
+  <div class="field"><label for="n">Observações</label><textarea id="n" name="notes">{{ f.get('notes','') }}</textarea></div>
+  <div class="actions"><button class="btn primary">Cadastrar loja</button><a class="btn" href="/stores">Cancelar</a></div>
+</form>
+{% endblock %}

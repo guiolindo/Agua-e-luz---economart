@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Tipos de registro · Controle de Energia{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Tipos de registro</h1><div class="muted">O que é acompanhado mês a mês em cada loja. Cada tipo manual pode ter campos numéricos próprios.</div></div></div>
+{% for t in types %}
+<form class="card" method="post" action="/types/{{ t.id }}">
+  {{ csrf(csrf_token) }}
+  <div class="card-head"><h2 style="margin:0">{{ t.name }} <span class="badge">{{ 'Conta com leitura por IA' if t.is_bill else 'Lançamento manual' }}</span></h2></div>
+  <div class="row row-3">
+    <div class="field"><label>Nome</label><input type="text" name="name" value="{{ t.name }}" required></div>
+    <div class="field"><label>Descrição</label><input type="text" name="description" value="{{ t.description or '' }}"></div>
+    <div class="field"><label>Situação</label><select name="active"><option value="1" {{ 'selected' if t.active }}>Ativo</option><option value="" {{ 'selected' if not t.active }}>Inativo</option></select></div>
+  </div>
+  {% if not t.is_bill %}<div class="field"><label>Campos extras (um por linha, ex.: “Horas de operação (h)”)</label><textarea name="fields">{{ fields_to_text(t.fields) }}</textarea></div>{% endif %}
+  <button class="btn">Salvar</button>
+</form>
+{% endfor %}
+<form class="card" method="post" action="/types"><h2>Novo tipo</h2>{{ csrf(csrf_token) }}
+  <div class="row row-2"><div class="field"><label>Nome *</label><input type="text" name="name" required placeholder="Ex.: Energia Solar"></div>
+    <div class="field"><label>Descrição</label><input type="text" name="description"></div></div>
+  <div class="field"><label>Campos extras (um por linha; opcional)</label><textarea name="fields" placeholder="Geração (kWh)&#10;Créditos (kWh)"></textarea>
+    <div class="hint">Todo tipo já tem “Valor (R$)” e mês de referência.</div></div>
+  <button class="btn primary">Criar tipo</button></form>
+{% endblock %}

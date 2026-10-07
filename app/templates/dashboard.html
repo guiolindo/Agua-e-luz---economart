@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Painel · Controle de Energia{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Painel</h1><div class="muted">Mês de referência: <strong>{{ month|month_label }}</strong></div></div>
+  <form method="get" class="actions"><label for="m" style="margin:0">Mês</label>
+    <input id="m" type="month" name="month" value="{{ month.strftime('%Y-%m') }}" style="width:auto" onchange="this.form.submit()"></form>
+</div>
+
+<div class="grid cols-4" style="margin-bottom:16px">
+  <div class="kpi"><div class="label">Lojas ativas</div><div class="value">{{ stores }}</div></div>
+  <div class="kpi"><div class="label">Unidades consumidoras</div><div class="value">{{ units }}</div></div>
+  <div class="kpi"><div class="label">Registros em {{ month|month_label }}</div><div class="value">{{ records_in_month }}</div></div>
+  <div class="kpi"><div class="label">Pendências</div><div class="value">{{ pending|length }}</div>
+    <div class="sub muted">{% if last_store %}Última importação: <a href="/stores/{{ last_store.id }}">{{ last_store.code }}</a>{% else %}Nenhuma importação ainda{% endif %}</div></div>
+</div>
+
+<div class="grid cols-main">
+  <section class="card flush">
+    <div style="padding:14px 18px 0"><h2>Pendências de {{ month|month_label }}</h2></div>
+    {% if pending %}
+    <div class="tablewrap"><table>
+      <thead><tr><th>Loja</th><th>Unidade</th><th>Tipo</th><th>Situação</th><th></th></tr></thead>
+      <tbody>{% for p in pending[:30] %}
+        <tr><td><a href="/stores/{{ p.store.id }}">{{ p.store.code }}</a></td><td class="mono">{{ p.unit.number if p.unit else '—' }}</td>
+          <td>{{ p.type.name }}</td><td class="muted">{{ p.text }}</td>
+          <td class="right"><a class="btn sm" href="{{ '/import?store_id=' ~ p.store.id if p.type.is_bill else '/manual?store_id=' ~ p.store.id }}">{{ 'Importar' if p.type.is_bill else 'Lançar' }}</a></td></tr>
+      {% endfor %}</tbody></table></div>
+    {% if pending|length > 30 %}<div class="muted small" style="padding:10px 18px">Mostrando 30 de {{ pending|length }}.</div>{% endif %}
+    {% else %}<p class="muted" style="padding:0 18px 16px">Nenhuma pendência para este mês.</p>{% endif %}
+  </section>
+
+  <section class="card flush">
+    <div style="padding:14px 18px 0"><h2>Lojas</h2></div>
+    {% if stores_list %}<div class="tablewrap"><table><tbody>
+      {% for s in stores_list %}<tr><td><a href="/stores/{{ s.id }}"><strong>{{ s.code }}</strong></a>{% if s.name %}<div class="muted small">{{ s.name }}</div>{% endif %}</td>
+        <td class="num muted">{{ s.units|length }} unid.</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<p class="muted" style="padding:0 18px 16px">Nenhuma loja cadastrada.
+      {% if user.is_admin %}<a href="/stores/new">Cadastrar a primeira loja</a>{% endif %}</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

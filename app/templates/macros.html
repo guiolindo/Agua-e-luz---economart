@@ -1,0 +1,56 @@
+{% macro field(name, label, form, errors, type="text", flagged=false, hint=None, required=false, step=None, placeholder=None) %}
+<div class="field{{ ' error' if errors.get(name) }}{{ ' flag' if flagged and not errors.get(name) }}">
+  <label for="f-{{ name }}">{{ label }}{% if required %} *{% endif %}{% if flagged %}<span class="flagtxt">conferir</span>{% endif %}</label>
+  <input id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ form.get(name, '') }}"
+         {% if placeholder %}placeholder="{{ placeholder }}"{% endif %} {% if type in ('text',) %}autocomplete="off"{% endif %}>
+  {% if errors.get(name) %}<div class="err">{{ errors[name] }}</div>{% elif hint %}<div class="hint">{{ hint }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro variation(v) %}{% if v and v.pct is not none %}<span class="var var-{{ v.direction }}">{{ v.text }}</span>{% else %}<span class="muted">—</span>{% endif %}{% endmacro %}
+
+{% macro csrf(token) %}<input type="hidden" name="csrf_token" value="{{ token }}">{% endmacro %}
+
+{# Campos da conta (revisão da importação e lançamento manual de tipos "conta") #}
+{% macro bill_fields(form, errors, flagged) %}
+  <div class="row row-3">
+    {{ field("reference", "Mês de referência", form, errors, type="month", flagged="reference" in flagged, required=true) }}
+    {{ field("total_value", "Valor da fatura (R$)", form, errors, flagged="total_value" in flagged, required=true, placeholder="0,00") }}
+    {{ field("days", "Dias de consumo", form, errors, type="number") }}
+  </div>
+  <div class="row row-3">
+    {{ field("due_date", "Vencimento", form, errors, type="date", flagged="due_date" in flagged) }}
+    {{ field("issue_date", "Emissão", form, errors, type="date", flagged="issue_date" in flagged) }}
+    {{ field("invoice_number", "Nº da nota", form, errors) }}
+  </div>
+  <details open><summary>Consumo e demanda</summary>
+    <div class="row row-3">
+      {{ field("consumption_hp", "Consumo HP — ponta (kWh)", form, errors) }}
+      {{ field("consumption_hfp", "Consumo HFP — fora ponta (kWh)", form, errors) }}
+      {{ field("consumption_hr", "Consumo HR (kWh)", form, errors) }}
+    </div>
+    <div class="row row-3">
+      {{ field("demand_hp", "Demanda HP (kW)", form, errors) }}
+      {{ field("demand_hfp", "Demanda HFP (kW)", form, errors) }}
+      {{ field("contracted_demand", "Demanda contratada (kW)", form, errors) }}
+    </div>
+  </details>
+  <details><summary>Leituras, impostos e classificação</summary>
+    <div class="row row-3">
+      {{ field("previous_reading_date", "Leitura anterior", form, errors, type="date") }}
+      {{ field("current_reading_date", "Leitura atual", form, errors, type="date") }}
+      {{ field("next_reading_date", "Próxima leitura", form, errors, type="date") }}
+    </div>
+    <div class="row row-3">
+      {{ field("pis_cofins_value", "PIS/COFINS (R$)", form, errors) }}
+      {{ field("icms_value", "ICMS (R$)", form, errors) }}
+      {{ field("series", "Série", form, errors) }}
+    </div>
+    <div class="row row-3">
+      {{ field("bill_class", "Classe", form, errors) }}
+      {{ field("subclass", "Subclasse", form, errors) }}
+      {{ field("tariff_modality", "Modalidade tarifária", form, errors) }}
+    </div>
+    <div class="field"><label for="f-notes">Observações</label><textarea id="f-notes" name="notes">{{ form.get('notes', '') }}</textarea></div>
+  </details>
+{% endmacro %}

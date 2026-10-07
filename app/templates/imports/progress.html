@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Analisando conta · Controle de Energia{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="crumbs"><a href="/import">Importar conta</a> /</div><h1>{{ job.document.filename }}</h1></div></div>
+{% if job.status == 'failed' %}
+<div class="card" style="max-width:640px"><div class="flash error">{{ job.error or 'Não foi possível analisar a conta.' }}</div>
+  <div class="actions"><form method="post" action="/import/{{ job.id }}/retry">{{ csrf(csrf_token) }}<button class="btn primary">Tentar novamente</button></form>
+    <a class="btn" href="/import">Enviar outra foto</a></div>
+  <p class="muted small">Dica: fotografe a conta inteira, de frente, com boa iluminação e sem reflexos.</p></div>
+{% elif job.status in ('confirmed', 'cancelled') %}
+<div class="card" style="max-width:640px"><p>Esta importação já foi {{ 'salva' if job.status == 'confirmed' else 'descartada' }}.</p><a class="btn" href="/import">Importar outra conta</a></div>
+{% else %}
+<div class="card" style="max-width:640px"><h2>Analisando a conta…</h2>
+  <ol class="steps" id="steps" data-job="{{ job.id }}" data-stage="{{ job.stage }}">
+    {% for key, label in steps %}<li data-step="{{ key }}">{{ label }}</li>{% endfor %}
+  </ol><p class="muted small" style="margin-bottom:0">Normalmente leva alguns segundos. Você pode manter esta página aberta.</p></div>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if job.status == 'processing' %}<script>
+(function () {
+  const ol = document.getElementById('steps'), order = [...ol.children].map((li) => li.dataset.step);
+  function paint(stage) {
+    const idx = order.indexOf(stage);
+    [...ol.children].forEach((li, i) => { li.className = i < idx ? 'done' : i === idx ? (stage === 'done' ? 'done' : 'active') : ''; });
+  }
+  async function poll() {
+    try {
+      const r = await fetch('/import/' + ol.dataset.job + '/status', { headers: { Accept: 'application/json' } });
+      const s = await r.json(); paint(s.stage);
+      if (s.status === 'ready') { setTimeout(() => location.href = '/import/' + ol.dataset.job + '/review', 350); return; }
+      if (s.status !== 'processing') { location.reload(); return; }
+    } catch (e) { /* tenta de novo */ }
+    setTimeout(poll, 1000);
+  }
+  paint(ol.dataset.stage); poll();
+})();
+</script>{% endif %}{% endblock %}

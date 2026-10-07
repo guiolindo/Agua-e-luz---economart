@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Usuários · Controle de Energia{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Usuários</h1></div>
+<div class="card flush"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Situação</th><th></th></tr></thead><tbody>
+  {% for u in users %}<tr><td>{{ u.username }}</td><td>{{ 'Administrador' if u.is_admin else 'Operador' }}</td>
+    <td>{% if u.active %}<span class="badge ok">Ativo</span>{% else %}<span class="badge">Inativo</span>{% endif %}</td>
+    <td class="right">{% if u.id != user.id %}<form method="post" action="/admin/users/{{ u.id }}/toggle">{{ csrf(csrf_token) }}<button class="btn sm">{{ 'Desativar' if u.active else 'Reativar' }}</button></form>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+<form class="card" method="post" action="/admin/users" style="max-width:640px"><h2>Novo usuário</h2>{{ csrf(csrf_token) }}
+  <div class="row row-3"><div class="field"><label>Usuário</label><input type="text" name="username" required></div>
+    <div class="field"><label>Senha (mín. 8)</label><input type="password" name="password" minlength="8" required autocomplete="new-password"></div>
+    <div class="field"><label>Perfil</label><select name="role"><option value="user">Operador</option><option value="admin">Administrador</option></select></div></div>
+  <button class="btn primary">Criar usuário</button></form>
+{% endblock %}

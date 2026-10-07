@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "macros.html" import variation, csrf %}
+{% block title %}{{ unit.number }} · Controle de Energia{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><div class="crumbs"><a href="/stores">Lojas</a> / <a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div>
+    <h1>{{ store.code }} · Unidade {{ unit.number }}</h1><div class="muted">{{ rtype.name if rtype else '' }}{% if unit.description %} · {{ unit.description }}{% endif %}</div></div>
+  <div class="actions"><a class="btn primary" href="/import?store_id={{ store.id }}">Importar conta</a><a class="btn" href="/manual?store_id={{ store.id }}">Lançamento manual</a></div>
+</div>
+
+{% if last %}
+<p class="muted" style="margin-top:-8px">Última conta: <strong>{{ last.reference|month_label }}</strong>, vencimento {{ last.due_date|date_br }}.</p>
+<div class="grid cols-4" style="margin-bottom:16px">
+  {% for k in kpis %}<div class="kpi"><div class="label">{{ k.label }}</div><div class="value">{{ k.text }}</div>
+    <div class="sub">{{ variation(k.variation) }} <span class="muted">vs. mês anterior</span></div></div>{% endfor %}
+</div>
+{% endif %}
+
+{% set state = {'view': 'units', 'type_id': rtype.id if rtype else None, 'indicator': indicator, 'start': '', 'end': '',
+                'highlight': unit.id, 'unit_id': unit.id} %}
+{% set chart_url = '/api/stores/' ~ store.id ~ '/chart' %}{% set title = 'Histórico da unidade' %}{% set types = None %}
+{% include "partials/chart_panel.html" with context %}
+
+<section class="card flush">
+  <div style="padding:14px 18px 0"><h2>Contas</h2></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Referência</th><th class="num">Valor</th><th>Variação</th><th class="num">Dias</th><th class="num">Consumo (kWh)</th><th class="num">Demanda HFP (kW)</th><th>Vencimento</th><th>Origem</th><th></th></tr></thead>
+    <tbody>{% for h in history %}{% set b = h.bill %}
+      <tr><td><strong>{{ b.reference|month_label }}</strong></td><td class="num">{{ b.total_value|brl }}</td><td>{{ variation(h.variation) }}</td>
+        <td class="num">{{ b.days if b.days is not none else '—' }}</td><td class="num">{{ b.consumption_total|num }}</td>
+        <td class="num">{{ b.demand_hfp|num }}</td><td>{{ b.due_date|date_br }}</td>
+        <td>{{ 'Foto/IA' if b.source == 'import' else 'Manual' }}</td>
+        <td class="right nowrap">{% if b.document_id %}<a class="btn sm" href="/documents/{{ b.document_id }}" target="_blank" rel="noopener">Ver documento original</a> {% endif %}
+          <a class="btn sm" href="/manual?bill={{ b.id }}">Editar</a>
+          {% if user.is_admin %}<form method="post" action="/manual/bills/{{ b.id }}/delete" style="display:inline" onsubmit="return confirm('Excluir a conta de {{ b.reference|month_label }}?')">{{ csrf(csrf_token) }}<button class="btn sm danger">Excluir</button></form>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="9" class="muted">Nenhuma conta registrada para esta unidade.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

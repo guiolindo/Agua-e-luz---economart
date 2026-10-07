@@ -1,0 +1,22 @@
+{# Painel de gráfico. Espera: chart_url, state (dict), types (opcional), units (opcional), title #}
+<section class="card" data-chart-panel data-url="{{ chart_url }}" data-state='{{ state|tojson }}'>
+  <div class="card-head"><h2 style="margin:0">{{ title }}</h2><span class="muted small" data-chart-note></span></div>
+  <div class="chart-controls">
+    {% if types %}
+    <div class="seg" role="radiogroup" aria-label="Visualização">
+      <label><input type="radio" name="view" value="units" {{ 'checked' if state.view != 'types' }}><span>Por unidade</span></label>
+      <label><input type="radio" name="view" value="types" {{ 'checked' if state.view == 'types' }}><span>Por tipo (total da loja)</span></label>
+    </div>
+    <div class="field" data-when="units"><label for="c-type">Tipo</label>
+      <select id="c-type" name="type_id">{% for t in types %}<option value="{{ t.id }}" {{ 'selected' if state.type_id == t.id }}>{{ t.name }}</option>{% endfor %}</select></div>
+    {% elif state.type_id %}<input type="hidden" name="type_id" value="{{ state.type_id }}">
+    {% endif %}
+    <div class="field" data-when="units"><label for="c-ind">Indicador</label><select id="c-ind" name="indicator"></select></div>
+    <div class="field"><label for="c-start">De</label><input id="c-start" type="month" name="start" value="{{ state.start }}"></div>
+    <div class="field"><label for="c-end">Até</label><input id="c-end" type="month" name="end" value="{{ state.end }}"></div>
+  </div>
+  <div class="chart-box"><canvas aria-label="{{ title }}" role="img"></canvas></div>
+  <div class="chart-empty" hidden>Sem dados no período selecionado.</div>
+</section>
+<script src="/static/js/vendor/chart.umd.min.js"></script>
+<script src="/static/js/chart_panel.js"></script>

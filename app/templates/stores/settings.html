@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Cadastro {{ store.code }} · Controle de Energia{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="crumbs"><a href="/stores">Lojas</a> / <a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div><h1>Cadastro de {{ store.code }}</h1></div>
+  <a class="btn" href="/stores/{{ store.id }}">Ver histórico</a></div>
+
+<form class="card" method="post" action="/stores/{{ store.id }}/edit">
+  {{ csrf(csrf_token) }}<h2>Dados da loja</h2>
+  <div class="row row-3">
+    <div class="field"><label>Nome / descrição</label><input type="text" name="name" value="{{ store.name or '' }}"></div>
+    <div class="field"><label>Localização</label><input type="text" name="location" value="{{ store.location or '' }}"></div>
+    <div class="field"><label>Situação</label><select name="active"><option value="1" {{ 'selected' if store.active }}>Ativa</option><option value="" {{ 'selected' if not store.active }}>Inativa</option></select></div>
+  </div>
+  <div class="field"><label>Observações</label><textarea name="notes">{{ store.notes or '' }}</textarea></div>
+  <button class="btn primary">Salvar</button>
+</form>
+
+<div class="card flush">
+  <div style="padding:14px 18px 0"><h2>Unidades consumidoras</h2></div>
+  {% for u in store.units %}<form method="post" action="/units/{{ u.id }}/edit" id="uf{{ u.id }}">{{ csrf(csrf_token) }}</form>{% endfor %}
+  <div class="tablewrap"><table>
+    <thead><tr><th>Número</th><th>Descrição</th><th>Cód. interno</th><th>Tipo</th><th>Situação</th><th></th></tr></thead>
+    <tbody>{% for u in store.units %}
+      <tr>
+        <td><input form="uf{{ u.id }}" type="text" name="number" value="{{ u.number }}" required style="min-width:170px"></td>
+        <td><input form="uf{{ u.id }}" type="text" name="description" value="{{ u.description or '' }}"></td>
+        <td><input form="uf{{ u.id }}" type="text" name="internal_code" value="{{ u.internal_code or '' }}" style="width:110px"></td>
+        <td><select form="uf{{ u.id }}" name="record_type_id">{% for t in types %}{% if t.is_bill %}<option value="{{ t.id }}" {{ 'selected' if u.record_type_id == t.id }}>{{ t.name }}</option>{% endif %}{% endfor %}</select></td>
+        <td><select form="uf{{ u.id }}" name="active" style="width:auto"><option value="1" {{ 'selected' if u.active }}>Ativa</option><option value="" {{ 'selected' if not u.active }}>Inativa</option></select></td>
+        <td class="right nowrap"><button form="uf{{ u.id }}" class="btn sm">Salvar</button> <a class="btn sm" href="/units/{{ u.id }}">Abrir</a></td></tr>
+    {% else %}<tr><td colspan="6" class="muted">Nenhuma unidade cadastrada. Adicione abaixo.</td></tr>{% endfor %}
+    </tbody></table></div>
+  <form method="post" action="/stores/{{ store.id }}/units" style="padding:16px 18px;border-top:1px solid var(--line)">
+    {{ csrf(csrf_token) }}<h3>Adicionar unidade</h3>
+    <div class="row row-4">
+      <div class="field"><label>Nº da unidade consumidora *</label><input type="text" name="number" required placeholder="12.060.073.018-19"></div>
+      <div class="field"><label>Descrição</label><input type="text" name="description"></div>
+      <div class="field"><label>Código interno / fase</label><input type="text" name="internal_code"></div>
+      <div class="field"><label>Tipo</label><select name="record_type_id">{% for t in types %}{% if t.is_bill %}<option value="{{ t.id }}">{{ t.name }}</option>{% endif %}{% endfor %}</select></div>
+    </div>
+    <button class="btn primary">Adicionar unidade</button>
+  </form>
+</div>
+{% endblock %}

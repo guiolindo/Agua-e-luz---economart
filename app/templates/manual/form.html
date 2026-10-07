@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "macros.html" import field, bill_fields, csrf %}
+{% block title %}Lançamento manual · Controle de Energia{% endblock %}
+{% block content %}
+{% set editing = edit_bill or edit_record %}
+<div class="page-head"><div><h1>{{ 'Editar lançamento' if editing else 'Lançamento manual' }}</h1>
+  <div class="muted">Para LL Energia, gerador, manutenção e meses anteriores ao uso do sistema.</div></div></div>
+
+<div class="grid cols-main">
+<form class="card" method="post" action="/manual" id="mf">
+  {{ csrf(csrf_token) }}
+  {% if edit_bill %}<input type="hidden" name="edit_bill" value="{{ edit_bill.id }}">{% endif %}
+  {% if edit_record %}<input type="hidden" name="edit_record" value="{{ edit_record.id }}">{% endif %}
+  {% if errors %}<div class="flash error">Corrija os campos destacados.</div>{% endif %}
+
+  {% if dups %}
+  <div class="flash warn"><strong>Já existe um lançamento para este período.</strong>
+    <ul class="notice-list">{% for d in dups %}<li>{{ d.reference|month_label }} · {{ (d.total_value if d.total_value is defined else d.value)|brl }}</li>{% endfor %}</ul>
+    <div class="field" style="margin:10px 0 0"><label for="dup">O que fazer?</label>
+      <select id="dup" name="duplicate_action" required><option value="">Escolha…</option><option value="replace">Substituir o existente</option><option value="new">Salvar como novo registro</option></select></div></div>
+  {% endif %}
+
+  <div class="row row-3">
+    <div class="field {{ 'error' if errors.store }}"><label for="store">Loja *</label>
+      <select id="store" name="store_id" {{ 'disabled' if editing }} required><option value="">Selecione…</option>
+        {% for s in stores %}<option value="{{ s.id }}" {{ 'selected' if sel_store == s.id }}>{{ s.label }}</option>{% endfor %}</select>
+      {% if editing %}<input type="hidden" name="store_id" value="{{ sel_store }}">{% endif %}{% if errors.store %}<div class="err">{{ errors.store }}</div>{% endif %}</div>
+    <div class="field {{ 'error' if errors.unit }}"><label for="unit">Unidade consumidora <span id="unit-req" class="muted"></span></label>
+      <select id="unit" name="unit_id" {{ 'disabled' if editing }}><option value="">—</option>
+        {% for s in stores %}{% for u in s.units %}<option value="{{ u.id }}" data-store="{{ s.id }}" {{ 'selected' if sel_unit == u.id }}>{{ u.number }}{% if u.description %} · {{ u.description }}{% endif %}</option>{% endfor %}{% endfor %}</select>
+      {% if editing %}<input type="hidden" name="unit_id" value="{{ sel_unit or '' }}">{% endif %}{% if errors.unit %}<div class="err">{{ errors.unit }}</div>{% endif %}</div>
+    <div class="field {{ 'error' if errors.type }}"><label for="type">Tipo *</label>
+      <select id="type" name="type_id" {{ 'disabled' if editing }} required><option value="">Selecione…</option>
+        {% for t in types %}<option value="{{ t.id }}" data-bill="{{ 1 if t.is_bill else 0 }}" {{ 'selected' if sel_type == t.id }}>{{ t.name }}</option>{% endfor %}</select>
+      {% if editing %}<input type="hidden" name="type_id" value="{{ sel_type }}">{% endif %}{% if errors.type %}<div class="err">{{ errors.type }}</div>{% endif %}</div>
+  </div>
+
+  <p class="muted" id="pick" style="margin:6px 0 14px">Selecione a loja e o tipo para continuar.</p>
+
+  <fieldset data-set="bill" hidden disabled style="border:0;padding:0;margin:0">
+    {{ bill_fields(form, errors, []) }}
+  </fieldset>
+  {% for t in types if not t.is_bill %}
+  <fieldset data-set="{{ t.id }}" hidden disabled style="border:0;padding:0;margin:0">
+    <div class="row row-3">
+      {{ field("reference", "Mês de referência", form, errors, type="month", required=true) }}
+      {{ field("value", "Valor (R$)", form, errors, required=true, placeholder="0,00") }}
+    </div>
+    {% if t.fields %}<div class="row row-3">{% for f in t.fields %}
+      {{ field("f_" ~ f.key, f.label ~ (' (' ~ f.unit ~ ')' if f.unit else ''), form, errors) }}{% endfor %}</div>{% endif %}
+    <div class="field"><label for="n-{{ t.id }}">Observações</label><textarea id="n-{{ t.id }}" name="notes">{{ form.get('notes', '') }}</textarea></div>
+  </fieldset>
+  {% endfor %}
+
+  <div class="actions" id="submit-row" hidden><button class="btn primary">Salvar</button><a class="btn" href="/manual">Cancelar</a></div>
+</form>
+
+<aside>
+  <section class="card flush"><div style="padding:14px 18px 0"><h2>Últimos lançamentos manuais</h2></div>
+    <div class="tablewrap"><table><tbody>
+      {% for r in recent_manual %}<tr><td><strong>{{ r.store.code }}</strong> · {{ r.record_type.name }}<div class="muted small">{{ r.reference|month_label }}</div></td>
+        <td class="num">{{ r.value|brl }}</td><td class="right"><a class="btn sm" href="/manual?record={{ r.id }}">Editar</a></td></tr>{% endfor %}
+      {% for b in recent_bills %}<tr><td><strong>{{ b.unit.number }}</strong> · Conta<div class="muted small">{{ b.reference|month_label }}</div></td>
+        <td class="num">{{ b.total_value|brl }}</td><td class="right"><a class="btn sm" href="/manual?bill={{ b.id }}">Editar</a></td></tr>{% endfor %}
+      {% if not recent_manual and not recent_bills %}<tr><td class="muted">Nenhum lançamento manual ainda.</td></tr>{% endif %}
+    </tbody></table></div></section>
+</aside>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+(function () {
+  const store = document.getElementById('store'), unit = document.getElementById('unit'), type = document.getElementById('type'),
+        pick = document.getElementById('pick'), row = document.getElementById('submit-row'), req = document.getElementById('unit-req');
+  function sync() {
+    const sid = store.value, opt = type.options[type.selectedIndex], tid = type.value, isBill = opt && opt.dataset.bill === '1';
+    [...unit.options].forEach((o) => { o.hidden = !!o.value && o.dataset.store !== sid; });
+    const cur = unit.options[unit.selectedIndex]; if (cur && cur.value && cur.dataset.store !== sid) unit.value = '';
+    req.textContent = isBill ? '(obrigatória)' : '(opcional)';
+    document.querySelectorAll('fieldset[data-set]').forEach((fs) => {
+      const on = tid && (fs.dataset.set === 'bill' ? isBill : fs.dataset.set === tid);
+      fs.hidden = !on; fs.disabled = !on;
+    });
+    pick.hidden = !!(sid && tid); row.hidden = !(sid && tid);
+  }
+  [store, type].forEach((el) => el.addEventListener('change', sync)); sync();
+})();
+</script>{% endblock %}

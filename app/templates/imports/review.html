@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "macros.html" import bill_fields, csrf %}
+{% block title %}Conferir conta · Controle de Energia{% endblock %}
+{% block content %}
+{% set e = extraction %}
+<div class="page-head"><div><div class="crumbs"><a href="/import">Importar conta</a> /</div><h1>Conferir conta identificada</h1>
+  <div class="muted">A leitura é feita por IA e pode conter erros. Confira os campos e corrija o que for necessário antes de salvar.</div></div></div>
+
+<div class="review">
+<form method="post" action="/import/{{ job.id }}/confirm" id="confirm">
+  {{ csrf(csrf_token) }}
+  {% if errors %}<div class="flash error">Corrija os campos destacados para continuar.</div>{% endif %}
+
+  {# --- Identificação: loja/unidade --- #}
+  <section class="card">
+    <h2>Loja e unidade consumidora</h2>
+    <div class="identbox" style="margin-bottom:12px">
+      <div><div class="k">Unidade lida na conta{% if 'consumer_unit' in flagged %}<span class="flagtxt">conferir</span>{% endif %}</div><div class="v mono">{{ e.consumer_unit_number or 'Não identificada' }}</div></div>
+      <div><div class="k">Cliente / tipo</div><div class="v">{{ e.utility or 'CEMIG' }}{% if e.customer_name %} · <span style="font-weight:400" class="small">{{ e.customer_name }}</span>{% endif %}</div></div>
+    </div>
+    {% if errors.unit %}<div class="flash error">{{ errors.unit }}</div>{% endif %}
+
+    {% if unit %}
+    <div class="unit-choice"><label class="radio"><input type="radio" name="unit_mode" value="matched" {{ 'checked' if unit_mode == 'matched' }}> Unidade encontrada no cadastro</label>
+      <div class="body"><strong>{{ unit.store.code }}</strong> · <span class="mono">{{ unit.number }}</span>{% if unit.description %} · {{ unit.description }}{% endif %}</div></div>
+    {% else %}
+    <div class="flash warn"><strong>Unidade consumidora não cadastrada.</strong> A conta não será descartada: cadastre a unidade ou associe a uma já existente.
+      {% if similar %}<br>Parecidas no cadastro (possível erro de leitura):
+        <ul class="notice-list">{% for u in similar %}<li>{{ u.store.code }} · <span class="mono">{{ u.number }}</span></li>{% endfor %}</ul>{% endif %}</div>
+    {% endif %}
+
+    <div class="unit-choice"><label class="radio"><input type="radio" name="unit_mode" value="existing" {{ 'checked' if unit_mode == 'existing' }}> Associar a uma unidade existente</label>
+      <div class="body"><select name="unit_id" aria-label="Unidade existente"><option value="">Selecione…</option>
+        {% for u in units %}<option value="{{ u.id }}" {{ 'selected' if posted.get('unit_id') == u.id|string or (not unit and similar and similar[0].id == u.id and not posted) }}>{{ u.store.code }} · {{ u.number }}{% if u.description %} · {{ u.description }}{% endif %}</option>{% endfor %}</select></div></div>
+
+    <div class="unit-choice"><label class="radio"><input type="radio" name="unit_mode" value="new" {{ 'checked' if unit_mode == 'new' }}> Cadastrar esta unidade</label>
+      <div class="body"><div class="row row-3">
+        <div class="field"><label>Loja</label><select name="new_store_id"><option value="">Selecione…</option>
+          {% for s in stores %}<option value="{{ s.id }}" {{ 'selected' if (posted.get('new_store_id') or (job.store_hint_id|string)) == s.id|string }}>{{ s.label }}</option>{% endfor %}</select></div>
+        <div class="field {{ 'error' if errors.new_number }}"><label>Nº da unidade</label><input type="text" name="new_number" value="{{ posted.get('new_number', e.consumer_unit_number or '') }}">{% if errors.new_number %}<div class="err">{{ errors.new_number }}</div>{% endif %}</div>
+        <div class="field"><label>Descrição</label><input type="text" name="new_description" value="{{ posted.get('new_description', '') }}"></div>
+      </div></div></div>
+  </section>
+
+  {# --- Possível duplicidade --- #}
+  {% if dups %}
+  <section class="card" style="border-color:#ecd09a;background:#fffaf0">
+    <h2>Esta conta aparentemente já está cadastrada</h2>
+    <div class="tablewrap"><table><thead><tr><th>Referência</th><th class="num">Valor</th><th>Nº da nota</th><th>Origem</th></tr></thead><tbody>
+      {% for d in dups %}<tr><td>{{ d.reference|month_label }}</td><td class="num">{{ d.total_value|brl }}</td><td>{{ d.invoice_number or '—' }}</td><td>{{ 'Foto/IA' if d.source == 'import' else 'Manual' }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    <div class="field" style="margin:12px 0 0"><label for="dup">O que fazer?</label>
+      <select id="dup" name="duplicate_action" required><option value="">Escolha uma opção…</option>
+        <option value="replace" {{ 'selected' if posted.get('duplicate_action') == 'replace' }}>Substituir o registro existente por esta conta</option>
+        <option value="new" {{ 'selected' if posted.get('duplicate_action') == 'new' }}>Salvar como novo registro (manter os dois)</option></select>
+      <div class="hint">Para cancelar, use “Descartar importação”.</div></div>
+  </section>
+  {% endif %}
+
+  {# --- Dados da conta --- #}
+  <section class="card"><h2>Dados da conta</h2>{{ bill_fields(form, errors, flagged) }}
+    {% if e.line_items %}<details><summary>Itens faturados lidos ({{ e.line_items|length }})</summary>
+      <div class="tablewrap"><table><thead><tr><th>Item</th><th class="num">Qtd</th><th class="num">Valor (R$)</th></tr></thead><tbody>
+        {% for i in e.line_items %}<tr><td>{{ i.description }}</td><td class="num">{{ i.quantity|num(2) if i.quantity is not none else '—' }} {{ i.unit or '' }}</td><td class="num">{{ i.value|num(2) if i.value is not none else '—' }}</td></tr>{% endfor %}
+      </tbody></table></div><p class="muted small">Itens são guardados como lidos; não são editáveis aqui.</p></details>{% endif %}
+  </section>
+
+  <div class="actions"><button class="btn primary">Confirmar e salvar</button>
+    <button class="btn danger" type="submit" form="cancel" onclick="return confirm('Descartar esta importação?')">Descartar importação</button></div>
+</form>
+
+<aside class="docpane">
+  <h3>Documento original</h3>
+  {% if job.document.content_type == 'application/pdf' %}<iframe src="/documents/{{ job.document_id }}" title="Documento original"></iframe>
+  {% else %}<a href="/documents/{{ job.document_id }}" target="_blank" rel="noopener"><img src="/documents/{{ job.document_id }}" alt="Foto da conta enviada"></a>
+  <div class="muted small">Clique na imagem para abrir em tamanho real.</div>{% endif %}
+</aside>
+</div>
+<form id="cancel" method="post" action="/import/{{ job.id }}/cancel">{{ csrf(csrf_token) }}</form>
+{% endblock %}
+{% block scripts %}<script>
+document.querySelectorAll('.unit-choice').forEach((box) => {
+  const radio = box.querySelector('input[type=radio]');
+  box.addEventListener('focusin', () => { radio.checked = true; });
+});
+</script>{% endblock %}
