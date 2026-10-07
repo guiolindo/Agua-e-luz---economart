@@ -6,7 +6,7 @@
   <form method="get" class="actions"><label for="a" style="margin:0">Evento</label>
     <select id="a" name="action" style="width:auto" data-autosubmit><option value="">Todos</option>{% for a in actions %}<option value="{{ a }}" {{ 'selected' if a == action }}>{{ a }}</option>{% endfor %}</select></form></div>
 <div class="card flush"><div class="tablewrap"><table><thead><tr><th>Quando</th><th>Usuário</th><th>Evento</th><th>Objeto</th><th>Detalhes</th></tr></thead><tbody>
-  {% for r in rows %}<tr><td class="nowrap mono small">{{ r.at.strftime('%d/%m/%Y %H:%M:%S') }}</td><td>{{ names.get(r.user_id, '—') }}</td>
+  {% for r in rows %}<tr><td class="nowrap mono small">{{ r.at|dt_br(seconds=true) }}</td><td>{{ names.get(r.user_id, '—') }}</td>
     <td><span class="badge {{ 'bad' if r.action in ('login_failed','login_blocked','account_locked','password_change_failed') else 'ok' if r.action in ('login','password_changed') else '' }}">{{ r.action }}</span></td>
     <td class="small">{{ r.entity }}{% if r.entity_id %} #{{ r.entity_id }}{% endif %}</td>
     <td class="small muted" style="max-width:420px;overflow-wrap:anywhere">{% if r.details %}{% for k, v in r.details.items() if k not in ('before','after') %}{{ k }}={{ v }} {% endfor %}{% endif %}</td></tr>

@@ -15,6 +15,7 @@ from app.services import dashboard_service
 from app.services.calculation_service import add_months, month_range, variation
 from app.services.chart_service import _fetch_range, month_of
 from app.utils import formatting as fmt
+from app.utils.timezone import local_today
 
 PARTIAL_RATIO = 0.6   # mês com menos de 60% das lojas (vs. o melhor mês) é tratado como parcial
 MIN_PREV_MONTHS = 3  # histórico mínimo de uma loja no período anterior para compará-la
@@ -33,7 +34,7 @@ def _var(prev, cur) -> dict:
 def default_period(db: Session, start: date | None, end: date | None) -> tuple[date, date]:
     from app.repositories.records import latest_reference
 
-    end = (end or latest_reference(db) or date.today()).replace(day=1)
+    end = (end or latest_reference(db) or local_today()).replace(day=1)
     start = (start or add_months(end, -11)).replace(day=1)
     if start > end:
         start, end = end, start

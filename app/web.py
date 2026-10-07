@@ -7,11 +7,12 @@ from fastapi.templating import Jinja2Templates
 from app.config import get_settings
 from app.security import csrf_token
 from app.utils import formatting as fmt
+from app.utils.timezone import dt_br
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["retention_days"] = get_settings().document_retention_days
-templates.env.filters.update(brl=fmt.brl, num=fmt.num, pct=fmt.pct, month_label=fmt.month_label, date_br=fmt.date_br)
+templates.env.filters.update(brl=fmt.brl, num=fmt.num, pct=fmt.pct, month_label=fmt.month_label, date_br=fmt.date_br, dt_br=dt_br)
 
 
 def flash(request: Request, message: str, level: str = "ok") -> None:

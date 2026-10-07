@@ -199,3 +199,9 @@ tests/               pytest + fixtures/cemig_set_2026.json
 - Sem 2FA e sem recuperação de senha por e-mail (o admin redefine em *Usuários*). Veja o risco residual em `SECURITY.md`.
 - A leitura por IA nunca foi validada aqui com a API real do Gemini (sem chave neste ambiente): os testes usam o mock.
   Antes de usar em produção, importe algumas contas reais e confira a tela de revisão.
+
+## Fuso horário
+
+O sistema trabalha em **horário de Brasília (America/Sao_Paulo, UTC−3)**: o "hoje" dos avisos de vencimento, os períodos
+padrão de gráficos/painéis e todos os horários exibidos (auditoria, último acesso, "emitido em", importações) são
+convertidos de UTC para Brasília. O banco guarda os instantes em UTC (padrão seguro). Nada a configurar no Railway.

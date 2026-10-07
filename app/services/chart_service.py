@@ -12,6 +12,7 @@ from app.repositories import records as repo
 from app.repositories.stores import list_record_types
 from app.services.calculation_service import add_months, month_range, variation
 from app.utils import formatting as fmt
+from app.utils.timezone import local_today
 
 
 @dataclass(frozen=True)
@@ -82,7 +83,7 @@ def _fetch_range(start: date, end: date, by: str) -> tuple[date, date]:
 
 def default_range(db: Session, store_id: int | None, start: date | None, end: date | None) -> tuple[date, date]:
     if end is None:
-        end = repo.latest_reference(db, store_id) or date.today().replace(day=1)
+        end = repo.latest_reference(db, store_id) or local_today().replace(day=1)
     if start is None:
         start = add_months(end, -11)
         first = repo.earliest_reference(db, store_id) if store_id else None

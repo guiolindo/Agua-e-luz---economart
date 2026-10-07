@@ -5,21 +5,16 @@ Cada ponto tem um dia de vencimento mensal (due_day). A ocorrência do mês cai 
 """
 from calendar import monthrange
 from dataclasses import dataclass
-from datetime import date, datetime
-from zoneinfo import ZoneInfo
+from datetime import date
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import ConsumerUnit, EnergyBill, Store
+from app.utils.timezone import TZ, local_today  # noqa: F401  (reexportados)
 
-TZ = ZoneInfo("America/Sao_Paulo")   # "hoje" é o dia do usuário no Brasil, não o do servidor (UTC)
 OVERDUE_DAYS = 15                    # vencimentos não tratados continuam aparecendo por até 15 dias
 SOON_DAYS = 3
-
-
-def local_today() -> date:
-    return datetime.now(TZ).date()
 
 
 def occurrence(year: int, month: int, day: int) -> date:

@@ -7,10 +7,11 @@ from app.models import ConsumerUnit, EnergyBill, Import, ManualRecord, Store
 from app.repositories import records as repo
 from app.repositories.stores import list_record_types
 from app.services.calculation_service import add_months
+from app.utils.timezone import local_today
 
 
 def overview(db: Session, month: date | None = None) -> dict:
-    month = (month or repo.latest_reference(db) or date.today().replace(day=1)).replace(day=1)
+    month = (month or repo.latest_reference(db) or local_today().replace(day=1)).replace(day=1)
     prev = add_months(month, -1)
 
     stores = db.scalar(select(func.count()).select_from(Store).where(Store.active.is_(True))) or 0
