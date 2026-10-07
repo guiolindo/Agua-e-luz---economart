@@ -165,3 +165,52 @@ document.querySelectorAll('[data-toggle-password]').forEach((b) => b.addEventLis
   const show = i.type === 'password'; i.type = show ? 'text' : 'password'; b.textContent = show ? 'Ocultar' : 'Mostrar'; b.setAttribute('aria-pressed', String(show)); }));
 document.querySelectorAll('[data-login-form]').forEach((f) => f.addEventListener('submit', () => {
   const b = f.querySelector('button[type="submit"]'); if (b) { setTimeout(() => { b.disabled = true; b.classList.add('loading'); b.textContent = 'Entrando…'; }, 0); } }));
+
+// Barra de progresso no topo quando o usuário clica em um link interno
+// (dá sensação de responsividade enquanto a próxima página carrega).
+(function () {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const bar = document.createElement('div');
+  bar.className = 'nav-progress';
+  document.body.appendChild(bar);
+  const start = () => { bar.classList.remove('on'); void bar.offsetWidth; bar.classList.add('on'); };
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a'); if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin || url.pathname === location.pathname && url.search === location.search) return;
+    start();
+  });
+  document.addEventListener('submit', (e) => {
+    const f = e.target; if (!f || f.method?.toLowerCase() === 'get' && f.hasAttribute('data-autosubmit')) return;
+    if (f.target === '_blank') return;
+    start();
+  });
+  window.addEventListener('pagehide', () => bar.classList.remove('on'));
+})();
+
+// Delay em cascata para animar os cartões KPI em sequência (efeito "stagger")
+(function () {
+  document.querySelectorAll('.grid.cols-4 > .kpi, .grid.cols-3 > .kpi, .grid.cols-2 > .kpi').forEach((el, i) => {
+    el.style.setProperty('--d', (i * 40) + 'ms');
+  });
+})();
+
+// Ícones automáticos nos alerts/flash: usa SVGs inline por tipo. O markup
+// permanece acessível (role="alert"/"status" + texto), o ícone é só visual.
+(function () {
+  const icons = {
+    ok: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    info: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+    warn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    error: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  };
+  document.querySelectorAll('.flash').forEach((el) => {
+    if (el.querySelector('.flash-ico')) return;
+    const lvl = el.dataset.flash || (el.classList.contains('error') ? 'error' : el.classList.contains('warn') ? 'warn' : el.classList.contains('info') ? 'info' : 'ok');
+    const span = document.createElement('span');
+    span.className = 'flash-ico';
+    span.style.cssText = 'display:inline-flex;align-items:center;flex-shrink:0';
+    span.innerHTML = icons[lvl] || icons.info;
+    el.insertBefore(span, el.firstChild);
+  });
+})();

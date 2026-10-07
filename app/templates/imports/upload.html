@@ -11,6 +11,7 @@
     {% if error %}<div class="flash error" role="alert">{{ error }}
       {% if dup_bill %}<br><a href="/units/{{ dup_bill.unit_id }}">Ver a conta {{ dup_bill.reference|month_label }} da unidade {{ dup_bill.unit.number }}</a>{% endif %}</div>{% endif %}
     <label class="drop" for="file" id="drop">
+      <svg class="drop-ico" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       <strong>Arraste a conta aqui ou clique para escolher</strong>
       <span class="muted">JPG, PNG, WEBP ou PDF · até {{ max_mb }} MB · no celular, você pode tirar a foto direto</span>
       <input id="file" type="file" name="file" accept="image/jpeg,image/png,image/webp,application/pdf" required hidden>
