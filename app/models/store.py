@@ -13,6 +13,7 @@ class Store(TimestampMixin, Base):
     code: Mapped[str] = mapped_column(String(40), unique=True)
     name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     location: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    region: Mapped[str | None] = mapped_column(String(20), nullable=True)  # UF/região, p.ex. MG, BA (comparação na diretoria)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Apelidos usados em anotações à mão/relatórios (ex.: "CD 300", "CD Rib Neves")
     aliases: Mapped[list | None] = mapped_column(JSON, default=list, nullable=True)

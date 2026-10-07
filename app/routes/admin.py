@@ -11,7 +11,12 @@ from app.services import audit_service, auth_service
 from app.web import flash, render
 
 router = APIRouter()
-ROLES = {"admin": "Administrador", "operator": "Operador (importa e lança)", "viewer": "Consulta (só visualiza e imprime)"}
+ROLES = {
+    "operator": "Funcionário — envia fotos/PDF das contas e lança",
+    "director": "Diretoria — painel executivo, só consulta",
+    "viewer": "Consulta — só visualiza e imprime",
+    "admin": "Administrador — cria usuários e cadastros",
+}
 
 
 def _active_admins(db: Session) -> int:

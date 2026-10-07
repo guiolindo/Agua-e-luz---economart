@@ -13,7 +13,7 @@ class User(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(80), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    role: Mapped[str] = mapped_column(String(20), default="operator")  # admin | operator | viewer ("user" = legado)
+    role: Mapped[str] = mapped_column(String(20), default="operator")  # admin | operator (funcionário) | director | viewer ("user" = legado)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     must_change_password: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
     failed_attempts: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
@@ -26,6 +26,14 @@ class User(TimestampMixin, Base):
     @property
     def is_admin(self) -> bool:
         return self.role == "admin"
+
+    @property
+    def is_director(self) -> bool:
+        return self.role == "director"
+
+    @property
+    def can_see_executive(self) -> bool:
+        return self.role in ("director", "admin")
 
     @property
     def can_write(self) -> bool:

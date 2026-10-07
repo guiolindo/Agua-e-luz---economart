@@ -14,7 +14,8 @@
     <div class="brand">Controle de Energia<small>Contas e custos por loja</small></div>
     <nav class="nav" aria-label="Principal">
       {% if user.can_write %}<a class="cta" href="/import">Importar conta</a>{% endif %}
-      <a href="/" class="{{ 'active' if path == '/' }}">Painel</a>
+      {% if user.can_see_executive %}<a href="/diretoria" class="{{ 'active' if path.startswith('/diretoria') }}">Painel da diretoria</a>{% endif %}
+      {% if not user.is_director %}<a href="/" class="{{ 'active' if path == '/' }}">Painel</a>{% endif %}
       <a href="/stores" class="{{ 'active' if path.startswith('/stores') or path.startswith('/units') }}">Lojas</a>
       {% if user.can_write %}<a href="/manual" class="{{ 'active' if path.startswith('/manual') }}">Lançamento manual</a>{% endif %}
       {% if user.is_admin %}<hr>
@@ -23,7 +24,7 @@
       <a href="/admin/users" class="{{ 'active' if path.startswith('/admin') }}">Usuários</a>{% endif %}
     </nav>
     <div class="side-foot">
-      {{ user.username }}{% if user.is_admin %} · admin{% endif %}<br>
+      {{ user.username }} · {{ {'admin': 'administrador', 'operator': 'funcionário', 'director': 'diretoria', 'viewer': 'consulta', 'user': 'funcionário'}.get(user.role, user.role) }}<br>
       <a href="/account/password" style="color:#cfd6df">Alterar senha</a><br>
       <form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button>Sair</button></form>
     </div>

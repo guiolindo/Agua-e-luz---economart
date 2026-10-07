@@ -48,7 +48,8 @@ def store_new(request: Request, user: User = Depends(admin_required)):
 
 @router.post("/stores", dependencies=[Depends(verify_csrf)])
 def store_create(request: Request, code: str = Form(...), name: str = Form(""), location: str = Form(""),
-                 aliases: str = Form(""), notes: str = Form(""), user: User = Depends(admin_required), db: Session = Depends(get_db)):
+                 aliases: str = Form(""), notes: str = Form(""), region: str = Form(""),
+                 user: User = Depends(admin_required), db: Session = Depends(get_db)):
     code = code.strip().upper()
     if not code:
         flash(request, "Informe o código da loja.", "error")
@@ -59,7 +60,7 @@ def store_create(request: Request, code: str = Form(...), name: str = Form(""), 
                       form={"code": code, "name": name, "location": location, "aliases": aliases,
                                           "notes": notes})
     store = Store(code=code, name=clean_str(name, 200), location=clean_str(location, 200), notes=clean_str(notes),
-                  aliases=parse_aliases(aliases))
+                  aliases=parse_aliases(aliases), region=(clean_str(region, 20) or "").upper() or None)
     db.add(store)
     db.flush()
     audit_service.log(db, user.id, "create", "store", store.id, {"code": code})
@@ -93,11 +94,12 @@ def store_settings(request: Request, store_id: int, user: User = Depends(admin_r
 
 @router.post("/stores/{store_id}/edit", dependencies=[Depends(verify_csrf)])
 def store_edit(request: Request, store_id: int, name: str = Form(""), location: str = Form(""),
-               aliases: str = Form(""), notes: str = Form(""), active: str = Form(""), user: User = Depends(admin_required),
-               db: Session = Depends(get_db)):
+               aliases: str = Form(""), notes: str = Form(""), active: str = Form(""), region: str = Form(""),
+               user: User = Depends(admin_required), db: Session = Depends(get_db)):
     store = _store_or_404(db, store_id)
     store.name, store.location, store.notes = clean_str(name, 200), clean_str(location, 200), clean_str(notes)
     store.aliases = parse_aliases(aliases)
+    store.region = (clean_str(region, 20) or "").upper() or None
     store.active = bool(active)
     audit_service.log(db, user.id, "update", "store", store.id)
     db.commit()

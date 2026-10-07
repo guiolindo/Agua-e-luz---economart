@@ -20,6 +20,23 @@ Reenviar o **mesmo arquivo** (mesmo hash) de uma conta já salva é recusado ant
 A IA nunca grava sozinha: tudo passa pela tela de conferência. Unidade desconhecida não descarta a conta (cadastrar
 ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decisão: substituir ou salvar como novo.
 
+## Perfis de usuário e painel da diretoria
+
+| Perfil | O que faz |
+|---|---|
+| **Administrador** | Cria os usuários (senha provisória exibida uma vez) e os cadastros (lojas, unidades, tipos); vê tudo, inclusive a diretoria e a auditoria. |
+| **Funcionário** | Envia as fotos/PDF das contas, confere, preenche lançamentos manuais, imprime. Não vê o painel da diretoria. |
+| **Diretoria** | Só consulta. Ao entrar cai no **Painel da diretoria** (`/diretoria`) e pode abrir lojas e imprimir; não importa nem edita nada. |
+| **Consulta** | Só visualiza e imprime. |
+
+O **painel da diretoria** compara as lojas: KPIs (total, último mês, média, custo médio R$/kWh, maior gasto/alta/queda, pendências),
+gasto da empresa por mês e fornecedor, ranking de lojas, variação do último mês por loja, composição por fornecedor, evolução
+(com seleção de lojas), custo por kWh, uso da demanda contratada, **comparação de duas lojas** (com diferença em R$ e %),
+mapa de calor loja × mês e tabela comparativa. Filtros: período, mês de referência/vencimento, **região** (campo “Região/UF” da loja) e
+fornecedores. Para não enganar: um mês em que poucas lojas já lançaram é marcado com `*` e fica fora das variações (os indicadores usam o
+último mês completo), e “vs. período anterior” compara a **média mensal** só das lojas com histórico. `python -m scripts.seed_demo_company`
+cria lojas **fictícias** para visualizar o painel.
+
 ## Distribuidoras, anotação à mão, retenção e impressão
 
 - **Várias distribuidoras:** CEMIG e COELBA (testada com a conta real “Neoenergia Coelba” de Feira de Santana) já vêm cadastradas como tipos de conta. A IA lê a distribuidora da própria

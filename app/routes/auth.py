@@ -28,6 +28,8 @@ def login(request: Request, username: str = Form(..., max_length=80), password: 
     if result.user.must_change_password:
         return RedirectResponse("/account/password", status_code=303)
     target = next if next.startswith("/") and not next.startswith("//") and "\\" not in next else "/"
+    if target == "/" and result.user.is_director:
+        target = "/diretoria"
     return RedirectResponse(target, status_code=303)
 
 

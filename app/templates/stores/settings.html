@@ -10,6 +10,7 @@
   <div class="row row-3">
     <div class="field"><label>Nome / descrição</label><input type="text" name="name" value="{{ store.name or '' }}"></div>
     <div class="field"><label>Localização</label><input type="text" name="location" value="{{ store.location or '' }}"></div>
+    <div class="field"><label>Região / UF</label><input type="text" name="region" value="{{ store.region or '' }}" maxlength="20" placeholder="MG"></div>
     <div class="field"><label>Situação</label><select name="active"><option value="1" {{ 'selected' if store.active }}>Ativa</option><option value="" {{ 'selected' if not store.active }}>Inativa</option></select></div>
   </div>
   <div class="field"><label>Apelidos (separados por vírgula)</label><input type="text" name="aliases" value="{{ (store.aliases or [])|join(', ') }}">

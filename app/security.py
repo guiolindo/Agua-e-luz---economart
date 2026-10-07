@@ -159,6 +159,12 @@ def admin_required(user: User = Depends(current_user)) -> User:
     return user
 
 
+def director_required(user: User = Depends(current_user)) -> User:
+    if not user.can_see_executive:
+        raise HTTPException(status_code=403, detail="O painel da diretoria é restrito à diretoria e ao administrador.")
+    return user
+
+
 def writer_required(user: User = Depends(current_user)) -> User:
     if not user.can_write:
         raise HTTPException(status_code=403, detail="Seu perfil é somente de consulta.")

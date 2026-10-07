@@ -134,3 +134,14 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 .infostrip { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 11px; background: #f6f8fa; border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; margin-bottom: 6px; }
 .infostrip em { font-style: normal; color: var(--muted); margin-right: 4px; }
 @media print { [data-fit] { zoom: var(--fit, 1); } .sheet { break-inside: avoid; } }
+
+/* painel da diretoria */
+.filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; } .filters .field { margin: 0; min-width: 130px; }
+.typeset { border: 0; padding: 0; margin: 0; } .typeset legend { font-weight: 600; font-size: 12px; color: #33404f; padding: 0; margin-bottom: 4px; }
+.chk { display: inline-flex; align-items: center; gap: 5px; font-weight: 400; font-size: 13px; margin: 0 12px 4px 0; cursor: pointer; } .chk input { margin: 0; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.dir-kpis { margin-bottom: 16px; } .kpi .unit { font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 3px; } .kpi .value.sm { font-size: 20px; }
+.cols-main2 { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } .dchart { position: relative; height: 320px; } .dchart.tall { height: 400px; }
+.storepick { margin-bottom: 8px; } table.heat td, table.heat th { padding: 5px 8px; font-size: 12px; } table.heat tr:hover td { background-image: none; }
+@media (max-width: 1100px) { .cols-main2 { grid-template-columns: 1fr; } }
+@media print { .dir-kpis { grid-template-columns: repeat(4, 1fr); } .card { break-inside: avoid; } .dchart { height: 240px; } .dchart.tall { height: 280px; } }

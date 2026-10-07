@@ -23,6 +23,7 @@ from app.routes import (
     auth,
     charts,
     dashboard,
+    director,
     documents,
     imports,
     manual,
@@ -75,7 +76,7 @@ def create_app() -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
     app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-    for module in (auth, account, dashboard, stores, types, imports, manual, charts, documents, admin):
+    for module in (auth, account, dashboard, director, stores, types, imports, manual, charts, documents, admin):
         app.include_router(module.router)
 
     @app.get("/health", include_in_schema=False)
