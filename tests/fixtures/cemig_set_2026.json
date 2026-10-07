@@ -33,6 +33,7 @@
     {"description": "Desconto Comp. Encargo HP", "unit": null, "quantity": null, "unit_price": null, "value": -4652.11},
     {"description": "Ajuste de Desconto C. Enc HP", "unit": null, "quantity": null, "unit_price": null, "value": -4.99}
   ],
+  "handwritten_note": "CD 300",
   "notes": "Aplicado desconto de 49,99%. Tarifa vigente conforme Res Aneel nº 3.589, de 26/05/2026.",
   "confidence": {"consumer_unit_number": 0.98, "reference_month": 0.97, "total_value": 0.99, "dates": 0.95}
 }

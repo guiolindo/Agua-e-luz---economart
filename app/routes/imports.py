@@ -6,13 +6,13 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.database import get_db
 from app.models import ConsumerUnit, Import, User
-from app.repositories.stores import default_bill_type, list_stores
+from app.repositories.stores import default_bill_type, list_record_types, list_stores
 from app.schemas.forms import extraction_to_form, low_confidence_fields, parse_bill_form
 from app.security import current_user, verify_csrf
 from app.services import audit_service
 from app.services.duplicate_service import find_bill_duplicates
 from app.services.import_service import UnitConflict, create_unit, get_extraction, run_import, save_bill
-from app.services.matching_service import suggest_similar_units
+from app.services.matching_service import find_store_by_hint, suggest_similar_units, type_for_utility
 from app.utils.uploads import UploadError
 from app.web import flash, render
 
@@ -96,7 +96,20 @@ def _review_ctx(db: Session, job: Import, form: dict, errors: dict | None = None
     extraction = get_extraction(job)
     unit = db.get(ConsumerUnit, job.matched_unit_id) if job.matched_unit_id else None
     posted = posted or {}
+    hint_store = find_store_by_hint(db, extraction.handwritten_note)
+    util_type = type_for_utility(list_record_types(db), extraction.utility)
+    warnings = []
+    if unit and hint_store and hint_store.id != unit.store_id:
+        warnings.append(f"A anotação à mão na folha diz “{extraction.handwritten_note}” ({hint_store.code}), mas esta unidade "
+                        f"está cadastrada em {unit.store.code}. Confira antes de salvar.")
+    if unit and util_type and unit.record_type_id and unit.record_type_id != util_type.id:
+        warnings.append(f"A conta parece ser da distribuidora {util_type.name}, mas a unidade está cadastrada como "
+                        f"{unit.record_type.name}. Confira o cadastro.")
+    if not unit and extraction.handwritten_note and not hint_store:
+        warnings.append(f"Anotação à mão lida: “{extraction.handwritten_note}” (não corresponde a nenhuma loja cadastrada).")
+    default_store_id = (hint_store.id if hint_store else None) or job.store_hint_id
     return {
+        "warnings": warnings, "default_store_id": default_store_id, "util_type": util_type,
         "job": job, "extraction": extraction, "form": form, "errors": errors or {}, "dups": dups or [],
         "flagged": low_confidence_fields(extraction), "unit": unit,
         "similar": [] if unit else suggest_similar_units(db, extraction.consumer_unit_number),
@@ -157,9 +170,10 @@ async def confirm(request: Request, import_id: int, user: User = Depends(current
 
     try:
         if unit is None:
+            guessed = type_for_utility(list_record_types(db), (get_extraction(job) or None) and get_extraction(job).utility)
+            fallback = guessed or default_bill_type(db)
             unit = create_unit(db, int(posted["new_store_id"]), posted["new_number"],
-                               posted.get("new_description") or None,
-                               default_bill_type(db).id if default_bill_type(db) else None, user.id)
+                               posted.get("new_description") or None, fallback.id if fallback else None, user.id)
         rtype = unit.record_type or default_bill_type(db)
         extraction = get_extraction(job)
         items = [i.model_dump() for i in extraction.line_items] if extraction else None

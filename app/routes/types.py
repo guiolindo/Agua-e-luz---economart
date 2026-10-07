@@ -49,7 +49,8 @@ def types_page(request: Request, user: User = Depends(admin_required), db: Sessi
 
 
 @router.post("/types", dependencies=[Depends(verify_csrf)])
-def type_create(request: Request, name: str = Form(...), description: str = Form(""), fields: str = Form(""),
+def type_create(request: Request, name: str = Form(...), kind: str = Form("manual"), description: str = Form(""),
+                fields: str = Form(""),
                 user: User = Depends(admin_required), db: Session = Depends(get_db)):
     code = _slug(name)
     if not code:
@@ -57,8 +58,10 @@ def type_create(request: Request, name: str = Form(...), description: str = Form
     elif db.query(RecordType).filter(RecordType.code == code).first():
         flash(request, "Já existe um tipo com esse nome.", "error")
     else:
-        rt = RecordType(code=code, name=name.strip()[:120], kind="manual", description=clean_str(description),
-                        fields=parse_fields(fields), sort_order=100)
+        is_bill = kind == "bill"
+        rt = RecordType(code=code, name=name.strip()[:120], kind="bill" if is_bill else "manual",
+                        description=clean_str(description), fields=[] if is_bill else parse_fields(fields),
+                        sort_order=15 if is_bill else 100)
         db.add(rt)
         db.flush()
         audit_service.log(db, user.id, "create", "record_type", rt.id, {"name": rt.name})

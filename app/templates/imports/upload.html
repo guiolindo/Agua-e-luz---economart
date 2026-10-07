@@ -2,8 +2,8 @@
 {% from "macros.html" import csrf %}
 {% block title %}Importar conta · Controle de Energia{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Importar conta da CEMIG</h1>
-  <div class="muted">Envie a foto ou o PDF da conta. O sistema lê os dados, identifica a loja pela unidade consumidora e mostra tudo para você conferir antes de salvar.</div></div></div>
+<div class="page-head"><div><h1>Importar conta de energia</h1>
+  <div class="muted">Envie a foto ou o PDF da conta (CEMIG, Coelba e outras distribuidoras). O sistema lê os dados, identifica a loja pela unidade consumidora e mostra tudo para você conferir antes de salvar.</div></div></div>
 
 <div class="grid cols-main">
   <form class="card" method="post" action="/import" enctype="multipart/form-data" id="up">
@@ -20,6 +20,7 @@
       <select id="store" name="store_id"><option value="">Identificar automaticamente pela conta</option>
         {% for s in stores %}<option value="{{ s.id }}" {{ 'selected' if store_id == s.id }}>{{ s.label }}</option>{% endfor %}</select>
       <div class="hint">Só é usada se a unidade lida ainda não estiver cadastrada.</div></div>
+    <p class="muted small">A foto/PDF fica guardada por {{ (retention_days / 30.5)|round|int }} meses e depois é apagada automaticamente; os dados lidos permanecem.</p>
     <button class="btn primary" id="go" disabled>Enviar e analisar</button>
   </form>
 

@@ -10,6 +10,7 @@
   {{ field("code", "Código da loja", f, {}, required=true, placeholder="Ex.: CD300", hint="Identificador curto e único.") }}
   {{ field("name", "Nome / descrição", f, {}) }}
   {{ field("location", "Localização", f, {}) }}
+  {{ field("aliases", "Apelidos (separados por vírgula)", f, {}, hint="Como a loja aparece escrita à mão ou em relatórios. Ex.: CD 300, CD Rib Neves") }}
   <div class="field"><label for="n">Observações</label><textarea id="n" name="notes">{{ f.get('notes','') }}</textarea></div>
   <div class="actions"><button class="btn primary">Cadastrar loja</button><a class="btn" href="/stores">Cancelar</a></div>
 </form>

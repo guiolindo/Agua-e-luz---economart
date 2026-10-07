@@ -11,12 +11,13 @@
   {{ csrf(csrf_token) }}
   {% if errors %}<div class="flash error">Corrija os campos destacados para continuar.</div>{% endif %}
 
+  {% for w in warnings %}<div class="flash warn" role="alert">{{ w }}</div>{% endfor %}
   {# --- Identificação: loja/unidade --- #}
   <section class="card">
     <h2>Loja e unidade consumidora</h2>
     <div class="identbox" style="margin-bottom:12px">
       <div><div class="k">Unidade lida na conta{% if 'consumer_unit' in flagged %}<span class="flagtxt">conferir</span>{% endif %}</div><div class="v mono">{{ e.consumer_unit_number or 'Não identificada' }}</div></div>
-      <div><div class="k">Cliente / tipo</div><div class="v">{{ e.utility or 'CEMIG' }}{% if e.customer_name %} · <span style="font-weight:400" class="small">{{ e.customer_name }}</span>{% endif %}</div></div>
+      <div><div class="k">Distribuidora / cliente</div><div class="v">{{ e.utility or '—' }}{% if e.customer_name %} · <span style="font-weight:400" class="small">{{ e.customer_name }}</span>{% endif %}</div></div>
     </div>
     {% if errors.unit %}<div class="flash error">{{ errors.unit }}</div>{% endif %}
 
@@ -36,7 +37,7 @@
     <div class="unit-choice"><label class="radio"><input type="radio" name="unit_mode" value="new" {{ 'checked' if unit_mode == 'new' }}> Cadastrar esta unidade</label>
       <div class="body"><div class="row row-3">
         <div class="field"><label>Loja</label><select name="new_store_id"><option value="">Selecione…</option>
-          {% for s in stores %}<option value="{{ s.id }}" {{ 'selected' if (posted.get('new_store_id') or (job.store_hint_id|string)) == s.id|string }}>{{ s.label }}</option>{% endfor %}</select></div>
+          {% for s in stores %}<option value="{{ s.id }}" {{ 'selected' if (posted.get('new_store_id') or (default_store_id|string)) == s.id|string }}>{{ s.label }}</option>{% endfor %}</select></div>
         <div class="field {{ 'error' if errors.new_number }}"><label>Nº da unidade</label><input type="text" name="new_number" value="{{ posted.get('new_number', e.consumer_unit_number or '') }}">{% if errors.new_number %}<div class="err">{{ errors.new_number }}</div>{% endif %}</div>
         <div class="field"><label>Descrição</label><input type="text" name="new_description" value="{{ posted.get('new_description', '') }}"></div>
       </div></div></div>
@@ -71,9 +72,11 @@
 
 <aside class="docpane">
   <h3>Documento original</h3>
-  {% if job.document.content_type == 'application/pdf' %}<iframe src="/documents/{{ job.document_id }}" title="Documento original"></iframe>
+  {% if not job.document.available %}<div class="flash info">O arquivo original expirou e foi removido ({{ job.document.purged_at|date_br }}).</div>
+  {% elif job.document.content_type == 'application/pdf' %}<iframe src="/documents/{{ job.document_id }}" title="Documento original"></iframe>
   {% else %}<a href="/documents/{{ job.document_id }}" target="_blank" rel="noopener"><img src="/documents/{{ job.document_id }}" alt="Foto da conta enviada"></a>
   <div class="muted small">Clique na imagem para abrir em tamanho real.</div>{% endif %}
+  {% if job.document.available and retention_days %}<div class="muted small">O arquivo fica guardado por {{ (retention_days / 30.5)|round|int }} meses e depois é apagado; os dados lidos permanecem.</div>{% endif %}
 </aside>
 </div>
 <form id="cancel" method="post" action="/import/{{ job.id }}/cancel">{{ csrf(csrf_token) }}</form>

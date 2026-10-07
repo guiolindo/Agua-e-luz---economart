@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, ForeignKey, String, Text
+from sqlalchemy import JSON, Boolean, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -14,6 +14,8 @@ class Store(TimestampMixin, Base):
     name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     location: Mapped[str | None] = mapped_column(String(200), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Apelidos usados em anotações à mão/relatórios (ex.: "CD 300", "CD Rib Neves")
+    aliases: Mapped[list | None] = mapped_column(JSON, default=list, nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     units: Mapped[list["ConsumerUnit"]] = relationship(

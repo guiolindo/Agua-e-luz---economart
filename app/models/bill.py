@@ -5,6 +5,7 @@ from sqlalchemy import JSON, Date, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+from app.models.document import Document
 from app.models.mixins import TimestampMixin
 from app.models.store import ConsumerUnit
 
@@ -34,6 +35,7 @@ class EnergyBill(TimestampMixin, Base):
 
     consumption_hp: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
     consumption_hfp: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
+    consumption_kwh: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)  # consumo único (sem HP/HFP)
     consumption_hr: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
     demand_hp: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
     demand_hfp: Mapped[Decimal | None] = mapped_column(Numeric(14, 3), nullable=True)
@@ -52,8 +54,11 @@ class EnergyBill(TimestampMixin, Base):
     updated_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     unit: Mapped[ConsumerUnit] = relationship()
+    document: Mapped[Document | None] = relationship()
 
     @property
     def consumption_total(self) -> Decimal | None:
         parts = [v for v in (self.consumption_hp, self.consumption_hfp, self.consumption_hr) if v is not None]
-        return sum(parts, Decimal("0")) if parts else None
+        if parts:
+            return sum(parts, Decimal("0"))
+        return self.consumption_kwh

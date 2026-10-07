@@ -1,3 +1,5 @@
+import re
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
@@ -37,3 +39,45 @@ def suggest_similar_units(db: Session, number: str | None, max_distance: int = 2
     scored = [(d, u) for d, u in scored if 0 < d <= max_distance]
     scored.sort(key=lambda t: t[0])
     return [u for _, u in scored[:limit]]
+
+
+def _norm(text: str | None) -> str:
+    """'CD 300' / 'cd-300' / 'CD300' -> 'CD300' (sem acentos, só letras/dígitos)."""
+    import unicodedata
+
+    t = unicodedata.normalize("NFKD", text or "").encode("ascii", "ignore").decode()
+    return re.sub(r"[^A-Za-z0-9]", "", t).upper()
+
+
+def find_store_by_hint(db: Session, hint: str | None):
+    """Loja citada em anotação à mão/texto livre: compara código, nome e apelidos (igualdade, sem fuzzy).
+
+    Retorna None se não houver correspondência única — nunca chuta (um dígito errado seria outra loja).
+    """
+    from app.models import Store
+
+    key = _norm(hint)
+    if not key:
+        return None
+    hits = []
+    for store in db.scalars(select(Store)):
+        names = [store.code, store.name, *(store.aliases or [])]
+        if key in {_norm(n) for n in names if n}:
+            hits.append(store)
+    return hits[0] if len(hits) == 1 else None
+
+
+def type_for_utility(types, utility: str | None):
+    """Tipo de conta (CEMIG, COELBA...) cujo nome/código aparece no texto da distribuidora lida da conta."""
+    key = _norm(utility)
+    if not key:
+        return None
+    best = None
+    for t in types:
+        if not t.is_bill:
+            continue
+        for candidate in (t.name, t.code):
+            c = _norm(candidate)
+            if c and c in key and (best is None or len(c) > best[0]):
+                best = (len(c), t)
+    return best[1] if best else None

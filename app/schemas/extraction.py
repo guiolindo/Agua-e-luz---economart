@@ -43,6 +43,9 @@ class BillExtraction(BaseModel):
     total_value: float | None = Field(None, description="Valor total a pagar em R$ (ex.: 20505.00)")
     consumption_hp_kwh: float | None = Field(None, description="Energia ponta (HP) do mês, kWh")
     consumption_hfp_kwh: float | None = Field(None, description="Energia fora ponta (HFP) do mês, kWh")
+    consumption_kwh: float | None = Field(
+        None, description="Consumo total do mês em kWh quando a conta NÃO separa ponta/fora ponta (tarifa convencional)"
+    )
     consumption_hr_kwh: float | None = Field(None, description="Energia horário reservado (HR) do mês, kWh")
     demand_hp_kw: float | None = Field(None, description="Demanda ponta (HP) do mês, kW")
     demand_hfp_kw: float | None = Field(None, description="Demanda fora ponta (HFP) do mês, kW")
@@ -51,5 +54,8 @@ class BillExtraction(BaseModel):
     icms_value: float | None = Field(None, description="ICMS em R$ (0 se constar 0,00)")
 
     line_items: list[LineItem] = Field(default_factory=list, description="Itens da fatura / valores faturados")
+    handwritten_note: str | None = Field(
+        None, description="Texto escrito À MÃO na folha (ex.: \"CD 300\"), se houver. null se não houver ou estiver ilegível"
+    )
     notes: str | None = Field(None, description="Informações gerais relevantes, resumidas")
     confidence: FieldConfidence | None = Field(None, description="Confiança (0 a 1) nos campos críticos")

@@ -14,6 +14,16 @@ from app.web import flash, render
 router = APIRouter()
 
 
+def parse_aliases(text: str) -> list[str]:
+    seen, out = set(), []
+    for a in (text or "").replace(";", ",").split(","):
+        a = a.strip()[:60]
+        if a and a.lower() not in seen:
+            seen.add(a.lower())
+            out.append(a)
+    return out[:20]
+
+
 def _store_or_404(db: Session, store_id: int) -> Store:
     store = db.get(Store, store_id)
     if not store:
@@ -33,7 +43,7 @@ def store_new(request: Request, user: User = Depends(admin_required)):
 
 @router.post("/stores", dependencies=[Depends(verify_csrf)])
 def store_create(request: Request, code: str = Form(...), name: str = Form(""), location: str = Form(""),
-                 notes: str = Form(""), user: User = Depends(admin_required), db: Session = Depends(get_db)):
+                 aliases: str = Form(""), notes: str = Form(""), user: User = Depends(admin_required), db: Session = Depends(get_db)):
     code = code.strip().upper()
     if not code:
         flash(request, "Informe o código da loja.", "error")
@@ -41,8 +51,10 @@ def store_create(request: Request, code: str = Form(...), name: str = Form(""), 
     if get_store_by_code(db, code):
         return render(request, "stores/form.html", status_code=409, user=user, store=None,
                       error=f"Já existe uma loja com o código {code}.",
-                      form={"code": code, "name": name, "location": location, "notes": notes})
-    store = Store(code=code, name=clean_str(name, 200), location=clean_str(location, 200), notes=clean_str(notes))
+                      form={"code": code, "name": name, "location": location, "aliases": aliases,
+                                          "notes": notes})
+    store = Store(code=code, name=clean_str(name, 200), location=clean_str(location, 200), notes=clean_str(notes),
+                  aliases=parse_aliases(aliases))
     db.add(store)
     db.flush()
     audit_service.log(db, user.id, "create", "store", store.id, {"code": code})
@@ -75,10 +87,11 @@ def store_settings(request: Request, store_id: int, user: User = Depends(admin_r
 
 @router.post("/stores/{store_id}/edit", dependencies=[Depends(verify_csrf)])
 def store_edit(request: Request, store_id: int, name: str = Form(""), location: str = Form(""),
-               notes: str = Form(""), active: str = Form(""), user: User = Depends(admin_required),
+               aliases: str = Form(""), notes: str = Form(""), active: str = Form(""), user: User = Depends(admin_required),
                db: Session = Depends(get_db)):
     store = _store_or_404(db, store_id)
     store.name, store.location, store.notes = clean_str(name, 200), clean_str(location, 200), clean_str(notes)
+    store.aliases = parse_aliases(aliases)
     store.active = bool(active)
     audit_service.log(db, user.id, "update", "store", store.id)
     db.commit()
@@ -135,3 +148,13 @@ def unit_page(request: Request, unit_id: int, indicator: str | None = None, user
     return render(request, "units/detail.html", user=user, unit=unit, store=unit.store, rtype=rtype,
                   indicators=chart_service.indicators_for_type(rtype) if rtype else [], indicator=indicator,
                   **overview)
+
+
+@router.get("/stores/{store_id}/report")
+def store_report(request: Request, store_id: int, start: str | None = None, end: str | None = None,
+                 user: User = Depends(current_user), db: Session = Depends(get_db)):
+    from datetime import datetime, timezone
+
+    store = _store_or_404(db, store_id)
+    data = chart_service.report_data(db, store, parse_reference(start), parse_reference(end))
+    return render(request, "stores/report.html", user=user, store=store, generated=datetime.now(timezone.utc), **data)

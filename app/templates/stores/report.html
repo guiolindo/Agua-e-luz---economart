@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "macros.html" import variation %}
+{% block title %}Relatório {{ store.code }} · Controle de Energia{% endblock %}
+{% block content %}
+<div class="page-head no-print">
+  <div><div class="crumbs"><a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div><h1>Relatório para impressão</h1></div>
+  <form method="get" class="actions">
+    <label for="s" style="margin:0">De</label><input id="s" type="month" name="start" value="{{ start.strftime('%Y-%m') }}" style="width:auto">
+    <label for="e" style="margin:0">Até</label><input id="e" type="month" name="end" value="{{ end.strftime('%Y-%m') }}" style="width:auto">
+    <button class="btn">Atualizar</button><button class="btn primary" type="button" onclick="window.print()">Imprimir</button>
+  </form>
+</div>
+
+<div class="report">
+  <header class="report-head">
+    <h1>ENERGIA — Relatório por loja</h1>
+    <div class="report-meta"><div><span class="muted">LOJA:</span> <strong>{{ store.code }}</strong>{% if store.name %} — {{ store.name }}{% endif %}</div>
+      <div><span class="muted">Período:</span> {{ start|month_label }} a {{ end|month_label }}</div>
+      <div class="muted small">Emitido em {{ generated.strftime('%d/%m/%Y %H:%M') }} por {{ user.username }}</div></div>
+  </header>
+
+  {% set summary = summary %}
+  <section class="rblock">
+    <h2>Resumo mensal — total geral da loja (R$)</h2>
+    {% if summary.rows %}<table class="rtable">
+      <thead><tr><th>Tipo</th>{% for m in months %}<th class="num">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
+      <tbody>{% for r in summary.rows %}<tr><td>{{ r.type.name }}</td>{% for v in r['values'] %}<td class="num">{{ v|num(2) if v is not none else '' }}</td>{% endfor %}<td class="num">{{ r.total|num(2) }}</td></tr>{% endfor %}</tbody>
+      <tfoot><tr><td>Total geral</td>{% for t in summary.totals %}<td class="num">{{ t|num(2) if t is not none else '' }}</td>{% endfor %}<td class="num">{{ summary.grand_total|num(2) }}</td></tr></tfoot>
+    </table>{% else %}<p class="muted">Sem registros no período.</p>{% endif %}
+  </section>
+
+  {% for b in blocks %}
+  <section class="rblock">
+    <h2>{{ b.type.name }} — {{ store.code }}</h2>
+    <div class="rchart"><canvas data-chart='{{ b.chart|tojson }}' aria-label="Gráfico {{ b.type.name }}" role="img"></canvas></div>
+    <table class="rtable">
+      <thead><tr><th></th>{% for m in months %}<th class="num">{{ m|month_label }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for r in b.rows %}<tr class="sub"><td>{{ r.label }}</td>{% for v in r['values'] %}<td class="num">{{ v|brl if v is not none else '' }}</td>{% endfor %}</tr>{% endfor %}
+        <tr><td><strong>Valor da fatura</strong></td>{% for v in b.totals %}<td class="num">{{ v|brl if v is not none else '' }}</td>{% endfor %}</tr>
+        {% if b.days %}<tr><td>Dias de consumo</td>{% for d in b.days %}<td class="num">{{ d if d is not none else '' }}</td>{% endfor %}</tr>{% endif %}
+        <tr><td>Variação (%)</td>{% for v in b.variations %}<td class="num">{{ variation(v) }}</td>{% endfor %}</tr>
+      </tbody>
+    </table>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/vendor/chart.umd.min.js"></script>
+<script>
+(function () {
+  if (typeof Chart === 'undefined') return;
+  const nf = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+  const charts = [...document.querySelectorAll('canvas[data-chart]')].map((cv) => {
+    const d = JSON.parse(cv.dataset.chart);
+    return new Chart(cv, {
+      data: { labels: d.labels, datasets: [
+        { type: 'bar', label: 'Valor da fatura (R$)', data: d.values, backgroundColor: '#7f8b9b', borderRadius: 2, maxBarThickness: 40, yAxisID: 'y' },
+        { type: 'line', label: 'Variação (%)', data: d.variation, borderColor: '#0b5cab', backgroundColor: '#0b5cab', borderWidth: 2, pointRadius: 3, spanGaps: true, yAxisID: 'y1' },
+      ] },
+      options: { responsive: true, maintainAspectRatio: false, animation: false,
+        scales: { y: { beginAtZero: true, ticks: { callback: (v) => 'R$ ' + nf.format(v) } },
+                  y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: (v) => v + '%' } } },
+        plugins: { legend: { position: 'bottom' } } },
+    });
+  });
+  window.addEventListener('beforeprint', () => charts.forEach((c) => c.resize()));
+})();
+</script>
+{% endblock %}

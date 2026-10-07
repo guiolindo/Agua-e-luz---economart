@@ -14,6 +14,9 @@ def document(doc_id: int, user: User = Depends(current_user), db: Session = Depe
     doc = db.get(Document, doc_id)
     if not doc:
         raise HTTPException(404, "Documento não encontrado.")
+    if doc.data is None:
+        raise HTTPException(410, "O arquivo original expirou e foi removido (os arquivos são guardados por 6 meses). "
+                                 "Os dados lidos da conta continuam salvos.")
     return Response(doc.data, media_type=doc.content_type,
                     headers={"Content-Disposition": f'inline; filename="{doc.filename}"',
                              "X-Content-Type-Options": "nosniff", "Cache-Control": "private, max-age=3600"})

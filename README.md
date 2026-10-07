@@ -16,6 +16,23 @@ Importar conta → foto/PDF → Gemini extrai (JSON validado) → unidade consum
 A IA nunca grava sozinha: tudo passa pela tela de conferência. Unidade desconhecida não descarta a conta (cadastrar
 ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decisão: substituir ou salvar como novo.
 
+## Distribuidoras, anotação à mão, retenção e impressão
+
+- **Várias distribuidoras:** CEMIG e COELBA já vêm cadastradas como tipos de conta. A IA lê a distribuidora da própria
+  conta; ao cadastrar uma unidade nova pela importação, o tipo é definido por ela. Para outra distribuidora, o admin cria
+  um tipo “Conta de distribuidora” em *Tipos de registro* (o nome deve aparecer na conta, ex.: ENERGISA). Contas sem
+  separação ponta/fora ponta usam o campo “Consumo único (kWh)”.
+- **Anotação à mão (ex.: “CD 300” escrito na folha):** a IA a copia, e o sistema compara com o código/nome/apelidos da loja
+  (*Cadastro da loja → Apelidos*). Serve para pré-selecionar a loja de uma unidade nova e para **avisar** quando a loja
+  citada à mão difere da loja da unidade encontrada. A identificação oficial continua sendo pelo número da unidade.
+- **Retenção:** a foto/PDF fica no PostgreSQL por 6 meses e então é apagada automaticamente (rotina na subida e a cada
+  6 h; manual: `python -m scripts.purge_documents`). Os dados lidos, valores e gráficos permanecem; a tela mostra
+  “Original expirado”.
+- **Impressão:** em *Histórico da loja → Imprimir relatório* (A4 paisagem): resumo mensal, gráfico de barras com linha de
+  variação e tabela Valor / Dias / Variação por tipo, no formato do relatório atual.
+- **Gemini (lições do projeto lancamento-automatico):** erros traduzidos para português sem expor chave/URL, retentativa
+  em 429/5xx, timeout de 120 s, “zero chute” e parsing tolerante do JSON.
+
 ## Requisitos
 
 - Python 3.12+ (testado em 3.13)
@@ -41,6 +58,7 @@ Edite o `.env`:
 | `SECRET_KEY` | Obrigatória fora do `DEBUG`. Gere com `python -c "import secrets; print(secrets.token_hex(32))"`. |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Criam o administrador no primeiro start (se não existir nenhum usuário). Em `DEBUG` sem senha, usa `admin`/`admin`. |
 | `MAX_UPLOAD_MB` | Limite do upload (padrão 15). |
+| `DOCUMENT_RETENTION_DAYS` | Dias até a foto/PDF original ser apagada do banco (padrão 183 ≈ 6 meses). |
 
 ```bash
 python run.py                        # http://127.0.0.1:8000
@@ -109,7 +127,7 @@ tests/               pytest + fixtures/cemig_set_2026.json
 
 ## Limitações conhecidas / próximos passos
 
-- Migrações: hoje `create_all`. Para evoluir o esquema em produção, adotar Alembic.
+- Migrações: `create_all` + adição automática de colunas novas anuláveis (`ensure_columns`). Mudanças maiores exigem Alembic.
 - Importação em lote e exportação (Excel/CSV/PDF) não foram implementadas; a arquitetura (`Import` + `run_import`) já comporta.
 - Sem limitação de tentativas de login e sem recuperação de senha (o admin cria/desativa usuários em *Usuários*).
 - A leitura por IA nunca foi validada aqui com a API real do Gemini (sem chave neste ambiente): os testes usam o mock.

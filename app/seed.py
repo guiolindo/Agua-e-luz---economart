@@ -11,7 +11,9 @@ log = logging.getLogger(__name__)
 
 DEFAULT_TYPES = [
     dict(code="cemig", name="CEMIG", kind="bill", sort_order=10, fields=[],
-         description="Conta de energia da distribuidora (leitura por foto)."),
+         description="Conta de energia da CEMIG (Minas Gerais), lida por foto."),
+    dict(code="coelba", name="COELBA", kind="bill", sort_order=11, fields=[],
+         description="Conta de energia da Coelba (Bahia), lida por foto."),
     dict(code="ll-energia", name="LL Energia", kind="manual", sort_order=20,
          fields=[{"key": "consumo_kwh", "label": "Consumo", "unit": "kWh"}],
          description="Comercializadora de energia (lançamento mensal)."),

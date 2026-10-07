@@ -6,6 +6,7 @@
   <div><div class="crumbs"><a href="/stores">Lojas</a> /</div><h1>{{ store.code }} — Histórico</h1>
     <div class="muted">{{ store.name or '' }}{% if store.location %} · {{ store.location }}{% endif %}</div></div>
   <div class="actions"><a class="btn primary" href="/import?store_id={{ store.id }}">Importar conta</a>
+    <a class="btn" id="print-link" href="/stores/{{ store.id }}/report?start={{ start.strftime('%Y-%m') }}&end={{ end.strftime('%Y-%m') }}">Imprimir relatório</a>
     <a class="btn" href="/manual?store_id={{ store.id }}">Lançamento manual</a>
     {% if user.is_admin %}<a class="btn" href="/stores/{{ store.id }}/settings">Cadastro</a>{% endif %}</div>
 </div>
@@ -39,3 +40,9 @@
   </tbody></table></div>
 </section>
 {% endblock %}
+{% block scripts %}<script>
+document.getElementById('print-link').addEventListener('click', (e) => {
+  const s = document.querySelector('[name="start"]'), t = document.querySelector('[name="end"]');
+  if (s && t && s.value && t.value) e.currentTarget.href = '/stores/{{ store.id }}/report?start=' + s.value + '&end=' + t.value;
+});
+</script>{% endblock %}

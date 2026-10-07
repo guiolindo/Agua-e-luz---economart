@@ -8,14 +8,14 @@ from app.utils.parsing import clean_str, parse_date, parse_decimal, parse_int, p
 
 DATE_FIELDS = ["issue_date", "due_date", "previous_reading_date", "current_reading_date", "next_reading_date"]
 MONEY_FIELDS = ["total_value", "pis_cofins_value", "icms_value"]
-QUANT_FIELDS = ["consumption_hp", "consumption_hfp", "consumption_hr", "demand_hp", "demand_hfp", "contracted_demand"]
+QUANT_FIELDS = ["consumption_kwh", "consumption_hp", "consumption_hfp", "consumption_hr", "demand_hp", "demand_hfp", "contracted_demand"]
 TEXT_FIELDS = {"invoice_number": 60, "series": 20, "bill_class": 80, "subclass": 120, "tariff_modality": 80,
                "notes": 2000}
 FIELD_LABELS = {
     "reference": "Mês de referência", "total_value": "Valor da fatura", "issue_date": "Emissão", "due_date": "Vencimento",
     "invoice_number": "Nº da nota", "series": "Série", "days": "Dias", "previous_reading_date": "Leitura anterior",
     "current_reading_date": "Leitura atual", "next_reading_date": "Próxima leitura",
-    "consumption_hp": "Consumo HP (kWh)", "consumption_hfp": "Consumo HFP (kWh)", "consumption_hr": "Consumo HR (kWh)",
+    "consumption_kwh": "Consumo único (kWh)", "consumption_hp": "Consumo HP (kWh)", "consumption_hfp": "Consumo HFP (kWh)", "consumption_hr": "Consumo HR (kWh)",
     "demand_hp": "Demanda HP (kW)", "demand_hfp": "Demanda HFP (kW)", "contracted_demand": "Demanda contratada (kW)",
     "pis_cofins_value": "PIS/COFINS (R$)", "icms_value": "ICMS (R$)", "bill_class": "Classe", "subclass": "Subclasse",
     "tariff_modality": "Modalidade tarifária", "notes": "Observações",
@@ -80,7 +80,7 @@ def extraction_to_form(e: BillExtraction) -> dict[str, str]:
         "next_reading_date": iso(e.next_reading_date),
         "invoice_number": e.invoice_number or "", "series": e.series or "",
         "total_value": _money(e.total_value), "days": "" if e.days is None else str(e.days),
-        "consumption_hp": _qty(e.consumption_hp_kwh), "consumption_hfp": _qty(e.consumption_hfp_kwh),
+        "consumption_kwh": _qty(e.consumption_kwh), "consumption_hp": _qty(e.consumption_hp_kwh), "consumption_hfp": _qty(e.consumption_hfp_kwh),
         "consumption_hr": _qty(e.consumption_hr_kwh),
         "demand_hp": _qty(e.demand_hp_kw), "demand_hfp": _qty(e.demand_hfp_kw),
         "contracted_demand": _qty(e.contracted_demand_kw),

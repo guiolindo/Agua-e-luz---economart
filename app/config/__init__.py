@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     admin_password: str = ""
 
     max_upload_mb: int = 15
+    # Foto/PDF original some do banco após este prazo (os dados lidos permanecem). ~6 meses.
+    document_retention_days: int = 183
+    retention_check_hours: int = 6
 
     @field_validator("database_url")
     @classmethod

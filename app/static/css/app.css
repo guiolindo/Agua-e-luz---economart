@@ -103,3 +103,14 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
   .brand { padding: 4px 8px; } .nav { display: flex; flex-wrap: wrap; gap: 4px; } .nav a { margin: 0; } .nav hr { display: none; } .side-foot { margin: 0 0 0 auto; padding: 4px 8px; }
   .main { padding: 14px 14px 30px; } .cols-2, .cols-4, .row-2, .row-3, .row-4, .identbox { grid-template-columns: 1fr; } .chart-box { height: 280px; }
 }
+
+/* relatório / impressão */
+.report { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 26px; }
+.report-head { border-bottom: 2px solid var(--text); padding-bottom: 8px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.report-meta { text-align: right; } .rblock { margin-bottom: 22px; break-inside: avoid; } .rblock h2 { font-size: 14px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.rchart { position: relative; height: 260px; margin-bottom: 8px; } .rtable { font-size: 12px; } .rtable th, .rtable td { padding: 4px 7px; } .rtable tr.sub td { color: var(--muted); }
+@page { size: A4 landscape; margin: 10mm; }
+@media print {
+  body { background: #fff; font-size: 11px; } .side, .no-print, .flash { display: none !important; } .shell { display: block; } .main { padding: 0; }
+  .report { border: 0; padding: 0; } .rtable th { background: #fff; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import SessionLocal
-from app.models import ConsumerUnit, Document, EnergyBill, Import
+from app.models import ConsumerUnit, Document, EnergyBill, Import, Store
 from app.models.mixins import utcnow
 from app.schemas.extraction import BillExtraction
 from app.services import audit_service
@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 BILL_FIELDS = [
     "reference", "issue_date", "due_date", "invoice_number", "series", "total_value", "days",
     "previous_reading_date", "current_reading_date", "next_reading_date",
-    "consumption_hp", "consumption_hfp", "consumption_hr", "demand_hp", "demand_hfp", "contracted_demand",
+    "consumption_kwh", "consumption_hp", "consumption_hfp", "consumption_hr", "demand_hp", "demand_hfp", "contracted_demand",
     "pis_cofins_value", "icms_value", "bill_class", "subclass", "tariff_modality", "notes",
 ]
 
@@ -47,10 +47,13 @@ def run_import(import_id: int, extractor: Extractor | None = None, session_facto
         if job is None:
             return
         extractor = extractor or get_extractor()
+        if job.document.data is None:
+            _fail(db, job, "O arquivo original desta importação já expirou e foi removido.")
+            return
         job.stage = "extracting"
         db.commit()
         try:
-            extraction = extractor.extract(job.document.data, job.document.content_type)
+            extraction = extractor.extract(job.document.data, job.document.content_type, store_catalog(db))
         except ExtractionError as exc:
             _fail(db, job, str(exc))
             return
@@ -73,6 +76,15 @@ def run_import(import_id: int, extractor: Extractor | None = None, session_facto
         db.commit()
     finally:
         db.close()
+
+
+def store_catalog(db: Session) -> str | None:
+    """Lojas com apelidos, para o Gemini normalizar anotações à mão ("CD 300" -> CD300)."""
+    lines = []
+    for s in db.query(Store).filter(Store.active.is_(True)).order_by(Store.code):
+        aliases = ", ".join(a for a in (s.aliases or []) if a)
+        lines.append(f"- {s.code}" + (f" ({s.name})" if s.name else "") + (f" ← {aliases}" if aliases else ""))
+    return "\n".join(lines) or None
 
 
 def _fail(db: Session, job: Import, message: str) -> None:

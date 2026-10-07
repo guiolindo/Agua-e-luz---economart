@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import secrets
 from contextlib import asynccontextmanager
@@ -13,6 +14,7 @@ from app.config import get_settings
 from app.routes import admin, auth, charts, dashboard, documents, imports, manual, stores, types
 from app.security import LoginRequired
 from app.seed import seed
+from app.services.retention_service import retention_loop
 from app.web import render
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -21,9 +23,14 @@ BASE_DIR = Path(__file__).resolve().parent
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     database.Base.metadata.create_all(database.engine)
+    database.ensure_columns()
     with database.SessionLocal() as db:
         seed(db)
-    yield
+    task = asyncio.create_task(retention_loop())
+    try:
+        yield
+    finally:
+        task.cancel()
 
 
 def create_app() -> FastAPI:

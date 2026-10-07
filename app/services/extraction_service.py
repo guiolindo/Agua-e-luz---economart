@@ -13,7 +13,7 @@ FIXTURE = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "cemig_se
 class Extractor(Protocol):
     name: str
 
-    def extract(self, data: bytes, mime_type: str) -> BillExtraction: ...
+    def extract(self, data: bytes, mime_type: str, catalog: str | None = None) -> BillExtraction: ...
 
 
 class MockExtractor:
@@ -24,7 +24,7 @@ class MockExtractor:
         self._path = path
         self.name = "mock"
 
-    def extract(self, data: bytes, mime_type: str) -> BillExtraction:
+    def extract(self, data: bytes, mime_type: str, catalog: str | None = None) -> BillExtraction:
         payload = self._payload if self._payload is not None else json.loads(self._path.read_text(encoding="utf-8"))
         return BillExtraction.model_validate(payload)
 

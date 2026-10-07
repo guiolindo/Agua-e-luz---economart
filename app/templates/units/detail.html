@@ -30,7 +30,8 @@
         <td class="num">{{ b.days if b.days is not none else '—' }}</td><td class="num">{{ b.consumption_total|num }}</td>
         <td class="num">{{ b.demand_hfp|num }}</td><td>{{ b.due_date|date_br }}</td>
         <td>{{ 'Foto/IA' if b.source == 'import' else 'Manual' }}</td>
-        <td class="right nowrap">{% if b.document_id %}<a class="btn sm" href="/documents/{{ b.document_id }}" target="_blank" rel="noopener">Ver documento original</a> {% endif %}
+        <td class="right nowrap">{% if b.document and b.document.available %}<a class="btn sm" href="/documents/{{ b.document_id }}" target="_blank" rel="noopener" title="Disponível até {{ b.document.expires_at(retention_days)|date_br }}">Ver documento original</a>
+          {% elif b.document %}<span class="badge" title="Removido em {{ b.document.purged_at|date_br }}">Original expirado</span> {% endif %}
           <a class="btn sm" href="/manual?bill={{ b.id }}">Editar</a>
           {% if user.is_admin %}<form method="post" action="/manual/bills/{{ b.id }}/delete" style="display:inline" onsubmit="return confirm('Excluir a conta de {{ b.reference|month_label }}?')">{{ csrf(csrf_token) }}<button class="btn sm danger">Excluir</button></form>{% endif %}</td></tr>
     {% else %}<tr><td colspan="9" class="muted">Nenhuma conta registrada para esta unidade.</td></tr>{% endfor %}

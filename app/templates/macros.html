@@ -25,6 +25,9 @@
   </div>
   <details open><summary>Consumo e demanda</summary>
     <div class="row row-3">
+      {{ field("consumption_kwh", "Consumo único (kWh)", form, errors, hint="Só se a conta não separar ponta/fora ponta.") }}
+    </div>
+    <div class="row row-3">
       {{ field("consumption_hp", "Consumo HP — ponta (kWh)", form, errors) }}
       {{ field("consumption_hfp", "Consumo HFP — fora ponta (kWh)", form, errors) }}
       {{ field("consumption_hr", "Consumo HR (kWh)", form, errors) }}
