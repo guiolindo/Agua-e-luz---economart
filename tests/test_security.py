@@ -349,3 +349,66 @@ def test_production_rejects_weak_admin_password(db):
 def test_audit_page_admin_only_and_never_shows_raw_ip(client):
     html = client.get("/admin/audit").text
     assert "login" in html and "testclient" not in html
+
+
+# ---------------------------------------------------------------- PDF de ponta a ponta
+PDF = (b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
+       b"3 0 obj<</Type/Page/Parent 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF")
+
+
+class _SpyExtractor:
+    name = "spy"
+
+    def __init__(self):
+        self.seen = []
+
+    def extract(self, data, mime_type, catalog=None):
+        from app.services.extraction_service import MockExtractor
+        self.seen.append((data, mime_type))
+        return MockExtractor().extract(data, mime_type)
+
+
+def test_pdf_flow_sends_original_bytes_as_pdf_and_serves_it_inline_and_encrypted(client, db, monkeypatch):
+    from app.services import import_service
+    spy = _SpyExtractor()
+    monkeypatch.setattr(import_service, "get_extractor", lambda: spy)
+    _make_store(client)
+    r = client.post("/import", {}, files={"file": ("conta.pdf", PDF, "application/pdf")})
+    job = int(r.headers["location"].rsplit("/", 1)[1])
+    assert spy.seen == [(PDF, "application/pdf")]                       # o Gemini recebe o PDF decifrado, intacto
+    doc = db.query(Document).one()
+    assert doc.encrypted and doc.data != PDF and doc.size == len(PDF)    # no banco está cifrado
+    review = client.get(f"/import/{job}/review").text
+    assert f'<iframe src="/documents/{doc.id}"' in review
+    served = client.get(f"/documents/{doc.id}")
+    assert served.content == PDF and served.headers["content-type"] == "application/pdf"
+    assert "content-security-policy" not in served.headers               # CSP/sandbox quebraria o visualizador de PDF
+    assert served.headers["x-content-type-options"] == "nosniff" and served.headers["cache-control"] == "no-store"
+    client.post(f"/import/{job}/confirm", {**_form_from_review(review), "unit_mode": "matched"})
+    from app.models import EnergyBill
+    bill = db.query(EnergyBill).one()
+    page = client.get(f"/bills/{bill.id}/print?doc=1").text
+    assert "O original é um PDF" in page and "<img class=\"orig\"" not in page
+
+
+def test_same_file_is_not_sent_to_gemini_twice(client, db, monkeypatch):
+    from app.services import import_service
+    spy = _SpyExtractor()
+    monkeypatch.setattr(import_service, "get_extractor", lambda: spy)
+    _make_store(client)
+    r = client.post("/import", {}, files={"file": ("conta.pdf", PDF, "application/pdf")})
+    job = int(r.headers["location"].rsplit("/", 1)[1])
+    client.post(f"/import/{job}/confirm", {**_form_from_review(client.get(f"/import/{job}/review").text), "unit_mode": "matched"})
+    again = client.post("/import", {}, files={"file": ("renomeado.pdf", PDF, "application/pdf")})
+    assert again.status_code == 409 and "já foi importado" in again.text and "/units/" in again.text
+    assert len(spy.seen) == 1                                            # nenhuma 2ª chamada à API
+    assert db.query(Document).count() == 1
+
+
+def test_discarded_import_allows_reupload_of_same_file(client, db, monkeypatch):
+    from app.services import import_service
+    monkeypatch.setattr(import_service, "get_extractor", lambda: _SpyExtractor())
+    _make_store(client)
+    job = int(client.post("/import", {}, files={"file": ("a.pdf", PDF, "application/pdf")}).headers["location"].rsplit("/", 1)[1])
+    client.post(f"/import/{job}/cancel")
+    assert client.post("/import", {}, files={"file": ("a.pdf", PDF, "application/pdf")}).status_code == 303

@@ -8,7 +8,8 @@
 <div class="grid cols-main">
   <form class="card" method="post" action="/import" enctype="multipart/form-data" id="up">
     {{ csrf(csrf_token) }}
-    {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
+    {% if error %}<div class="flash error" role="alert">{{ error }}
+      {% if dup_bill %}<br><a href="/units/{{ dup_bill.unit_id }}">Ver a conta {{ dup_bill.reference|month_label }} da unidade {{ dup_bill.unit.number }}</a>{% endif %}</div>{% endif %}
     <label class="drop" for="file" id="drop">
       <strong>Arraste a conta aqui ou clique para escolher</strong>
       <span class="muted">JPG, PNG, WEBP ou PDF · até {{ max_mb }} MB · no celular, você pode tirar a foto direto</span>

@@ -15,6 +15,8 @@ Importar conta → foto/PDF → Gemini extrai (JSON validado) → unidade consum
 → conferência (imagem ao lado, campos editáveis) → confirmar → histórico + gráficos
 ```
 
+Reenviar o **mesmo arquivo** (mesmo hash) de uma conta já salva é recusado antes de chamar o Gemini. PDFs (a maioria dos casos) vão ao Gemini intactos; fotos são pré-processadas (rotação/tamanho).
+
 A IA nunca grava sozinha: tudo passa pela tela de conferência. Unidade desconhecida não descarta a conta (cadastrar
 ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decisão: substituir ou salvar como novo.
 

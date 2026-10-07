@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import get_db
-from app.models import ConsumerUnit, Import, User
+from app.models import ConsumerUnit, Document, EnergyBill, Import, User
 from app.repositories.stores import default_bill_type, list_record_types, list_stores
 from app.schemas.forms import extraction_to_form, low_confidence_fields, parse_bill_form
 from app.security import verify_csrf, writer_required
@@ -49,6 +49,15 @@ def _job_or_404(db: Session, import_id: int) -> Import:
     return job
 
 
+def _already_imported(db: Session, data: bytes):
+    """Conta salva a partir de um arquivo idêntico (mesmo hash), se ela ainda existir."""
+    from app.utils.uploads import sha256
+
+    return db.scalar(
+        select(EnergyBill).join(Import, Import.bill_id == EnergyBill.id).join(Document, Document.id == Import.document_id)
+        .where(Document.sha256 == sha256(data), Import.status == "confirmed").limit(1))
+
+
 @router.get("/import")
 def import_page(request: Request, store_id: int | None = None, user: User = Depends(writer_required),
                 db: Session = Depends(get_db)):
@@ -65,6 +74,12 @@ async def import_upload(request: Request, background: BackgroundTasks, file: Upl
 
     limit = get_settings().max_upload_bytes
     data = await file.read(limit + 1)  # nunca carrega mais que o limite + 1 byte
+    already = _already_imported(db, data) if len(data) <= limit else None
+    if already is not None:
+        return render(request, "imports/upload.html", status_code=409, user=user, dup_bill=already,
+                      error="Este mesmo arquivo já foi importado e a conta está salva. Nada foi enviado ao Gemini.",
+                      stores=list_stores(db, only_active=True), store_id=store_id, recent=[],
+                      max_mb=get_settings().max_upload_mb)
     try:
         job = create_import(db, file.filename or "conta", data, user.id, store_id)
     except UploadError as exc:
