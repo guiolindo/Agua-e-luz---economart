@@ -82,7 +82,7 @@ de importação — todos sem chamar a API (o Gemini é substituído por `MockEx
 
 1. Crie um projeto no Railway a partir deste repositório do GitHub (build automático via Nixpacks; `railway.json` e `Procfile` já definem o start).
 2. Adicione o plugin **PostgreSQL**. No serviço web, em *Variables*, referencie `DATABASE_URL` do Postgres.
-3. Defina as variáveis do serviço web:
+3. Defina as variáveis do serviço web (atalho: abra *Variables → Raw Editor* e cole o conteúdo de `railway.env.example`, preenchendo `GEMINI_API_KEY`, `SECRET_KEY` e `ADMIN_PASSWORD`):
    `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.5-flash-lite`, `EXTRACTION_PROVIDER=gemini`, `SECRET_KEY`, `DEBUG=false`,
    `ADMIN_USERNAME`, `ADMIN_PASSWORD`.
 4. Gere um domínio público (*Settings → Networking*). O healthcheck é `/health`.
