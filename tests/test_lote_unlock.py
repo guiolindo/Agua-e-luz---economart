@@ -71,7 +71,7 @@ def test_manual_page_asks_what_to_do_first_and_the_form_opens_after_choosing(cli
     assert "Últimos lançamentos manuais" in choose                                   # o histórico continua à mão
     single = client.get("/manual?modo=loja").text                                    # escolheu "uma loja": abre o formulário
     assert 'id="mf"' in single and f'<option value="{ll.id}"' not in single and 'data-bill="0"' in single   # LL fora da lista
-    assert "Lançamento de uma loja" in single                                        # os cartões viram o seletor de modo
+    assert "Trocar tipo de lançamento" in single and 'class="modes' not in single      # só o formulário, sem a escolha por cima
     a, = _stores(client, "F1")
     assert 'id="mf"' in client.get(f"/manual?store_id={a}").text                     # veio de uma loja: já abre o formulário
 
@@ -85,7 +85,8 @@ def test_batch_page_for_ll_has_fixed_type_and_the_mode_switcher(client, db):
     ll = _ll(db)
     batch = client.get("/manual/lote?type=ll-energia").text
     assert f'name="type_id" value="{ll.id}"' in batch and 'id="type" name="type_id" required' not in batch   # tipo fixo, sem select
-    assert "LL Energia · várias lojas" in batch and 'href="/manual?modo=loja"' in batch and client.get("/manual/lote").status_code == 200
+    assert "LL Energia · várias lojas" in batch and "Trocar tipo de lançamento" in batch and 'class="modes' not in batch
+    assert client.get("/manual/lote").status_code == 200
 
 
 def test_single_form_refuses_ll_and_points_to_the_batch_screen(client, db):
