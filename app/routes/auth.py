@@ -10,7 +10,9 @@ from app.services import auth_service
 from app.web import render
 
 router = APIRouter()
-GENERIC_ERROR = "Usuário ou senha incorretos, ou acesso temporariamente bloqueado."
+GENERIC_ERROR = "Usuário ou senha incorretos."
+LOCKED_ERROR = ("Acesso bloqueado por excesso de tentativas. Tente de novo em {minutes} minuto(s) "
+                "ou peça ao administrador para redefinir a senha.")
 
 
 @router.get("/login")
@@ -23,7 +25,8 @@ def login(request: Request, username: str = Form(..., max_length=80), password: 
           next: str = Form("/"), db: Session = Depends(get_db)):
     result = auth_service.attempt_login(db, request, username, password)
     if not result.ok:
-        return render(request, "login.html", status_code=401, next=next, error=GENERIC_ERROR)
+        error = LOCKED_ERROR.format(minutes=result.minutes) if result.locked else GENERIC_ERROR
+        return render(request, "login.html", status_code=401, next=next, error=error)
     security.start_session(request, result.user)
     if result.user.must_change_password:
         return RedirectResponse("/account/password", status_code=303)

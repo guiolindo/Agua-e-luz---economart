@@ -1,14 +1,15 @@
 """Login com bloqueio de conta, auditoria de acessos e troca de senha."""
+import math
 from dataclasses import dataclass
 from datetime import timedelta
 
 from fastapi import Request
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app import security
 from app.config import get_settings
-from app.models import User
+from app.models import LoginThrottle, User
 from app.models.mixins import utcnow
 from app.services import audit_service
 
@@ -18,6 +19,7 @@ class LoginResult:
     user: User | None
     ok: bool
     locked: bool = False
+    minutes: int = 0        # quanto falta para destravar (só quando locked)
 
 
 def _aware(dt):
@@ -26,30 +28,56 @@ def _aware(dt):
     return dt if dt is None or dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
+def _minutes_left(until, now) -> int:
+    return max(1, math.ceil((until - now).total_seconds() / 60))
+
+
+def _throttle_unknown(db: Session, request: Request, username: str, now) -> LoginResult:
+    """Usuário inexistente: conta as falhas como se fosse uma conta real, para o bloqueio não denunciar quem existe."""
+    s = get_settings()
+    key = security.pseudonymize(username.lower()) or "h:vazio"
+    thr = db.scalar(select(LoginThrottle).where(LoginThrottle.key == key))
+    until = _aware(thr.blocked_until) if thr else None
+    if until and until > now:
+        security_event(db, request, "login_blocked", None, user=security.pseudonymize(username))
+        db.commit()
+        return LoginResult(None, False, locked=True, minutes=_minutes_left(until, now))
+    if thr is None:
+        db.execute(delete(LoginThrottle).where(LoginThrottle.updated_at < now - timedelta(days=1)))   # faxina
+        thr = LoginThrottle(key=key, failures=0)
+        db.add(thr)
+    thr.failures = (thr.failures or 0) + 1
+    locked = thr.failures >= s.max_login_attempts
+    if locked:
+        thr.blocked_until, thr.failures = now + timedelta(minutes=s.login_block_minutes), 0
+    security_event(db, request, "login_failed", None, user=security.pseudonymize(username))
+    db.commit()
+    return LoginResult(None, False, locked=locked, minutes=s.login_block_minutes if locked else 0)
+
+
 def security_event(db: Session, request: Request, action: str, user_id: int | None, **details) -> None:
     audit_service.log(db, user_id, action, "auth", user_id,
                       {"ip": security.pseudonymize(security.client_ip(request)), **details})
 
 
 def attempt_login(db: Session, request: Request, username: str, password: str) -> LoginResult:
-    """Mensagem ao usuário é sempre a mesma (credencial errada, conta inexistente, bloqueada ou inativa): nada revela
-    se a conta existe. O bloqueio temporário e o log de acessos ficam no servidor."""
+    """Mensagens ao usuário: "incorretos" (credencial errada, usuário inexistente ou conta inativa — indistinguíveis) e
+    "bloqueado por excesso de tentativas" (com os minutos que faltam). O bloqueio vale igual para usuário real e
+    inventado (ver LoginThrottle), então a mensagem não revela quem existe."""
     s = get_settings()
     now = utcnow()
     username = (username or "").strip()[:80]
     user = db.scalar(select(User).where(User.username == username))
     if user is None:
         security.verify_dummy(password)
-        security_event(db, request, "login_failed", None, user=security.pseudonymize(username))
-        db.commit()
-        return LoginResult(None, False)
+        return _throttle_unknown(db, request, username, now)
 
     blocked = _aware(user.blocked_until)
     if blocked and blocked > now:
         security.verify_dummy(password)  # mesmo custo de tempo
         security_event(db, request, "login_blocked", user.id)
         db.commit()
-        return LoginResult(None, False, locked=True)
+        return LoginResult(None, False, locked=True, minutes=_minutes_left(blocked, now))
 
     # senha provisória (4 dígitos) é fraca de propósito: bloqueia mais cedo e expira
     limit = s.temp_max_login_attempts if user.must_change_password else s.max_login_attempts
@@ -59,15 +87,17 @@ def attempt_login(db: Session, request: Request, username: str, password: str) -
         db.commit()
         return LoginResult(None, False)               # mesma mensagem genérica; o admin precisa redefinir
     if not user.active or not security.verify_password(password, user.password_hash):
+        just_locked = False
         if user.active:
             user.failed_attempts = (user.failed_attempts or 0) + 1
             if user.failed_attempts >= limit:
                 user.blocked_until = now + timedelta(minutes=s.login_block_minutes)
                 user.failed_attempts = 0
+                just_locked = True
                 security_event(db, request, "account_locked", user.id, minutes=s.login_block_minutes)
         security_event(db, request, "login_failed", user.id)
         db.commit()
-        return LoginResult(None, False)
+        return LoginResult(None, False, locked=just_locked, minutes=s.login_block_minutes if just_locked else 0)
 
     user.failed_attempts, user.blocked_until, user.last_login = 0, None, now
     if security.needs_rehash(user.password_hash):

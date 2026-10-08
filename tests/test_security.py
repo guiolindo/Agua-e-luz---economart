@@ -51,19 +51,67 @@ def test_mutations_without_login_are_rejected():
     assert anon.tc.get("/health").status_code == 200  # único endpoint público além de /login e /static
 
 
-def test_lockout_after_failed_attempts_hides_whether_account_exists(client, db):
-    admin = client
-    pw = _create_user(admin, "maria", "operator")
+LOCKED = "excesso de tentativas"      # frase só da mensagem de bloqueio (a tela traz um aviso fixo com a palavra "bloqueado")
+
+
+def test_wrong_password_says_wrong_password_and_lockout_says_locked(client, db):
+    from app.middleware import reset_rate_limits
+    pw = _create_user(client, "maria", "operator")
     c = _new_client()
-    msgs = {_login(c, "maria", "errada-errada-1").text.count("incorretos") for _ in range(3)}   # senha provisória: bloqueia na 3ª
-    assert msgs == {1}
-    r = _login(c, "maria", pw)                       # senha CERTA, mas conta bloqueada
-    assert r.status_code == 401 and "incorretos" in r.text and "bloqueado" in r.text   # mesma mensagem genérica
-    ghost = _login(_new_client(), "nao-existe", "qualquer-coisa-1")
-    assert ghost.status_code == 401 and "incorretos" in ghost.text                    # igual para usuário inexistente
+    for _ in range(2):                                  # senha provisória: bloqueia na 3ª
+        r = _login(c, "maria", "errada-errada-1")
+        assert r.status_code == 401 and "incorretos" in r.text and LOCKED not in r.text
+    third = _login(c, "maria", "errada-errada-1")       # a que estoura o limite já avisa do bloqueio
+    assert third.status_code == 401 and LOCKED in third.text and "15 minuto(s)" in third.text
+    r = _login(c, "maria", pw)                          # senha CERTA, mas conta bloqueada
+    assert r.status_code == 401 and LOCKED in r.text
     db.expire_all()
     actions = [a.action for a in db.query(AuditLog).filter(AuditLog.entity == "auth")]
     assert "account_locked" in actions and "login_blocked" in actions and actions.count("login_failed") >= 3
+    reset_rate_limits()
+
+
+def test_lockout_message_does_not_reveal_whether_account_exists(client, db):
+    """Usuário inventado bloqueia com as mesmas palavras e no mesmo número de tentativas de uma conta normal (5)."""
+    from app.middleware import reset_rate_limits
+    ghost = _new_client()
+    for _ in range(4):
+        r = _login(ghost, "nao-existe", "qualquer-coisa-1")
+        assert r.status_code == 401 and "incorretos" in r.text and LOCKED not in r.text
+    fifth = _login(ghost, "nao-existe", "qualquer-coisa-1")
+    assert fifth.status_code == 401 and LOCKED in fifth.text
+    assert LOCKED in _login(ghost, "Nao-Existe", "outra-coisa-1").text                 # maiúscula/minúscula não escapa
+    reset_rate_limits()
+    real = _new_client()                                                               # conta normal (admin): também 5
+    for _ in range(4):
+        assert LOCKED not in _login(real, "admin", "errada-errada-1").text
+    assert LOCKED in _login(real, "admin", "errada-errada-1").text
+    assert _login(_new_client(), "outro-fantasma", "x").status_code == 401             # bloqueio é por nome, não global
+    reset_rate_limits()
+
+
+def test_unknown_user_lock_expires_and_stores_no_raw_name(client, db):
+    from datetime import timedelta
+
+    from app.middleware import reset_rate_limits
+    from app.models import LoginThrottle
+    from app.models.mixins import utcnow
+    c = _new_client()
+    for _ in range(5):
+        _login(c, "fantasma-x", "qualquer-coisa-1")
+    reset_rate_limits()
+    row = db.query(LoginThrottle).one()
+    assert "fantasma" not in row.key and row.key.startswith("h:")
+    row.blocked_until = utcnow() - timedelta(minutes=1)
+    db.commit()
+    again = _login(c, "fantasma-x", "qualquer-coisa-1")
+    assert "incorretos" in again.text and LOCKED not in again.text
+    reset_rate_limits()
+
+
+def test_login_page_explains_the_lockout_rule_up_front(client):
+    html = _new_client().get("/login").text
+    assert "bloqueado por 15 minutos" in html and "5 tentativas" in html
 
 
 def test_lockout_expires(client, db):

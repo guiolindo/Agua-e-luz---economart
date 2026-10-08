@@ -27,6 +27,8 @@ def _asset_version() -> str:
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["retention_days"] = get_settings().document_retention_days
+templates.env.globals["login_max_attempts"] = get_settings().max_login_attempts
+templates.env.globals["login_block_minutes"] = get_settings().login_block_minutes
 templates.env.globals["ASSET_VERSION"] = _asset_version()
 templates.env.filters.update(brl=fmt.brl, num=fmt.num, pct=fmt.pct, month_label=fmt.month_label, date_br=fmt.date_br, dt_br=dt_br)
 
