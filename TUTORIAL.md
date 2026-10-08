@@ -102,7 +102,7 @@ O papel do administrador é cuidar de **quem entra e com qual perfil**. Menu **U
 
 1. Digite o nome de usuário e escolha o **perfil** (Funcionário, Diretoria, Consulta ou Administrador).
 2. Clique em **Criar usuário**. Aparece uma **senha provisória de 4 dígitos**, mostrada **uma única vez**. Anote e entregue à pessoa.
-3. **No primeiro acesso a pessoa é obrigada a criar a própria senha** (mínimo 10 caracteres, letras e números; não pode ser o nome de usuário nem uma senha comum).
+3. **No primeiro acesso a pessoa é obrigada a criar a própria senha** (mínimo 8 caracteres, letras e números; não pode ser o nome de usuário nem uma senha comum).
 
 Sobre a senha provisória de 4 dígitos:
 

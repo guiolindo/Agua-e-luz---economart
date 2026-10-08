@@ -24,12 +24,9 @@ def _parse_month(s: str | None) -> date | None:
         return None
 
 
-@router.get("/notas")
-def notas(request: Request, store_id: int | None = None, type_id: int | None = None,
-          start: str | None = None, end: str | None = None, q: str = "",
-          origin: str = "", user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """Tela única de contas: uma lista plana filtrável. Mescla contas (EnergyBill) e lançamentos
-    manuais (ManualRecord) na mesma visualização, ordenada pelo mês mais recente."""
+def _collect(db: Session, store_id, type_id, start, end, q, origin):
+    """Lista plana filtrável (usada pela tela e pelo CSV). Mescla contas (EnergyBill) e lançamentos
+    manuais (ManualRecord), ordenada pelo mês mais recente. Devolve (linhas, lojas, tipos)."""
     s0, e0 = _parse_month(start), _parse_month(end)
     stores = list(db.scalars(select(Store).where(Store.active.is_(True)).order_by(Store.code)))
     types = list(db.scalars(select(RecordType).where(RecordType.active.is_(True)).order_by(RecordType.sort_order, RecordType.name)))
@@ -93,6 +90,47 @@ def notas(request: Request, store_id: int | None = None, type_id: int | None = N
             return bool(q_digits and r["unit_number"] and q_digits in normalize_uc(r["unit_number"]))
         rows = [r for r in rows if hit(r)]
 
+    return rows, stores, types
+
+
+@router.get("/notas")
+def notas(request: Request, store_id: int | None = None, type_id: int | None = None,
+          start: str | None = None, end: str | None = None, q: str = "",
+          origin: str = "", user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Tela única de contas: uma lista plana filtrável."""
+    rows, stores, types = _collect(db, store_id, type_id, start, end, q, origin)
     return render(request, "bills/list.html", user=user, rows=rows[:500], total=len(rows),
                   stores=stores, types=types, q=q, store_id=store_id, type_id=type_id,
                   start=start or "", end=end or "", origin=origin)
+
+
+def _csv_cell(v) -> str:
+    """Texto seguro para planilha: neutraliza fórmulas (=, +, -, @) vindas de campos digitados por pessoas."""
+    t = "" if v is None else str(v)
+    return "'" + t if t[:1] in ("=", "+", "-", "@", "\t", "\r") else t
+
+
+@router.get("/notas/export.csv")
+def notas_csv(store_id: int | None = None, type_id: int | None = None, start: str | None = None, end: str | None = None,
+              q: str = "", origin: str = "", user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Mesmos filtros da tela, em CSV para Excel (separador ';', vírgula decimal, UTF-8 com BOM)."""
+    import csv
+    import io
+
+    from fastapi.responses import Response
+
+    rows, _, _ = _collect(db, store_id, type_id, start, end, q, origin)
+    out = io.StringIO()
+    w = csv.writer(out, delimiter=";", lineterminator="\r\n")
+    w.writerow(["Mês de referência", "Loja", "Unidade consumidora", "Tipo", "Valor (R$)", "Vencimento", "Nota fiscal", "Origem"])
+    for r in rows:
+        w.writerow([f"{r['reference'].month:02d}/{r['reference'].year}", _csv_cell(r["store_code"]), _csv_cell(r["unit_number"]),
+                    _csv_cell(r["type_name"]), f"{r['value']:.2f}".replace(".", ",") if r["value"] is not None else "",
+                    r["due_date"].strftime("%d/%m/%Y") if r["due_date"] else "", _csv_cell(r["invoice_number"]),
+                    "Foto/IA" if r["origin"] == "bill" else "Manual"])
+    from app.services import audit_service
+
+    audit_service.log(db, user.id, "export", "bills", None, {"rows": len(rows), "q": q, "store_id": store_id})
+    db.commit()
+    return Response("\ufeff" + out.getvalue(), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="contas-economart.csv"'})

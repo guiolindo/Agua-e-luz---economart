@@ -10,6 +10,15 @@ Stack: Python · FastAPI · SQLAlchemy 2 · Jinja2 · Chart.js (embutido em `sta
 
 > **Segurança:** veja [`SECURITY.md`](SECURITY.md). Em produção (`DEBUG=false`) o servidor só inicia com `SECRET_KEY`, `DOCUMENT_ENCRYPTION_KEY` e PostgreSQL configurados.
 
+## Novidades de segurança e uso
+
+- **2FA do administrador** (TOTP/Google Authenticator): *Verificação em 2 etapas* no menu; `REQUIRE_ADMIN_2FA=true` obriga. Perdeu o celular: `python -m scripts.reset_2fa <usuario>`.
+- **Auditoria à prova de adulteração:** cada evento é selado em cadeia; *Auditoria → Verificar integridade* aponta qualquer alteração feita fora do sistema.
+- **Arquivo que não é conta de energia** é barrado na importação e os bytes são apagados (o Gemini classifica e o servidor confere).
+- **Disjuntor do Gemini:** se o Google cair, o sistema falha rápido em vez de esperar timeouts.
+- **Contas → Baixar planilha (CSV):** exporta o que está filtrado, pronto para o Excel.
+- **Ajuda por perfil** (administrador, funcionário, diretoria, consulta).
+
 ## Fluxo principal
 
 ```
@@ -196,7 +205,7 @@ tests/               pytest + fixtures/cemig_set_2026.json
 
 - Migrações: `create_all` + adição automática de colunas novas anuláveis (`ensure_columns`). Mudanças maiores exigem Alembic.
 - Importação em lote e exportação (Excel/CSV/PDF) não foram implementadas; a arquitetura (`Import` + `run_import`) já comporta.
-- Sem 2FA e sem recuperação de senha por e-mail (o admin redefine em *Usuários*). Veja o risco residual em `SECURITY.md`.
+- 2FA (Google Authenticator) só para administradores; sem recuperação de senha por e-mail (o admin redefine em *Usuários*). Veja o risco residual em `SECURITY.md`.
 - A leitura por IA nunca foi validada aqui com a API real do Gemini (sem chave neste ambiente): os testes usam o mock.
   Antes de usar em produção, importe algumas contas reais e confira a tela de revisão.
 

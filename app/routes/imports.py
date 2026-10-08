@@ -74,6 +74,14 @@ async def import_upload(request: Request, background: BackgroundTasks, file: Upl
 
     limit = get_settings().max_upload_bytes
     data = await file.read(limit + 1)  # nunca carrega mais que o limite + 1 byte
+    from app.utils.uploads import sha256
+
+    if len(data) <= limit and db.scalar(select(Import.id).join(Document, Document.id == Import.document_id)
+                                        .where(Document.sha256 == sha256(data), Import.status == "rejected").limit(1)):
+        return render(request, "imports/upload.html", status_code=409, user=user,
+                      error="Este mesmo arquivo já foi analisado antes e não é uma conta de energia. Nada foi enviado ao Gemini.",
+                      stores=list_stores(db, only_active=True), store_id=store_id, recent=[],
+                      max_mb=get_settings().max_upload_mb)
     already = _already_imported(db, data) if len(data) <= limit else None
     if already is not None:
         return render(request, "imports/upload.html", status_code=409, user=user, dup_bill=already,

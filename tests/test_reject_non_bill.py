@@ -45,3 +45,20 @@ def test_rejection_rules_unit():
     assert rejection_reason(BillExtraction(is_energy_bill=False)) == "documento que não é conta de energia"
     assert rejection_reason(BillExtraction(total_value=10.5)) is None
     assert rejection_reason(BillExtraction(consumer_unit_number="1-2")) is None
+
+
+def test_same_rejected_file_is_not_sent_to_gemini_again(client, png, db, monkeypatch):
+    _make_store(client)
+    calls = []
+
+    class Spy(MockExtractor):
+        def extract(self, *a, **k):
+            calls.append(1)
+            return super().extract(*a, **k)
+
+    monkeypatch.setattr(import_service, "get_extractor", lambda: Spy(payload={"is_energy_bill": False}))
+    _upload(client, png)
+    assert len(calls) == 1
+    client.refresh()
+    r = client.post("/import", {}, files={"file": ("a.png", png, "image/png")})
+    assert r.status_code == 409 and "não é uma conta de energia" in r.text and len(calls) == 1
