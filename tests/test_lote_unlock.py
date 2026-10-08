@@ -62,14 +62,30 @@ def _ll(db):
     return db.query(RecordType).filter_by(code="ll-energia").one()
 
 
-def test_manual_page_shows_the_ll_card_and_hides_ll_from_the_single_form(client, db):
+def test_manual_page_asks_what_to_do_first_and_the_form_opens_after_choosing(client, db):
     ll = _ll(db)
-    page = client.get("/manual").text
-    assert "LL Energia · várias lojas" in page and 'href="/manual/lote?type=ll-energia"' in page and "mode-ll" in page
-    assert f'<option value="{ll.id}"' not in page and 'data-bill="0"' in page          # LL fora da lista; os outros tipos ficam
+    choose = client.get("/manual").text
+    assert "LL Energia · várias lojas" in choose and "Lançamento de uma loja" in choose and "mode-ll" in choose
+    assert 'id="mf"' not in choose and 'name="store_id"' not in choose              # nenhum formulário antes de escolher
+    assert 'href="/manual?modo=loja"' in choose and 'href="/manual/lote?type=ll-energia"' in choose
+    assert "Últimos lançamentos manuais" in choose                                   # o histórico continua à mão
+    single = client.get("/manual?modo=loja").text                                    # escolheu "uma loja": abre o formulário
+    assert 'id="mf"' in single and f'<option value="{ll.id}"' not in single and 'data-bill="0"' in single   # LL fora da lista
+    assert "Lançamento de uma loja" in single                                        # os cartões viram o seletor de modo
+    a, = _stores(client, "F1")
+    assert 'id="mf"' in client.get(f"/manual?store_id={a}").text                     # veio de uma loja: já abre o formulário
+
+
+def test_form_errors_stay_on_the_form_not_on_the_chooser(client, db):
+    r = client.post("/manual", {"type_id": "", "store_id": "", "reference": "", "value": ""})
+    assert r.status_code == 400 and 'id="mf"' in r.text
+
+
+def test_batch_page_for_ll_has_fixed_type_and_the_mode_switcher(client, db):
+    ll = _ll(db)
     batch = client.get("/manual/lote?type=ll-energia").text
     assert f'name="type_id" value="{ll.id}"' in batch and 'id="type" name="type_id" required' not in batch   # tipo fixo, sem select
-    assert "LL Energia · várias lojas" in batch and client.get("/manual/lote").status_code == 200
+    assert "LL Energia · várias lojas" in batch and 'href="/manual?modo=loja"' in batch and client.get("/manual/lote").status_code == 200
 
 
 def test_single_form_refuses_ll_and_points_to_the_batch_screen(client, db):

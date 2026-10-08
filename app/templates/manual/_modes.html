@@ -1,6 +1,6 @@
 {# Escolha do tipo de lançamento: dois cartões grandes, o da LL Energia em destaque (laranja da marca). #}
-<nav class="modes" aria-label="Como lançar">
-  <a class="mode {{ 'on' if active == 'single' }}" href="/manual"{% if active == 'single' %} aria-current="page"{% endif %}>
+<nav class="modes{{ ' modes-choose' if active is none }}" aria-label="Como lançar">
+  <a class="mode {{ 'on' if active == 'single' }}" href="/manual?modo=loja"{% if active == 'single' %} aria-current="page"{% endif %}>
     <span class="mode-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
     <span class="mode-txt"><strong>Lançamento de uma loja</strong><small>Gerador, manutenção e meses anteriores ao sistema</small></span>
   </a>

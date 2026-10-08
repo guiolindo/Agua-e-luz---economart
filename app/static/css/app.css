@@ -377,3 +377,8 @@ body.drawer-open { overflow: hidden; }
 /* colunas de grid não podem ser empurradas pela largura de tabelas internas (estourava a tela no celular) */
 .grid > *, .shell .main { min-width: 0; }
 @media (max-width: 1100px) { .cols-main, .cols-main2 { grid-template-columns: minmax(0, 1fr); } }
+.modes-choose .mode { padding: 26px 24px; } .modes-choose .mode-ico { width: 56px; height: 56px; }
+.modes-choose .mode-txt strong { font-size: 19px; } .modes-choose .mode-txt small { font-size: 14px; margin-top: 4px; }
+@media (max-width: 800px) { .card.flush .tablewrap { margin: 0; } }   /* cartão "flush" não tem padding: a margem negativa cortava os valores */
+#manual-body td:first-child { white-space: normal; }   /* nome longo quebra em vez de empurrar o valor para fora da tela */
+#manual-body td.num { padding-left: 4px; padding-right: 8px; }

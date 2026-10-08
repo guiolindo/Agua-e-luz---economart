@@ -30,13 +30,16 @@ def _ctx(db: Session, **extra) -> dict:
     types = [t for t in list_record_types(db) if not t.is_batch_only or (editing and editing.record_type_id == t.id)]
     return {"stores": list_stores(db, only_active=True), "types": types,
             "recent_bills": recent_bills, "recent_manual": recent_manual, "form": {}, "errors": {}, "dups": [],
-            "edit_bill": None, "edit_record": None, **extra}
+            "edit_bill": None, "edit_record": None, "view": "form", **extra}
 
 
 @router.get("/manual")
-def manual_page(request: Request, bill: int | None = None, record: int | None = None,
+def manual_page(request: Request, bill: int | None = None, record: int | None = None, modo: str | None = None,
                 store_id: int | None = None, user: User = Depends(writer_required), db: Session = Depends(get_db)):
-    extra: dict = {"sel_store": store_id}
+    """Sem pistas de destino (loja, edição, modo=loja) mostra só a ESCOLHA do tipo de lançamento; o formulário
+    individual só abre depois que a pessoa escolhe "Lançamento de uma loja"."""
+    extra: dict = {"sel_store": store_id,
+                   "view": "form" if (bill or record or store_id or modo == "loja") else "choose"}
     if bill:
         b = db.get(EnergyBill, bill)
         if not b:

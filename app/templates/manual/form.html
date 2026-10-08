@@ -2,10 +2,26 @@
 {% from "macros.html" import field, bill_fields, csrf %}
 {% block title %}Lançamento manual · Economart Energia{% endblock %}
 {% block content %}
+{% macro recent_card() %}
+  <section class="card flush"><div style="padding:14px 18px 0">
+    <h2 style="margin-bottom:6px">Últimos lançamentos manuais</h2>
+    {% if recent_manual or recent_bills %}<div class="field searchbox" style="margin:0 0 8px"><label for="qm" class="sr">Buscar lançamento</label>
+      <input id="qm" type="search" placeholder="Buscar por loja, tipo ou mês (ex.: CD300, LL, AGO/2026)…" data-filter="#manual-body tr" autocomplete="off"></div>{% endif %}</div>
+    {# Agrupa por mês de referência para dar hierarquia visual. Mescla contas (bill) e lançamentos manuais em uma única linha do tempo, mais novo primeiro. #}
+    {% set items = [] %}{% for r in recent_manual %}{% set _ = items.append((r.reference, r.reference|month_label, r.store.code ~ ' · ' ~ r.record_type.name, r.store.code ~ ' ' ~ r.record_type.name ~ ' ' ~ (r.reference|month_label), r.value, '/manual?record=' ~ r.id)) %}{% endfor %}{% for b in recent_bills %}{% set _ = items.append((b.reference, b.reference|month_label, b.unit.number ~ ' · Conta', (b.unit.number or '') ~ ' Conta ' ~ (b.reference|month_label), b.total_value, '/manual?bill=' ~ b.id)) %}{% endfor %}
+    {% set items = items|sort(attribute=0, reverse=true) %}{% set ns = namespace(month='') %}
+    <div class="tablewrap"><table><tbody id="manual-body">
+      {% for ref, lbl, title, blob, value, href in items %}
+        {% if lbl != ns.month %}{% set ns.month = lbl %}<tr class="group-row"><td colspan="3" data-filter-match="{{ lbl }}">{{ lbl }}</td></tr>{% endif %}
+        <tr data-filter-blob="{{ blob|lower }}"><td>{{ title }}</td><td class="num">{{ value|brl }}</td><td class="right"><a class="btn sm" href="{{ href }}">Editar</a></td></tr>
+      {% else %}<tr><td class="muted">Nenhum lançamento manual ainda.</td></tr>{% endfor %}
+    </tbody></table></div></section>
+{% endmacro %}
 {% set editing = edit_bill or edit_record %}
 <div class="page-head"><div><h1>{{ 'Editar lançamento' if editing else 'Lançamento manual' }}</h1>
-  <div class="muted">{{ 'Corrija os dados e salve.' if editing else 'Escolha como lançar:' }}</div></div></div>
-{% if not editing %}{% with active = 'single' %}{% include "manual/_modes.html" %}{% endwith %}{% endif %}
+  <div class="muted">{% if editing %}Corrija os dados e salve.{% elif view == 'choose' %}Escolha como quer lançar — o formulário abre em seguida.{% else %}Lançamento de uma loja.{% endif %}</div></div></div>
+{% if not editing %}{% with active = ('single' if view == 'form' else none) %}{% include "manual/_modes.html" %}{% endwith %}{% endif %}
+{% if view == 'choose' %}{{ recent_card() }}{% else %}
 
 <div class="grid cols-main">
 <form class="card" method="post" action="/manual" id="mf">
@@ -58,23 +74,13 @@
 </form>
 
 <aside aria-label="Últimos lançamentos">
-  <section class="card flush"><div style="padding:14px 18px 0">
-    <h2 style="margin-bottom:6px">Últimos lançamentos manuais</h2>
-    {% if recent_manual or recent_bills %}<div class="field searchbox" style="margin:0 0 8px"><label for="qm" class="sr">Buscar lançamento</label>
-      <input id="qm" type="search" placeholder="Buscar por loja, tipo ou mês (ex.: CD300, LL, AGO/2026)…" data-filter="#manual-body tr" autocomplete="off"></div>{% endif %}</div>
-    {# Agrupa por mês de referência para dar hierarquia visual. Mescla contas (bill) e lançamentos manuais em uma única linha do tempo, mais novo primeiro. #}
-    {% set items = [] %}{% for r in recent_manual %}{% set _ = items.append((r.reference, r.reference|month_label, r.store.code ~ ' · ' ~ r.record_type.name, r.store.code ~ ' ' ~ r.record_type.name ~ ' ' ~ (r.reference|month_label), r.value, '/manual?record=' ~ r.id)) %}{% endfor %}{% for b in recent_bills %}{% set _ = items.append((b.reference, b.reference|month_label, b.unit.number ~ ' · Conta', (b.unit.number or '') ~ ' Conta ' ~ (b.reference|month_label), b.total_value, '/manual?bill=' ~ b.id)) %}{% endfor %}
-    {% set items = items|sort(attribute=0, reverse=true) %}{% set ns = namespace(month='') %}
-    <div class="tablewrap"><table><tbody id="manual-body">
-      {% for ref, lbl, title, blob, value, href in items %}
-        {% if lbl != ns.month %}{% set ns.month = lbl %}<tr class="group-row"><td colspan="3" data-filter-match="{{ lbl }}">{{ lbl }}</td></tr>{% endif %}
-        <tr data-filter-blob="{{ blob|lower }}"><td>{{ title }}</td><td class="num">{{ value|brl }}</td><td class="right"><a class="btn sm" href="{{ href }}">Editar</a></td></tr>
-      {% else %}<tr><td class="muted">Nenhum lançamento manual ainda.</td></tr>{% endfor %}
-    </tbody></table></div></section>
+  {{ recent_card() }}
+
 </aside>
 </div>
+{% endif %}
 {% endblock %}
-{% block scripts %}<script nonce="{{ csp_nonce }}">
+{% block scripts %}{% if view == 'form' %}<script nonce="{{ csp_nonce }}">
 (function () {
   const store = document.getElementById('store'), unit = document.getElementById('unit'), type = document.getElementById('type'),
         pick = document.getElementById('pick'), row = document.getElementById('submit-row'), req = document.getElementById('unit-req');
@@ -91,4 +97,4 @@
   }
   [store, type].forEach((el) => el.addEventListener('change', sync)); sync();
 })();
-</script>{% endblock %}
+</script>{% endif %}{% endblock %}
