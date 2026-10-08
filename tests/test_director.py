@@ -186,3 +186,11 @@ def test_partial_month_is_flagged_and_never_produces_a_fake_drop(db):
     db.commit()
     d2 = executive_service.build(db, date(2026, 1, 1), date(2026, 3, 1))
     assert d2["partial"] == [False, False, False] and d2["focus_label"] == "MAR/2026" and d2["month_vars"][2]["pct"] is not None
+
+
+def test_director_summary_in_plain_language(client, db):
+    _world(db)
+    d = _user(client, "diretor7", "director")
+    html = d.get("/diretoria").text
+    assert "Resumo em poucas palavras" in html and "a empresa gastou" in html
+    assert "A loja que mais pesa no período é" in html

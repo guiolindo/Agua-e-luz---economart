@@ -386,3 +386,12 @@ body.drawer-open { overflow: hidden; }
 .hint { color: var(--muted); font-size: .9em; }
 details { border-top: 1px solid var(--line-soft); padding: 8px 0; } details summary { cursor: pointer; font-weight: 600; } details p { margin: 6px 0 2px; color: var(--muted); }
 .card[id] { scroll-margin-top: 72px; }
+.insights { margin-bottom: 16px; border-left: 4px solid var(--accent, #1b4f8a); } .insights h2 { margin: 0 0 8px; }
+.insights ul { list-style: none; margin: 0; padding: 0; } .insights li { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line-soft); line-height: 1.45; } .insights li:first-child { border-top: 0; }
+.ins-dot { flex: 0 0 18px; text-align: center; font-size: 12px; padding-top: 3px; } .ins-bad .ins-dot { color: var(--bad, #c0392b); } .ins-good .ins-dot { color: var(--ok, #1e8e4e); } .ins-info .ins-dot { color: var(--muted); }
+.insights .hint { margin: 8px 0 0; }
+
+.flash-body { flex: 1; min-width: 0; line-height: 1.45; } .flash-body > :first-child { margin-top: 0; } .flash-body > :last-child { margin-bottom: 0; }
+.filters-box { margin-bottom: 16px; padding: 0; } .filters-box > summary { cursor: pointer; padding: 12px 16px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.filters-box > summary::-webkit-details-marker { display: none; } .filters-box > summary .muted { font-weight: 400; } .filters-box > summary::after { content: 'Alterar ▾'; color: var(--accent, #1b4f8a); font-weight: 600; font-size: .9em; white-space: nowrap; }
+.filters-box[open] > summary::after { content: 'Fechar ▴'; } .filters-box .filters { padding: 4px 16px 16px; border-top: 1px solid var(--line-soft); }

@@ -230,7 +230,10 @@ document.querySelectorAll('[data-login-form]').forEach((f) => f.addEventListener
     span.className = 'flash-ico';
     span.style.cssText = 'display:inline-flex;align-items:center;flex-shrink:0';
     span.innerHTML = icons[lvl] || icons.info;
-    el.insertBefore(span, el.firstChild);
+    const body = document.createElement('div');          // o texto (com <strong>, links...) fica numa coluna só
+    body.className = 'flash-body';
+    while (el.firstChild) body.appendChild(el.firstChild);
+    el.append(span, body);
   });
 })();
 

@@ -8,15 +8,12 @@
   <button class="btn" type="button" data-print>Imprimir painel</button>
 </div>
 
-<form method="get" class="card filters no-print">
-  <div class="field"><label for="f-s">De</label><input id="f-s" type="month" name="start" value="{{ start.strftime('%Y-%m') }}"></div>
-  <div class="field"><label for="f-e">Até</label><input id="f-e" type="month" name="end" value="{{ end.strftime('%Y-%m') }}"></div>
-  <div class="field"><label for="f-b">Agrupar por</label><select id="f-b" name="by"><option value="reference" {{ 'selected' if by == 'reference' }}>Mês de referência</option><option value="due" {{ 'selected' if by == 'due' }}>Mês de vencimento</option></select></div>
-  {% if regions %}<div class="field"><label for="f-r">Região</label><select id="f-r" name="region"><option value="">Todas</option>{% for r in regions %}<option value="{{ r }}" {{ 'selected' if region == r }}>{{ r }}</option>{% endfor %}</select></div>{% endif %}
-  <fieldset class="field typeset"><legend>Fornecedores</legend>{% for t in types %}<label class="chk"><input type="checkbox" name="types" value="{{ t.id }}" {{ 'checked' if t.id in type_ids }}><span class="dot" style="background:{{ colors[t.id] }}"></span>{{ t.name }}</label>{% endfor %}</fieldset>
-  <div class="field"><label>&nbsp;</label><button class="btn primary">Aplicar</button></div>
-</form>
 
+{% if insights %}<section class="card insights" aria-labelledby="ins-h">
+  <h2 id="ins-h">Resumo em poucas palavras</h2>
+  <ul>{% for i in insights %}<li class="ins-{{ i.tone }}"><span class="ins-dot" aria-hidden="true">{{ '▲' if i.tone == 'bad' else '▼' if i.tone == 'good' else '●' }}</span><span>{{ i.text }}</span></li>{% endfor %}</ul>
+  <p class="hint">Gerado automaticamente a partir dos números abaixo. ▲ pede atenção · ▼ boa notícia · ● informação.</p>
+</section>{% endif %}
 {% if partial_labels %}<div class="flash warn no-print" role="status"><strong>Mês em andamento:</strong> {{ partial_labels|join(', ') }} — poucas lojas já lançaram. Esses meses aparecem marcados com * e <strong>não entram nas variações</strong>; os indicadores usam {{ focus_label }}, o último mês completo.</div>{% endif %}
 <div class="grid cols-4 kpis dir-kpis">
   <div class="kpi"><div class="label">Total no período</div><div class="value">{{ kpi.total|brl(0) }}</div><div class="sub">{{ delta(kpi.vs_prev) }} <span class="muted">média/mês vs. período anterior{% if kpi.comparable_stores %} ({{ kpi.comparable_stores }} lojas com histórico){% endif %}</span></div></div>
@@ -29,6 +26,16 @@
   <div class="kpi"><div class="label">Pendências de {{ focus_label }}</div><div class="value">{{ kpi.pending }}</div><div class="sub muted">contas/lançamentos faltando</div></div>
 </div>
 
+<details class="card filters-box no-print"><summary><span>Filtros <span class="muted">· {{ start|month_label }} a {{ end|month_label }}{{ ' · ' ~ region if region }}</span></span></summary>
+<form method="get" class="filters">
+  <div class="field"><label for="f-s">De</label><input id="f-s" type="month" name="start" value="{{ start.strftime('%Y-%m') }}"></div>
+  <div class="field"><label for="f-e">Até</label><input id="f-e" type="month" name="end" value="{{ end.strftime('%Y-%m') }}"></div>
+  <div class="field"><label for="f-b">Agrupar por</label><select id="f-b" name="by"><option value="reference" {{ 'selected' if by == 'reference' }}>Mês de referência</option><option value="due" {{ 'selected' if by == 'due' }}>Mês de vencimento</option></select></div>
+  {% if regions %}<div class="field"><label for="f-r">Região</label><select id="f-r" name="region"><option value="">Todas</option>{% for r in regions %}<option value="{{ r }}" {{ 'selected' if region == r }}>{{ r }}</option>{% endfor %}</select></div>{% endif %}
+  <fieldset class="field typeset"><legend>Fornecedores</legend>{% for t in types %}<label class="chk"><input type="checkbox" name="types" value="{{ t.id }}" {{ 'checked' if t.id in type_ids }}><span class="dot" style="background:{{ colors[t.id] }}"></span>{{ t.name }}</label>{% endfor %}</fieldset>
+  <div class="field"><label>&nbsp;</label><button class="btn primary">Aplicar</button></div>
+</form>
+</details>
 {% if not rows %}<div class="card"><p class="muted" style="margin:0">Sem dados no período/filtros selecionados.</p></div>{% else %}
 <div class="grid cols-main2">
   <section class="card"><div class="card-head"><h2>Gasto da empresa por mês e fornecedor</h2><span class="muted small">barras = R$ · linha = variação do total</span></div><div class="dchart"><canvas id="c-month" role="img" aria-label="Gasto mensal por fornecedor"></canvas></div></section>

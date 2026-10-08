@@ -188,6 +188,53 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
     }
 
 
+def insights(data: dict) -> list[dict]:
+    """Resumo em linguagem simples para quem não quer ler gráficos: frases curtas, com o que merece atenção.
+    Cada item: {"tone": "good"|"bad"|"info", "text": str}. Só afirma o que os números sustentam."""
+    k, rows, out = data["kpi"], data["rows"], []
+    if not rows:
+        return out
+    focus, prev = data["focus_label"], data["prev_label"]
+
+    def names(codes):
+        return ", ".join(codes[:6]) + (f" e mais {len(codes) - 6}" if len(codes) > 6 else "")
+
+    def reais(v):
+        return fmt.brl(v, 0)
+
+    lv = k["last_vs_prev"]
+    if k["last_month"] is not None and focus:
+        if lv and lv["pct"] is not None and prev:
+            verb = "a mais" if lv["pct"] > 0 else "a menos"
+            tone = "bad" if lv["pct"] > 5 else "good" if lv["pct"] < -5 else "info"
+            out.append({"tone": tone, "text": f"Em {focus} a empresa gastou {reais(k['last_month'])}, {fmt.pct(abs(lv['pct']))} {verb} que em {prev}."})
+        else:
+            out.append({"tone": "info", "text": f"Em {focus} a empresa gastou {reais(k['last_month'])}."})
+    if k["top"]:
+        out.append({"tone": "info", "text": f"A loja que mais pesa no período é {k['top']['code']}, com {fmt.pct(k['top']['share'])} do gasto total."})
+    for key, word, tone in (("rise", "alta", "bad"), ("fall", "queda", "good")):
+        r = k.get(key)
+        if r and r["vs_last_month"]["pct"] is not None and abs(r["vs_last_month"]["pct"]) >= 5:
+            out.append({"tone": tone, "text": f"Maior {word} em {focus}: {r['code']} ({fmt.pct(r['vs_last_month']['pct'], signed=True)})."
+                        + (" Vale conferir o motivo: consumo, demanda ou tarifa." if key == "rise" else "")})
+    over = [r["code"] for r in rows if (r.get("demand_over") or 0) > 0]
+    if over:
+        out.append({"tone": "bad", "text": f"Ultrapassaram a demanda contratada (pagam multa de ultrapassagem): {names(over)}."})
+    low = [r["code"] for r in rows if r.get("demand_use") is not None and r["demand_use"] < 60]
+    if low:
+        out.append({"tone": "info", "text": f"Usam menos de 60% da demanda contratada (pode haver contrato maior que o necessário): {names(low)}."})
+    avg = k.get("rs_kwh")
+    if avg:
+        dear = [r["code"] for r in rows if r.get("rs_kwh") and r["rs_kwh"] > avg * 1.15]
+        if dear:
+            out.append({"tone": "bad", "text": f"Custo por kWh acima da média da empresa ({fmt.brl(avg, 3)}) em mais de 15%: {names(dear)}."})
+    if k["pending"]:
+        out.append({"tone": "info", "text": f"Faltam {k['pending']} conta(s) ou lançamento(s) de {focus} (veja a lista de pendências no fim da página)."})
+    if data.get("partial_labels"):
+        out.append({"tone": "info", "text": "Meses ainda incompletos aparecem com * nos gráficos e não entram nas variações."})
+    return out
+
+
 def client_payload(data: dict) -> dict:
     """Subconjunto serializável (JSON) usado pelos gráficos do navegador."""
     return {
