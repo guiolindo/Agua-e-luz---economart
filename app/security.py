@@ -22,6 +22,10 @@ class MustChangePassword(Exception):
     pass
 
 
+class MustSetup2FA(Exception):
+    pass
+
+
 # ---------------------------------------------------------------- senhas
 SCRYPT_LOGN = 15  # N=32768 (≈32 MB, ~100 ms). Hashes antigos (N=16384) continuam válidos e são atualizados no login.
 _MAXMEM = 128 * 1024 * 1024
@@ -164,6 +168,9 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> User:
     sess["seen"] = now
     if user.must_change_password and request.url.path not in ("/account/password", "/logout"):
         raise MustChangePassword()
+    if (s.require_admin_2fa and user.is_admin and not user.has_2fa
+            and not request.url.path.startswith("/account/2fa") and request.url.path not in ("/account/password", "/logout")):
+        raise MustSetup2FA()
     return user
 
 

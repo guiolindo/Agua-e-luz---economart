@@ -65,6 +65,7 @@
       <div class="whoami"><strong>{{ user.username }}</strong><span>{{ {'admin': 'administrador', 'operator': 'funcionário', 'director': 'diretoria', 'viewer': 'consulta', 'user': 'funcionário'}.get(user.role, user.role) }}</span></div>
       <div class="side-actions">
         {% if not user.must_change_password %}<a href="/account/password">Alterar senha</a>{% endif %}
+        {% if user.is_admin and not user.must_change_password %}<a href="/account/2fa">Verificação em 2 etapas</a>{% endif %}
         <form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Sair</button></form>
       </div>
     </div>
@@ -83,6 +84,7 @@
       </div>
       {% endif %}
     </div>{% endif %}
+    {% if user and user.is_admin and not user.has_2fa and not path.startswith('/account/2fa') and not user.must_change_password %}<div class="flash warn" role="status">Sua conta de administrador ainda não tem verificação em duas etapas. <a href="/account/2fa"><strong>Ativar o 2FA</strong></a> (leva 1 minuto, com o Google Authenticator).</div>{% endif %}
     {% for f in flashes %}<div class="flash {{ f.level }}" role="{{ 'alert' if f.level == 'error' else 'status' }}" data-flash="{{ f.level }}">{{ f.text }}</div>{% endfor %}
     {% block content %}{% endblock %}
   </main>

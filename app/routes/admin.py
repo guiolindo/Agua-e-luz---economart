@@ -11,7 +11,7 @@ from app.models.mixins import utcnow
 from app.database import get_db
 from app.models import AuditLog, User
 from app.security import admin_required, verify_csrf
-from app.services import audit_service, auth_service
+from app.services import audit_service, auth_service, totp_service
 from app.web import flash, render
 
 router = APIRouter()
@@ -122,13 +122,40 @@ def user_toggle(request: Request, user_id: int, user: User = Depends(admin_requi
     return RedirectResponse("/admin/users", status_code=303)
 
 
-@router.get("/admin/audit")
-def audit_page(request: Request, action: str | None = None, user: User = Depends(admin_required),
-               db: Session = Depends(get_db)):
+@router.post("/admin/users/{user_id}/reset-2fa", dependencies=[Depends(verify_csrf)])
+def user_reset_2fa(request: Request, user_id: int, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    """Outro administrador perdeu o celular: remove o 2FA dele (ele configura de novo no próximo acesso)."""
+    target = db.get(User, user_id)
+    if target is None or target.id == user.id or not target.has_2fa:
+        flash(request, "Nada a redefinir.", "info")
+    else:
+        totp_service.disable(target)       # também encerra as sessões dele
+        audit_service.log(db, user.id, "2fa_reset", "user", target.id, {"by_admin": True})
+        db.commit()
+        flash(request, f"2FA de {target.username} removido. Ele pode configurar de novo em Conta → Verificação em duas etapas.")
+    return RedirectResponse("/admin/users", status_code=303)
+
+
+def _audit_context(request, db, user, action=None, integrity=None):
     stmt = select(AuditLog).order_by(AuditLog.id.desc()).limit(300)
     if action:
         stmt = stmt.where(AuditLog.action == action)
     names = {u.id: u.username for u in db.scalars(select(User))}
     actions = sorted(db.scalars(select(AuditLog.action).distinct()).all())
     return render(request, "admin/audit.html", user=user, rows=db.scalars(stmt).all(), names=names, actions=actions,
-                  action=action)
+                  action=action, integrity=integrity)
+
+
+@router.post("/admin/audit/verify", dependencies=[Depends(verify_csrf)])
+def audit_verify(request: Request, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    report = audit_service.verify_chain(db)
+    audit_service.log(db, user.id, "audit_verified", "audit", None, {"ok": report.ok, "broken_id": report.broken_id})
+    db.commit()
+    return _audit_context(request, db, user, integrity=report)
+
+
+@router.get("/admin/audit")
+def audit_page(request: Request, action: str | None = None, user: User = Depends(admin_required),
+               db: Session = Depends(get_db)):
+    return _audit_context(request, db, user, action)
+

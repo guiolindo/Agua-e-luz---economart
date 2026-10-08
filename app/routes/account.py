@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 from app import security
 from app.database import get_db
 from app.models import User
-from app.security import current_user, verify_csrf
-from app.services import auth_service
+from app.config import get_settings
+from app.security import admin_required, current_user, verify_csrf
+from app.services import auth_service, totp_service
 from app.web import flash, render
 
 router = APIRouter()
@@ -41,3 +42,59 @@ def password_change(request: Request, current_password: str = Form(..., max_leng
     security.start_session(request, user)  # outras sessões deste usuário caem; esta continua
     flash(request, "Senha alterada.")
     return RedirectResponse("/", status_code=303)
+
+
+# ---------------------------------------------------------------- 2FA (só administrador)
+def _2fa_page(request, user, db, **extra):
+    secret = None
+    if not user.has_2fa:
+        if not user.totp_secret:
+            totp_service.start_enrollment(user)
+            db.commit()
+        secret = totp_service.current_secret(user)
+        extra.setdefault("qr", totp_service.qr_svg(totp_service.provisioning_uri(user.username, secret)))
+        extra["secret"] = " ".join(secret[i:i + 4] for i in range(0, len(secret), 4))
+    return render(request, "account/two_factor.html", status_code=extra.pop("status_code", 200), user=user,
+                  enabled=user.has_2fa, required=get_settings().require_admin_2fa, **extra)
+
+
+@router.get("/account/2fa")
+def two_factor_page(request: Request, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    return _2fa_page(request, user, db)
+
+
+@router.post("/account/2fa/enable", dependencies=[Depends(verify_csrf)])
+def two_factor_enable(request: Request, code: str = Form(..., max_length=32), user: User = Depends(admin_required),
+                      db: Session = Depends(get_db)):
+    if user.has_2fa or not user.totp_secret:
+        return RedirectResponse("/account/2fa", status_code=303)
+    if not totp_service.check_code(user, code):
+        auth_service.security_event(db, request, "2fa_setup_failed", user.id)
+        db.commit()
+        return _2fa_page(request, user, db, status_code=400, error="Código incorreto. Confira se o app está com a hora certa e tente de novo.")
+    user.totp_enabled = True
+    codes = totp_service.new_recovery_codes(user)
+    auth_service.revoke_sessions(user)       # outras sessões abertas caem; esta continua
+    auth_service.security_event(db, request, "2fa_enabled", user.id)
+    db.commit()
+    security.start_session(request, user)
+    return render(request, "account/two_factor.html", user=user, enabled=True, recovery_codes=codes,
+                  required=get_settings().require_admin_2fa)
+
+
+@router.post("/account/2fa/disable", dependencies=[Depends(verify_csrf)])
+def two_factor_disable(request: Request, password: str = Form(..., max_length=256), code: str = Form(..., max_length=32),
+                       user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    if not user.has_2fa:
+        return RedirectResponse("/account/2fa", status_code=303)
+    if not (security.verify_password(password, user.password_hash)
+            and (totp_service.check_code(user, code) or totp_service.use_recovery_code(user, code))):
+        auth_service.security_event(db, request, "2fa_disable_failed", user.id)
+        db.commit()
+        return _2fa_page(request, user, db, status_code=400, error="Senha ou código incorretos.")
+    totp_service.disable(user)
+    auth_service.security_event(db, request, "2fa_disabled", user.id)
+    db.commit()
+    security.start_session(request, user)
+    flash(request, "Verificação em duas etapas desativada.", "info")
+    return RedirectResponse("/account/2fa", status_code=303)

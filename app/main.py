@@ -38,7 +38,7 @@ from app.routes import (
     stores,
     types,
 )
-from app.security import LoginRequired, MustChangePassword
+from app.security import LoginRequired, MustChangePassword, MustSetup2FA
 from app.seed import seed
 from app.services.retention_service import retention_loop
 from app.startup_checks import security_problems
@@ -102,6 +102,10 @@ def create_app() -> FastAPI:
     @app.exception_handler(MustChangePassword)
     async def _must_change(request: Request, exc: MustChangePassword):
         return RedirectResponse("/account/password", status_code=303)
+
+    @app.exception_handler(MustSetup2FA)
+    async def _must_setup_2fa(request: Request, exc: MustSetup2FA):
+        return RedirectResponse("/account/2fa", status_code=303)
 
     @app.exception_handler(Exception)
     async def _unexpected(request: Request, exc: Exception):

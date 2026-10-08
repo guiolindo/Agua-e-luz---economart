@@ -96,6 +96,7 @@ class Policy:
 
 POLICIES = (
     Policy("login", frozenset({"POST"}), re.compile(r"^/login$"), 10, 60),
+    Policy("login2fa", frozenset({"POST"}), re.compile(r"^/login/2fa$"), 10, 60),
     Policy("password", frozenset({"POST"}), re.compile(r"^/account/password$"), 10, 600),
     Policy("upload", frozenset({"POST"}), re.compile(r"^/import$"), 20, 60),
     Policy("documents", frozenset({"GET"}), re.compile(r"^/documents/"), 60, 60),

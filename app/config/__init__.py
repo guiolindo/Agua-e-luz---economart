@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     min_password_length: int = 8
     temp_password_hours: int = 48          # validade da senha provisória (4 dígitos) de usuário novo/redefinido
     temp_max_login_attempts: int = 3       # contas com senha provisória bloqueiam mais cedo
+    require_admin_2fa: bool = False        # True = administrador sem 2FA é obrigado a configurar antes de usar o sistema
     rate_limit_enabled: bool = True
     csrf_allowed_origins: str = ""      # origens extras permitidas em POST (CSV); normalmente vazio
 

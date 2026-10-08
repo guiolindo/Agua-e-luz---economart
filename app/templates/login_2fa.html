@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Verificação em duas etapas · Economart Energia{% endblock %}
+{% block bare %}
+<div class="auth">
+  <aside class="auth-brand">
+    <div class="auth-logo"><img src="/static/img/logo.png" alt="Economart Atacadista" width="445" height="113"></div>
+    <div class="auth-pitch"><h2>Controle de Energia</h2><p>Acesso de administrador protegido por verificação em duas etapas.</p></div>
+    <div class="auth-foot">Economart Atacadista · uso interno</div>
+  </aside>
+  <main class="auth-form" id="content">
+    <div class="auth-box">
+      <div class="mlogo"><img src="/static/img/logo.png" alt="Economart Atacadista" width="445" height="113"></div>
+      <h1>Código do autenticador</h1>
+      <p class="sub">Abra o Google Authenticator e digite o código de 6 dígitos do Economart Energia.</p>
+      <form method="post" action="/login/2fa" data-no-loading>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+        <div class="field"><label for="c">Código</label>
+          <input id="c" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="32" pattern="[0-9A-Za-z\- ]*" autofocus required
+                 style="font-size:1.5rem;letter-spacing:.35em;text-align:center"></div>
+        <button class="btn primary" type="submit">Confirmar</button>
+      </form>
+      <p class="hint">Perdeu o celular? Digite um dos códigos de recuperação (formato <span class="mono">abcd-ef12</span>) ou peça a outro administrador para redefinir o seu 2FA.<br><a href="/login">Voltar ao login</a></p>
+    </div>
+  </main>
+</div>
+{% endblock %}

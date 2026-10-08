@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Verificação em duas etapas · Economart Energia{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Verificação em duas etapas</h1>
+  <div class="muted">Além da senha, o login de administrador pede um código do Google Authenticator.</div></div></div>
+
+{% if recovery_codes %}
+<div class="card" style="max-width:560px">
+  <div class="flash ok" role="status"><strong>2FA ativado.</strong> Guarde os códigos de recuperação abaixo num lugar seguro (cofre de senhas ou papel). Cada um vale uma vez e <strong>não serão mostrados de novo</strong>.</div>
+  <ul class="mono" style="columns:2;font-size:1.1rem;line-height:1.9;list-style:none;padding:0">{% for c in recovery_codes %}<li>{{ c }}</li>{% endfor %}</ul>
+  <button class="btn" type="button" data-print>Imprimir códigos</button>
+</div>
+{% elif enabled %}
+<div class="card" style="max-width:560px">
+  <p><span class="badge ok">Ativo</span> O login deste administrador exige o código do autenticador.</p>
+  <p class="muted small">Restam {{ user.totp_recovery|length if user.totp_recovery else 0 }} código(s) de recuperação.</p>
+  <h2>Desativar</h2>
+  <form method="post" action="/account/2fa/disable" data-confirm="Desativar a verificação em duas etapas?">
+    {{ csrf(csrf_token) }}
+    {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+    <div class="field"><label for="pw">Senha</label><input id="pw" name="password" type="password" autocomplete="current-password" required></div>
+    <div class="field"><label for="cd">Código do autenticador (ou de recuperação)</label><input id="cd" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" required></div>
+    <button class="btn">Desativar 2FA</button>
+  </form>
+</div>
+{% else %}
+<div class="card" style="max-width:560px">
+  {% if required %}<div class="flash warn" role="status">A empresa exige 2FA para administradores. Configure agora para continuar.</div>{% endif %}
+  <ol>
+    <li>Instale o <strong>Google Authenticator</strong> no celular (Android ou iPhone).</li>
+    <li>No app, toque em <strong>+</strong> → <strong>Ler código QR</strong> e aponte para a imagem abaixo.</li>
+    <li>Digite o código de 6 dígitos que o app mostrar e confirme.</li>
+  </ol>
+  <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin:12px 0">
+    <div style="background:#fff;padding:8px;border-radius:8px;border:1px solid var(--line, #ddd);line-height:0">{{ qr|safe }}</div>
+    <div class="small"><div class="muted">Sem câmera? Digite esta chave no app:</div><div class="mono" style="font-size:1.05rem;word-break:break-all;margin-top:4px">{{ secret }}</div></div>
+  </div>
+  <form method="post" action="/account/2fa/enable" data-no-loading>
+    {{ csrf(csrf_token) }}
+    {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+    <div class="field"><label for="cd">Código de 6 dígitos</label>
+      <input id="cd" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required style="font-size:1.3rem;letter-spacing:.3em;max-width:200px"></div>
+    <button class="btn primary">Ativar 2FA</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -11,7 +11,7 @@ from app import security
 from app.config import get_settings
 from app.models import LoginThrottle, User
 from app.models.mixins import utcnow
-from app.services import audit_service
+from app.services import audit_service, totp_service
 
 
 @dataclass
@@ -99,9 +99,14 @@ def attempt_login(db: Session, request: Request, username: str, password: str) -
         db.commit()
         return LoginResult(None, False, locked=just_locked, minutes=s.login_block_minutes if just_locked else 0)
 
-    user.failed_attempts, user.blocked_until, user.last_login = 0, None, now
     if security.needs_rehash(user.password_hash):
         user.password_hash = security.hash_password(password)
+    if user.is_admin and user.has_2fa:
+        # só o código do autenticador conclui o login: não zera o contador (senão dá para chutar o código sem limite)
+        security_event(db, request, "login_password_ok", user.id)
+        db.commit()
+        return LoginResult(user, True)
+    user.failed_attempts, user.blocked_until, user.last_login = 0, None, now
     security_event(db, request, "login", user.id)
     db.commit()
     return LoginResult(user, True)
@@ -131,3 +136,32 @@ def set_password(db: Session, user: User, new_password: str, *, must_change: boo
 
 def revoke_sessions(user: User) -> None:
     user.session_epoch = user.epoch + 1
+
+
+def verify_second_factor(db: Session, request: Request, user: User, code: str) -> LoginResult:
+    """Código do autenticador (ou de recuperação). Erros contam como tentativa errada de login: 5 seguidas bloqueiam."""
+    s = get_settings()
+    now = utcnow()
+    blocked = _aware(user.blocked_until)
+    if blocked and blocked > now:
+        security_event(db, request, "login_blocked", user.id)
+        db.commit()
+        return LoginResult(None, False, locked=True, minutes=_minutes_left(blocked, now))
+    used_recovery = False
+    ok = totp_service.check_code(user, code)
+    if not ok and totp_service.use_recovery_code(user, code):
+        ok = used_recovery = True
+    if not ok:
+        user.failed_attempts = (user.failed_attempts or 0) + 1
+        just_locked = user.failed_attempts >= s.max_login_attempts
+        if just_locked:
+            user.blocked_until, user.failed_attempts = now + timedelta(minutes=s.login_block_minutes), 0
+            security_event(db, request, "account_locked", user.id, minutes=s.login_block_minutes)
+        security_event(db, request, "login_2fa_failed", user.id)
+        db.commit()
+        return LoginResult(None, False, locked=just_locked, minutes=s.login_block_minutes if just_locked else 0)
+    user.failed_attempts, user.blocked_until, user.last_login = 0, None, now
+    security_event(db, request, "login_2fa", user.id, recovery_code=used_recovery,
+                   recovery_left=len(user.totp_recovery or []))
+    db.commit()
+    return LoginResult(user, True)
