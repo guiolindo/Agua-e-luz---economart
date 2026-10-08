@@ -406,7 +406,7 @@ def test_production_rejects_weak_admin_password(db):
 def test_audit_page_shows_real_ip_for_security_events(client):
     _login(_new_client(), "alguem", "x")
     html = client.get("/admin/audit").text
-    assert "login" in html and "ip=testclient" in html
+    assert "Senha incorreta" in html and "IP testclient" in html
 
 
 # ---------------------------------------------------------------- PDF de ponta a ponta

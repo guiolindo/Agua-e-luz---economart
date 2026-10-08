@@ -68,7 +68,7 @@ def test_manual_page_asks_what_to_do_first_and_the_form_opens_after_choosing(cli
     assert "LL Energia · várias lojas" in choose and "Lançamento de uma loja" in choose and "mode-ll" in choose
     assert 'id="mf"' not in choose and 'name="store_id"' not in choose              # nenhum formulário antes de escolher
     assert 'href="/manual?modo=loja"' in choose and 'href="/manual/lote?type=ll-energia"' in choose
-    assert "Últimos lançamentos manuais" in choose                                   # o histórico continua à mão
+    assert "Lançamentos recentes" in choose                                   # o histórico continua à mão
     single = client.get("/manual?modo=loja").text                                    # escolheu "uma loja": abre o formulário
     assert 'id="mf"' in single and f'<option value="{ll.id}"' not in single and 'data-bill="0"' in single   # LL fora da lista
     assert "Trocar tipo de lançamento" in single and 'class="modes' not in single      # só o formulário, sem a escolha por cima

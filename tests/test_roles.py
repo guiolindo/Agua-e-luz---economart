@@ -38,7 +38,7 @@ def test_employee_is_fully_responsible_for_energy_registers(client, db):
 
 def test_admin_role_is_access_management_and_audit(client, db):
     html = client.get("/admin/users").text
-    assert "Funcionário — responsável por toda a gestão de energia" in html and "cria usuários e perfis" in html
+    assert "Funcionário · gestão das contas" in html and "acessos e auditoria" in html
     func = _user(client, "func2", "operator")
     nav = func.get("/stores").text
     assert "Tipos de registro" in nav and 'href="/admin/users"' not in nav and 'href="/admin/audit"' not in nav
@@ -68,7 +68,7 @@ def test_employee_actions_are_traceable_in_the_audit_page(client, db):
     func.post("/stores", {"code": "RASTRO"})
     func.post("/types", {"name": "Solar Teste", "kind": "manual"})
     html = client.get("/admin/audit").text                                                      # o admin supervisiona
-    assert "func3" in html and re.search(r"create</span>.{0,200}store", html, re.S) and "record_type" in html
+    assert "func3" in html and re.search(r"Criação · loja</span>", html) and "Criação · tipo de registro" in html
     assert db.query(AuditLog).filter(AuditLog.entity == "store", AuditLog.action == "create").count() == 1
 
 

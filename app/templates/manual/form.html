@@ -4,9 +4,9 @@
 {% block content %}
 {% macro recent_card() %}
   <section class="card flush"><div style="padding:14px 18px 0">
-    <h2 style="margin-bottom:6px">Últimos lançamentos manuais</h2>
+    <h2 style="margin-bottom:6px">Lançamentos recentes</h2>
     {% if recent_manual or recent_bills %}<div class="field searchbox" style="margin:0 0 8px"><label for="qm" class="sr">Buscar lançamento</label>
-      <input id="qm" type="search" placeholder="Buscar por loja, tipo ou mês (ex.: CD300, LL, AGO/2026)…" data-filter="#manual-body tr" autocomplete="off"></div>{% endif %}</div>
+      <input id="qm" type="search" placeholder="Buscar loja, tipo ou mês…" data-filter="#manual-body tr" autocomplete="off"></div>{% endif %}</div>
     {# Agrupa por mês de referência para dar hierarquia visual. Mescla contas (bill) e lançamentos manuais em uma única linha do tempo, mais novo primeiro. #}
     {% set items = [] %}{% for r in recent_manual %}{% set _ = items.append((r.reference, r.reference|month_label, r.store.code ~ ' · ' ~ r.record_type.name, r.store.code ~ ' ' ~ r.record_type.name ~ ' ' ~ (r.reference|month_label), r.value, '/manual?record=' ~ r.id)) %}{% endfor %}{% for b in recent_bills %}{% set _ = items.append((b.reference, b.reference|month_label, b.unit.number ~ ' · Conta', (b.unit.number or '') ~ ' Conta ' ~ (b.reference|month_label), b.total_value, '/manual?bill=' ~ b.id)) %}{% endfor %}
     {% set items = items|sort(attribute=0, reverse=true) %}{% set ns = namespace(month='') %}
@@ -21,7 +21,7 @@
 <div class="page-head"><div>
   {% if not editing and view == 'form' %}<div class="crumbs"><a href="/manual">Lançamento manual</a> / Uma loja</div>{% endif %}
   <h1>{% if editing %}Editar lançamento{% elif view == 'form' %}Lançamento de uma loja{% else %}Lançamento manual{% endif %}</h1>
-  <div class="muted">{% if editing %}Corrija os dados e salve.{% elif view == 'choose' %}Escolha como quer lançar — o formulário abre em seguida.{% else %}Gerador, manutenção e meses anteriores ao sistema.{% endif %}</div></div>
+  <div class="muted">{% if editing %}Corrija os dados e salve.{% elif view == 'choose' %}Escolha o tipo de lançamento.{% else %}Gerador, manutenção e meses anteriores ao sistema.{% endif %}</div></div>
   {% if not editing and view == 'form' %}<a class="btn" href="/manual">← Trocar tipo de lançamento</a>{% endif %}</div>
 {% if view == 'choose' %}{% with active = none %}{% include "manual/_modes.html" %}{% endwith %}{% endif %}
 {% if view == 'choose' %}{{ recent_card() }}{% else %}

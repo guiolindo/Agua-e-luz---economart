@@ -16,10 +16,10 @@ from app.web import flash, render
 
 router = APIRouter()
 ROLES = {
-    "operator": "Funcionário — responsável por toda a gestão de energia (lojas, unidades, contas, lançamentos)",
-    "director": "Diretoria — painel executivo, só consulta",
-    "viewer": "Consulta — só visualiza e imprime",
-    "admin": "Administrador — cria usuários e perfis, auditoria",
+    "operator": "Funcionário · gestão das contas",
+    "director": "Diretoria · painel executivo",
+    "viewer": "Consulta · só visualiza e imprime",
+    "admin": "Administrador · acessos e auditoria",
 }
 
 
@@ -136,14 +136,61 @@ def user_reset_2fa(request: Request, user_id: int, user: User = Depends(admin_re
     return RedirectResponse("/admin/users", status_code=303)
 
 
+ACTION_LABELS = {
+    "login": "Entrou no sistema", "login_password_ok": "Senha aceita (falta o código 2FA)", "login_2fa": "Entrou com 2FA",
+    "login_failed": "Senha incorreta", "login_2fa_failed": "Código 2FA incorreto", "login_blocked": "Tentativa com conta bloqueada",
+    "account_locked": "Conta bloqueada", "account_unlocked": "Conta desbloqueada", "login_temp_expired": "Senha provisória expirada",
+    "logout": "Saiu do sistema", "password_changed": "Senha alterada", "password_change_failed": "Troca de senha recusada",
+    "password_reset": "Senha redefinida pelo administrador", "2fa_enabled": "2FA ativado", "2fa_disabled": "2FA desativado",
+    "2fa_disable_failed": "Falha ao desativar o 2FA", "2fa_setup_failed": "Código incorreto ao ativar o 2FA",
+    "2fa_reset": "2FA redefinido pelo administrador", "audit_verified": "Integridade da auditoria verificada",
+    "export": "Planilha exportada", "extract": "Conta lida pela IA", "import_rejected": "Arquivo barrado (não é conta)",
+    "import": "Conta importada", "cancel": "Importação descartada", "purge": "Arquivos antigos apagados",
+    "role_change": "Perfil alterado", "activate": "Usuário reativado", "deactivate": "Usuário desativado",
+    "due_ack": "Marcada como paga", "replace": "Conta substituída", "create": "Criação", "update": "Alteração", "delete": "Exclusão",
+}
+ENTITY_LABELS = {"store": "loja", "consumer_unit": "unidade", "energy_bill": "conta", "manual_record": "lançamento",
+                 "record_type": "tipo de registro", "user": "usuário", "import": "importação", "document": "documento",
+                 "bills": "contas", "audit": "auditoria", "auth": ""}
+BAD_ACTIONS = {"login_failed", "login_2fa_failed", "2fa_disable_failed", "2fa_setup_failed", "login_blocked", "account_locked",
+               "password_change_failed", "import_rejected", "login_temp_expired", "delete", "deactivate"}
+OK_ACTIONS = {"login", "login_2fa", "password_changed", "account_unlocked", "2fa_enabled"}
+
+
+def action_label(action: str, entity: str = "") -> str:
+    base = ACTION_LABELS.get(action, action)
+    ent = ENTITY_LABELS.get(entity, "")
+    return f"{base} · {ent}" if action in ("create", "update", "delete") and ent else base
+
+
+def details_text(details: dict | None) -> str:
+    """Detalhes legíveis: IP em claro, usuário digitado oculto (pseudonimizado), antes/depois ficam de fora."""
+    parts = []
+    for k, v in (details or {}).items():
+        if k in ("before", "after") or v in (None, "", False):
+            continue
+        if k == "ip":
+            parts.append("IP anonimizado (registro antigo)" if str(v).startswith("h:") else f"IP {v}")
+        elif k == "user" and str(v).startswith("h:"):
+            parts.append("usuário digitado oculto")
+        elif k == "by_admin":
+            continue
+        elif k == "recovery_code":
+            parts.append("usou código de recuperação")
+        else:
+            parts.append(f"{k}: {v}")
+    return " · ".join(parts)
+
+
 def _audit_context(request, db, user, action=None, integrity=None):
     stmt = select(AuditLog).order_by(AuditLog.id.desc()).limit(300)
     if action:
         stmt = stmt.where(AuditLog.action == action)
     names = {u.id: u.username for u in db.scalars(select(User))}
     actions = sorted(db.scalars(select(AuditLog.action).distinct()).all())
-    return render(request, "admin/audit.html", user=user, rows=db.scalars(stmt).all(), names=names, actions=actions,
-                  action=action, integrity=integrity)
+    return render(request, "admin/audit.html", user=user, rows=db.scalars(stmt).all(), names=names,
+                  actions=[(a, action_label(a)) for a in actions], action=action, integrity=integrity,
+                  label=action_label, describe=details_text, entities=ENTITY_LABELS, bad=BAD_ACTIONS, good=OK_ACTIONS)
 
 
 @router.post("/admin/audit/verify", dependencies=[Depends(verify_csrf)])

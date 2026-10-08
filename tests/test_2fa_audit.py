@@ -288,3 +288,8 @@ def test_gemini_service_fast_fails_when_breaker_open(monkeypatch):
         assert FakeModels.calls == before            # rejeitou sem chamar o Google
     finally:
         gemini_breaker.reset()
+
+
+def test_audit_page_uses_readable_labels(client):
+    html = client.get("/admin/audit").text
+    assert "Entrou no sistema" in html and "auth #" not in html and ">login<" not in html

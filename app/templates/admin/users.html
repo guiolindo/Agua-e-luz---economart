@@ -2,7 +2,7 @@
 {% from "macros.html" import csrf %}
 {% block title %}Usuários · Economart Energia{% endblock %}
 {% block content %}
-<div class="page-head"><h1>Usuários</h1><a class="btn" href="/admin/audit">Auditoria de acessos</a></div>
+<div class="page-head"><h1>Usuários</h1><a class="btn" href="/admin/audit">Auditoria</a></div>
 {% if temp_password %}
 <div class="flash warn" role="alert"><strong>Senha provisória de {{ temp_for }}:</strong>
   <code style="font-size:22px;letter-spacing:.2em;user-select:all;margin:0 8px">{{ temp_password }}</code>
