@@ -26,7 +26,9 @@ def _ctx(db: Session, **extra) -> dict:
     recent_manual = db.scalars(select(ManualRecord).options(joinedload(ManualRecord.store),
                                                             joinedload(ManualRecord.record_type))
                                .order_by(ManualRecord.id.desc()).limit(10)).all()
-    return {"stores": list_stores(db, only_active=True), "types": list_record_types(db),
+    editing = extra.get("edit_record")
+    types = [t for t in list_record_types(db) if not t.is_batch_only or (editing and editing.record_type_id == t.id)]
+    return {"stores": list_stores(db, only_active=True), "types": types,
             "recent_bills": recent_bills, "recent_manual": recent_manual, "form": {}, "errors": {}, "dups": [],
             "edit_bill": None, "edit_record": None, **extra}
 
@@ -62,6 +64,9 @@ async def manual_save(request: Request, user: User = Depends(writer_required), d
     errors: dict[str, str] = {}
     if rtype is None:
         errors["type"] = "Selecione o tipo de registro."
+    if rtype is not None and rtype.is_batch_only and not edit_record_id:
+        errors["type"] = (f"{rtype.name} é lançada pelo botão “{rtype.name}: várias lojas” (um valor, todas as lojas de uma vez) "
+                          "— abra o lançamento em lote.")
     if store_id is None:
         errors["store"] = "Selecione a loja."
     if unit is not None and store_id is not None and unit.store_id != store_id:

@@ -4,8 +4,8 @@
 {% block content %}
 {% set editing = edit_bill or edit_record %}
 <div class="page-head"><div><h1>{{ 'Editar lançamento' if editing else 'Lançamento manual' }}</h1>
-  <div class="muted">Para LL Energia, gerador, manutenção e meses anteriores ao uso do sistema.</div></div>
-  {% if not editing %}<a class="btn primary" href="/manual/lote?type=ll-energia" title="Um valor, várias lojas">LL Energia: lançar em várias lojas</a>{% endif %}</div>
+  <div class="muted">{{ 'Corrija os dados e salve.' if editing else 'Escolha como lançar:' }}</div></div></div>
+{% if not editing %}{% with active = 'single' %}{% include "manual/_modes.html" %}{% endwith %}{% endif %}
 
 <div class="grid cols-main">
 <form class="card" method="post" action="/manual" id="mf">

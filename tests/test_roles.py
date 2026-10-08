@@ -30,7 +30,7 @@ def test_employee_is_fully_responsible_for_energy_registers(client, db):
     bill = _seed_bill(func, db, store.id)
     assert func.post(f"/manual/bills/{bill.id}/delete", {}).status_code == 303                  # corrige/exclui o que lançou errado
     ll = db.query(RecordType).filter_by(code="ll-energia").one()
-    func.post("/manual", {"store_id": store.id, "type_id": ll.id, "reference": "2026-08", "value": "10"})
+    assert func.post("/manual/lote", {"store_ids": [str(store.id)], "type_id": ll.id, "reference": "2026-08", "value": "10"}).status_code == 303
     rec = db.query(ManualRecord).one()
     assert func.post(f"/manual/records/{rec.id}/delete", {}).status_code == 303
     assert db.query(EnergyBill).count() == 0 and db.query(ManualRecord).count() == 0

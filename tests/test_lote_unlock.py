@@ -62,11 +62,41 @@ def _ll(db):
     return db.query(RecordType).filter_by(code="ll-energia").one()
 
 
-def test_manual_page_has_the_ll_batch_button_and_batch_page_defaults_to_ll(client, db):
-    assert "/manual/lote?type=ll-energia" in client.get("/manual").text
-    page = client.get("/manual/lote?type=ll-energia").text
-    assert f'<option value="{_ll(db).id}" selected>' in page
-    assert client.get("/manual/lote").status_code == 200                       # sem ?type= cai na LL Energia
+def test_manual_page_shows_the_ll_card_and_hides_ll_from_the_single_form(client, db):
+    ll = _ll(db)
+    page = client.get("/manual").text
+    assert "LL Energia · várias lojas" in page and 'href="/manual/lote?type=ll-energia"' in page and "mode-ll" in page
+    assert f'<option value="{ll.id}"' not in page and 'data-bill="0"' in page          # LL fora da lista; os outros tipos ficam
+    batch = client.get("/manual/lote?type=ll-energia").text
+    assert f'name="type_id" value="{ll.id}"' in batch and 'id="type" name="type_id" required' not in batch   # tipo fixo, sem select
+    assert "LL Energia · várias lojas" in batch and client.get("/manual/lote").status_code == 200
+
+
+def test_single_form_refuses_ll_and_points_to_the_batch_screen(client, db):
+    a, = _stores(client, "R1")
+    r = client.post("/manual", {"store_id": str(a), "type_id": str(_ll(db).id), "reference": "2026-09", "value": "100,00"})
+    assert r.status_code == 400 and "várias lojas" in r.text and db.query(ManualRecord).count() == 0
+
+
+def test_existing_ll_record_can_still_be_corrected_one_store_at_a_time(client, db):
+    a, b = _stores(client, "E1", "E2")
+    client.post("/manual/lote", {"type_id": str(_ll(db).id), "reference": "2026-09", "value": "1000,00", "store_ids": [str(a), str(b)]})
+    rec = db.query(ManualRecord).filter_by(store_id=a).one()
+    page = client.get(f"/manual?record={rec.id}")
+    assert page.status_code == 200 and f'<option value="{_ll(db).id}"' in page.text      # ao editar, o tipo aparece
+    r = client.post("/manual", {"edit_record": str(rec.id), "store_id": str(a), "type_id": str(_ll(db).id),
+                                "reference": "2026-09", "value": "1100,00", "notes": ""})
+    assert r.status_code == 303
+    db.expire_all()
+    assert {x.store_id: x.value for x in db.query(ManualRecord)} == {a: Decimal("1100.00"), b: Decimal("1000.00")}
+
+
+def test_dashboard_pending_for_ll_links_straight_to_the_batch_screen(client, db):
+    a, = _stores(client, "P1")
+    db.add(ManualRecord(store_id=a, record_type_id=_ll(db).id, reference=date(2026, 8, 1), value=Decimal("900.00"), data={}))
+    db.commit()
+    html = client.get("/?month=2026-09").text
+    assert "/manual/lote?type=ll-energia" in html
 
 
 def test_one_entry_becomes_many_records(client, db):
@@ -91,7 +121,8 @@ def test_batch_validation(client, db):
     for bad, field in [({"store_ids": []}, "Marque pelo menos uma loja"), ({"value": ""}, "Informe o valor"),
                        ({"reference": ""}, "Informe o mês"), ({"value": "abc"}, "Informe o valor"),
                        ({"store_ids": ["99999"]}, "loja inválida"), ({"due_date": "31/02/xx"}, "Data inválida"),
-                       ({"type_id": str(db.query(RecordType).filter_by(code="cemig").one().id)}, "Selecione o tipo")]:
+                       ({"type_id": str(db.query(RecordType).filter_by(code="cemig").one().id)}, "Selecione o tipo"),
+                       ({"type_id": str(db.query(RecordType).filter_by(code="manutencao-gerador").one().id)}, "Selecione o tipo")]:
         r = client.post("/manual/lote", {**base, **bad})
         assert r.status_code == 400 and field in r.text, (bad, r.text[:200])
     assert db.query(ManualRecord).count() == 0                                 # nada gravado em erro

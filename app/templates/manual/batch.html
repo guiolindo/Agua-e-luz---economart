@@ -3,9 +3,10 @@
 {% block title %}Lançamento em várias lojas · Economart Energia{% endblock %}
 {% block content %}
 <div class="page-head"><div>
-  <div class="crumbs"><a href="/manual">Lançamento manual</a> / em lote</div>
-  <h1>Lançamento em várias lojas</h1>
-  <div class="muted">Um valor só, aplicado a todas as lojas marcadas. Ex.: a LL Energia cobra o mesmo valor de várias lojas — em vez de 30 lançamentos, faça 1.</div></div></div>
+  <div class="crumbs"><a href="/manual">Lançamento manual</a> / LL Energia</div>
+  <h1>LL Energia · várias lojas</h1>
+  <div class="muted">Informe o valor uma vez e marque as lojas: o sistema cria um lançamento para cada uma.</div></div></div>
+{% with active = 'batch' %}{% include "manual/_modes.html" %}{% endwith %}
 
 <form method="post" action="/manual/lote" id="bf" data-no-loading>
   {{ csrf(csrf_token) }}
@@ -22,9 +23,11 @@
   <div class="grid cols-main">
     <section class="card">
       <h2>Dados do lançamento</h2>
-      <div class="field {{ 'error' if errors.type }}"><label for="type">Tipo *</label>
+      {% if types|length == 1 %}<input type="hidden" id="type" name="type_id" value="{{ types[0].id }}">
+      {% if errors.type %}<div class="flash error" role="alert">{{ errors.type }}</div>{% endif %}
+      {% else %}<div class="field {{ 'error' if errors.type }}"><label for="type">Tipo *</label>
         <select id="type" name="type_id" required>{% for t in types %}<option value="{{ t.id }}" {{ 'selected' if sel_type == t.id }}>{{ t.name }}</option>{% endfor %}</select>
-        {% if errors.type %}<div class="err">{{ errors.type }}</div>{% endif %}</div>
+        {% if errors.type %}<div class="err">{{ errors.type }}</div>{% endif %}</div>{% endif %}
       <div class="row row-2">
         {{ field("reference", "Mês de referência", form, errors, type="month", required=true) }}
         {{ field("value", "Valor por loja (R$)", form, errors, required=true, placeholder="1.200,00", hint="O mesmo valor entra em cada loja marcada.") }}

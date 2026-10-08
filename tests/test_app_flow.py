@@ -114,10 +114,10 @@ def test_manual_entries_and_dashboard(client, db):
     store_id = _make_store(client)
     from app.models import RecordType
     ll = db.query(RecordType).filter_by(code="ll-energia").one()
-    r = client.post("/manual", {"store_id": store_id, "type_id": ll.id, "reference": "2026-09", "value": "1.500,50",
-                                "f_consumo_kwh": "10.000"})
+    r = client.post("/manual/lote", {"store_ids": [str(store_id)], "type_id": ll.id, "reference": "2026-09", "value": "1.500,50",
+                                     "f_consumo_kwh": "10.000"})      # LL Energia só é lançada pela tela "várias lojas"
     assert r.status_code == 303
-    dup = client.post("/manual", {"store_id": store_id, "type_id": ll.id, "reference": "2026-09", "value": "2"})
+    dup = client.post("/manual/lote", {"store_ids": [str(store_id)], "type_id": ll.id, "reference": "2026-09", "value": "2"})
     assert dup.status_code == 409
     assert client.get("/?month=2026-09").status_code == 200
     page = client.get("/?month=2026-10").text

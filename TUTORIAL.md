@@ -152,7 +152,9 @@ Observações:
 
 ## B3. Lançamento manual (funcionário)
 
-Para fornecedores sem foto (LL Energia, Câmara, combustível, manutenção) e para meses antigos:
+**LL Energia (um valor para várias lojas).** Menu **Lançamento manual** → cartão laranja **LL Energia · várias lojas**: informe o mês e o valor uma vez, marque as lojas e confirme — o sistema cria um lançamento por loja. (A LL Energia não aparece na lista de tipos do lançamento de uma loja; para corrigir o valor de uma loja só, abra o lançamento em **Contas → Editar**.)
+
+Para os demais fornecedores sem foto (Câmara, combustível, manutenção) e para meses antigos:
 
 1. Menu **Lançamento manual**.
 2. Escolha a **loja**, a **unidade** (opcional para os fornecedores manuais) e o **tipo**.

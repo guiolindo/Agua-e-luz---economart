@@ -1,4 +1,4 @@
-"""Lançamento manual em lote: um valor (ex.: LL Energia) para várias lojas de uma vez."""
+"""Lançamento manual em lote: um valor (LL Energia) para várias lojas de uma vez."""
 import uuid
 from decimal import Decimal
 
@@ -23,7 +23,7 @@ MAX_VALUE = Decimal("999999999999.99")   # Numeric(14, 2)
 
 
 def _ctx(db: Session, **extra) -> dict:
-    types = [t for t in list_record_types(db) if not t.is_bill]
+    types = [t for t in list_record_types(db) if t.is_batch_only]
     sel = extra.pop("sel_type", None)
     chosen = next((t for t in types if t.id == sel), None) or next((t for t in types if t.code == DEFAULT_TYPE_CODE), None) \
         or (types[0] if types else None)
@@ -34,7 +34,7 @@ def _ctx(db: Session, **extra) -> dict:
 @router.get("/manual/lote")
 def batch_page(request: Request, type: str | None = None, user: User = Depends(writer_required),
                db: Session = Depends(get_db)):
-    types = [t for t in list_record_types(db) if not t.is_bill]
+    types = [t for t in list_record_types(db) if t.is_batch_only]
     sel = next((t.id for t in types if t.code == (type or DEFAULT_TYPE_CODE)), None)
     prev = local_today().replace(day=1)
     prev = prev.replace(year=prev.year - 1, month=12) if prev.month == 1 else prev.replace(month=prev.month - 1)
@@ -51,7 +51,7 @@ async def batch_save(request: Request, user: User = Depends(writer_required), db
     active_stores = {s.id: s for s in list_stores(db, only_active=True)}
     errors: dict[str, str] = {}
 
-    if rtype is None or rtype.is_bill or not rtype.active:
+    if rtype is None or not rtype.is_batch_only or not rtype.active:
         errors["type"] = "Selecione o tipo de lançamento."
     reference = parse_reference(posted.get("reference"))
     if reference is None:

@@ -8,6 +8,10 @@ KIND_BILL = "bill"      # conta com leitura estruturada (ex.: CEMIG) -> tabela e
 KIND_MANUAL = "manual"  # lançamento mensal com valor + campos próprios -> tabela manual_records
 
 
+# Tipos manuais lançados SÓ pela tela "várias lojas" (um valor para muitas lojas), nunca loja a loja.
+BATCH_ONLY_TYPE_CODES = frozenset({"ll-energia"})
+
+
 class RecordType(TimestampMixin, Base):
     """Tipo de registro (CEMIG, LL Energia, Gerador...). Novos tipos são cadastrados pelo admin."""
 
@@ -28,3 +32,7 @@ class RecordType(TimestampMixin, Base):
     @property
     def is_bill(self) -> bool:
         return self.kind == KIND_BILL
+
+    @property
+    def is_batch_only(self) -> bool:
+        return self.kind == KIND_MANUAL and self.code in BATCH_ONLY_TYPE_CODES
