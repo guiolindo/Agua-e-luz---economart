@@ -76,8 +76,8 @@
     const d = JSON.parse(cv.dataset.chart);
     return new Chart(cv, {
       data: { labels: d.labels, datasets: [
-        { type: 'bar', label: 'Valor da fatura (R$)', data: d.values, backgroundColor: d.labels.map((_, i) => i === d.last ? '#1b4f8a' : '#9aa5b4'), borderRadius: 2, maxBarThickness: 40, yAxisID: 'y' },
-        { type: 'line', label: 'Variação (%)', data: d.variation, borderColor: '#f47920', backgroundColor: '#f47920', borderWidth: 2, pointRadius: 3, spanGaps: true, yAxisID: 'y1' },
+        { type: 'bar', label: 'Valor da fatura (R$)', data: d.values, backgroundColor: d.labels.map((_, i) => i === d.last ? '#1b4f8a' : '#9aa5b4'), borderRadius: 2, maxBarThickness: 40, yAxisID: 'y', order: 2 },
+        { type: 'line', label: 'Variação (%)', data: d.variation, borderColor: '#f47920', backgroundColor: '#f47920', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderColor: '#f47920', pointBorderWidth: 2, spanGaps: true, yAxisID: 'y1', order: 0, z: 10 },
       ] },
       plugins: [{ id: 'varlabels', afterDatasetsDraw(c) {   // % de variação sobre cada ponto da linha (≤ 13 meses)
         if (d.labels.length > 13) return; const g = c.ctx, m = c.getDatasetMeta(1); g.save(); g.font = '600 9px sans-serif'; g.textAlign = 'center';

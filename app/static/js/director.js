@@ -24,8 +24,8 @@
 
   // 1) empresa por mês, empilhado por fornecedor + linha de variação
   new Chart($('c-month'), { data: { labels: D.labels, datasets: [
-      ...D.by_type.map((t) => ({ type: 'bar', label: t.name, data: t.values, backgroundColor: t.color, stack: 's', yAxisID: 'y', maxBarThickness: 44 })),
-      { type: 'line', label: 'Variação do total (%)', data: D.month_vars, borderColor: '#1c2430', backgroundColor: '#1c2430', borderWidth: 2, pointRadius: 3, spanGaps: true, yAxisID: 'y1' } ] },
+      ...D.by_type.map((t) => ({ type: 'bar', label: t.name, data: t.values, backgroundColor: t.color, stack: 's', yAxisID: 'y', maxBarThickness: 44, order: 2 })),
+      { type: 'line', label: 'Variação do total (%)', data: D.month_vars, borderColor: '#1c2430', backgroundColor: '#1c2430', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderColor: '#1c2430', pointBorderWidth: 2, spanGaps: true, yAxisID: 'y1', order: 0 } ] },
     options: { responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
       scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, grid: { color: GRID }, ticks: { callback: (v) => nfBRL0.format(v) } },
                 y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: (v) => v + '%' } } },

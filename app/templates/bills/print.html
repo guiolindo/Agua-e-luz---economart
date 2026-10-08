@@ -84,8 +84,8 @@
   const charts = [];
   charts.push(new Chart(document.getElementById('c-value'), {
     data: { labels: d.labels, datasets: [
-      { type: 'bar', label: 'Valor da fatura (R$)', data: s.value, backgroundColor: hl(GRAY), maxBarThickness: 40, borderRadius: 2, yAxisID: 'y' },
-      { type: 'line', label: 'Variação (%)', data: s.variation, borderColor: BLUE, backgroundColor: BLUE, borderWidth: 2, pointRadius: 3, spanGaps: true, yAxisID: 'y1' } ] },
+      { type: 'bar', label: 'Valor da fatura (R$)', data: s.value, backgroundColor: hl(GRAY), maxBarThickness: 40, borderRadius: 2, yAxisID: 'y', order: 2 },
+      { type: 'line', label: 'Variação (%)', data: s.variation, borderColor: BLUE, backgroundColor: BLUE, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderColor: BLUE, pointBorderWidth: 2, spanGaps: true, yAxisID: 'y1', order: 0 } ] },
     options: { ...common, scales: { y: { beginAtZero: true, ticks: { callback: (v) => 'R$ ' + nf.format(v) } },
       y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: (v) => v + '%' } } } } }));
   const cons = document.getElementById('c-cons');
@@ -96,9 +96,9 @@
     options: { ...common, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { callback: (v) => nf.format(v) } } } } }));
   const dem = document.getElementById('c-dem');
   if (dem) charts.push(new Chart(dem, { data: { labels: d.labels, datasets: [
-      { type: 'bar', label: 'HP', data: s.dhp, backgroundColor: hl('#7f8b9b'), maxBarThickness: 22 },
-      { type: 'bar', label: 'HFP', data: s.dhfp, backgroundColor: hl('#b7c0cc'), maxBarThickness: 22 },
-      { type: 'line', label: 'Contratada', data: s.contracted, borderColor: BLUE, borderDash: [5, 4], pointRadius: 0, spanGaps: true } ] },
+      { type: 'bar', label: 'HP', data: s.dhp, backgroundColor: hl('#7f8b9b'), maxBarThickness: 22, order: 2 },
+      { type: 'bar', label: 'HFP', data: s.dhfp, backgroundColor: hl('#b7c0cc'), maxBarThickness: 22, order: 2 },
+      { type: 'line', label: 'Contratada', data: s.contracted, borderColor: BLUE, borderDash: [5, 4], borderWidth: 2, pointRadius: 0, spanGaps: true, order: 0 } ] },
     options: { ...common, scales: { y: { beginAtZero: true } } } }));
   window.addEventListener('beforeprint', () => charts.forEach((c) => c.resize()));
 })();
