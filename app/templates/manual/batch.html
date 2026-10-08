@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "macros.html" import field, csrf %}
+{% block title %}Lançamento em várias lojas · Economart Energia{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <div class="crumbs"><a href="/manual">Lançamento manual</a> / em lote</div>
+  <h1>Lançamento em várias lojas</h1>
+  <div class="muted">Um valor só, aplicado a todas as lojas marcadas. Ex.: a LL Energia cobra o mesmo valor de várias lojas — em vez de 30 lançamentos, faça 1.</div></div></div>
+
+<form method="post" action="/manual/lote" id="bf" data-no-loading>
+  {{ csrf(csrf_token) }}
+  {% if errors %}<div class="flash error" role="alert">Corrija os campos destacados.</div>{% endif %}
+  {% if dups %}
+  <div class="flash warn" role="alert"><strong>{{ dups|length }} loja(s) já têm lançamento desse tipo neste mês:</strong>
+    <ul class="notice-list">{% for d in dups %}<li><strong>{{ d.store.code }}</strong> · {{ d.record.value|brl }}</li>{% endfor %}</ul>
+    <div class="field" style="margin:10px 0 0"><label for="dup">O que fazer com elas?</label>
+      <select id="dup" name="duplicate_action" required><option value="">Escolha…</option>
+        <option value="skip">Manter o que já existe (lançar só nas outras)</option>
+        <option value="replace">Substituir pelo valor novo</option></select></div></div>
+  {% endif %}
+
+  <div class="grid cols-main">
+    <section class="card">
+      <h2>Dados do lançamento</h2>
+      <div class="field {{ 'error' if errors.type }}"><label for="type">Tipo *</label>
+        <select id="type" name="type_id" required>{% for t in types %}<option value="{{ t.id }}" {{ 'selected' if sel_type == t.id }}>{{ t.name }}</option>{% endfor %}</select>
+        {% if errors.type %}<div class="err">{{ errors.type }}</div>{% endif %}</div>
+      <div class="row row-2">
+        {{ field("reference", "Mês de referência", form, errors, type="month", required=true) }}
+        {{ field("value", "Valor por loja (R$)", form, errors, required=true, placeholder="1.200,00", hint="O mesmo valor entra em cada loja marcada.") }}
+      </div>
+      {{ field("due_date", "Vencimento (opcional)", form, errors, type="date", hint="Usado para agrupar pelo mês de vencimento.") }}
+      {% for t in types %}{% if t.fields %}
+      <fieldset data-set="{{ t.id }}" hidden disabled style="border:0;padding:0;margin:0">
+        <div class="row row-2">{% for f in t.fields %}
+          {{ field("f_" ~ f.key, f.label ~ (' (' ~ f.unit ~ ')' if f.unit else ''), form, errors, hint="Igual em todas as lojas; deixe vazio se for diferente em cada uma.") }}{% endfor %}</div>
+      </fieldset>{% endif %}{% endfor %}
+      <div class="field"><label for="notes">Observações</label><textarea id="notes" name="notes">{{ form.get('notes', '') }}</textarea></div>
+    </section>
+
+    <section class="card" aria-labelledby="lojas-h">
+      <h2 id="lojas-h">Lojas</h2>
+      <div class="field {{ 'error' if errors.stores }}" style="margin-bottom:8px">
+        <label for="qs" class="sr">Filtrar lojas</label>
+        <input id="qs" type="search" placeholder="Filtrar por código, nome ou UF…" autocomplete="off">
+        {% if errors.stores %}<div class="err">{{ errors.stores }}</div>{% endif %}</div>
+      <div class="actions" style="margin-bottom:8px">
+        <button type="button" class="btn sm" id="all">Marcar todas (visíveis)</button>
+        <button type="button" class="btn sm" id="none">Limpar</button></div>
+      <div class="storepicker" id="picker" role="group" aria-label="Lojas que recebem o lançamento">
+        {% for s in stores %}<label class="chk storeopt" data-q="{{ (s.code ~ ' ' ~ (s.name or '') ~ ' ' ~ (s.region or ''))|lower }}">
+          <input type="checkbox" name="store_ids" value="{{ s.id }}" {{ 'checked' if s.id in selected }}>
+          <span><strong>{{ s.code }}</strong>{% if s.name %} <span class="muted small">{{ s.name }}</span>{% endif %}{% if s.region %} <span class="badge">{{ s.region }}</span>{% endif %}</span></label>
+        {% else %}<p class="muted">Nenhuma loja ativa cadastrada.</p>{% endfor %}
+      </div>
+      <p class="batch-total" id="total" aria-live="polite">Nenhuma loja marcada.</p>
+      <div class="actions"><button class="btn primary" id="go">Lançar</button><a class="btn" href="/manual">Cancelar</a></div>
+    </section>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}<script nonce="{{ csp_nonce }}">
+(function () {
+  const form = document.getElementById('bf'), type = document.getElementById('type'), value = document.getElementById('f-value'),
+        qs = document.getElementById('qs'), total = document.getElementById('total'), go = document.getElementById('go'),
+        opts = [...document.querySelectorAll('.storeopt')], boxes = opts.map((o) => o.querySelector('input'));
+  const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  function num(txt) {            // mesma regra do servidor: "1.200" = mil e duzentos; "1.200,50"; "1200.5"
+    let s = (txt || '').replace(/[^\d,.\-]/g, '');
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    const n = parseFloat(s); return isNaN(n) ? null : n;
+  }
+  function sync() {
+    document.querySelectorAll('fieldset[data-set]').forEach((fs) => { const on = fs.dataset.set === type.value; fs.hidden = !on; fs.disabled = !on; });
+    const n = boxes.filter((b) => b.checked).length, v = num(value.value);
+    if (!n) total.textContent = 'Nenhuma loja marcada.';
+    else total.textContent = n + ' loja(s) marcada(s)' + (v === null ? '.' : ' × ' + brl.format(v) + ' = ' + brl.format(v * n) + ' no total.');
+    go.textContent = n ? 'Lançar em ' + n + ' loja(s)' : 'Lançar';
+  }
+  qs.addEventListener('input', () => { const q = qs.value.trim().toLowerCase(); opts.forEach((o) => { o.hidden = !!q && !o.dataset.q.includes(q); }); });
+  document.getElementById('all').addEventListener('click', () => { opts.forEach((o) => { if (!o.hidden) o.querySelector('input').checked = true; }); sync(); });
+  document.getElementById('none').addEventListener('click', () => { boxes.forEach((b) => { b.checked = false; }); sync(); });
+  [type, value].forEach((el) => el.addEventListener('input', sync)); boxes.forEach((b) => b.addEventListener('change', sync));
+  form.addEventListener('submit', (e) => {
+    const n = boxes.filter((b) => b.checked).length, v = num(value.value);
+    if (n > 1 && v !== null && !window.confirm('Lançar ' + brl.format(v) + ' em ' + n + ' lojas (' + brl.format(v * n) + ' no total)?')) e.preventDefault();
+    else if (!e.defaultPrevented) { go.disabled = true; go.textContent = 'Lançando…'; }
+  });
+  sync();
+})();
+</script>{% endblock %}

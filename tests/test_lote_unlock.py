@@ -1,0 +1,144 @@
+import re
+from datetime import date
+from decimal import Decimal
+
+from app.middleware import reset_rate_limits
+from app.models import AuditLog, ManualRecord, RecordType, User
+from tests.test_app_flow import _make_store
+from tests.test_security import LOCKED, _create_user, _login, _new_client
+
+
+# ------------------------------------------------------------------ desbloquear
+def _lock(client, name):
+    pin = _create_user(client, name, "operator")
+    c = _new_client()
+    for _ in range(3):                                    # senha provisória: bloqueia na 3ª
+        _login(c, name, "errada-errada-1")
+    assert LOCKED in _login(c, name, pin).text
+    reset_rate_limits()
+    return pin
+
+
+def test_admin_sees_who_is_locked_and_unlocks(client, db):
+    pin = _lock(client, "bia")
+    html = client.get("/admin/users").text
+    assert "Bloqueado até" in html and "Desbloquear" in html
+    uid = db.query(User).filter_by(username="bia").one().id
+    r = client.post(f"/admin/users/{uid}/unlock")
+    assert r.status_code == 303
+    assert "desbloqueado" in client.get("/admin/users").text
+    assert "Bloqueado até" not in client.get("/admin/users").text
+    assert _login(_new_client(), "bia", pin).status_code == 303          # entra de novo com o mesmo PIN
+    db.expire_all()
+    assert db.query(AuditLog).filter_by(action="account_unlocked").count() == 1
+
+
+def test_unlock_on_a_user_that_is_not_locked_changes_nothing(client, db):
+    _create_user(client, "caio", "operator")
+    uid = db.query(User).filter_by(username="caio").one().id
+    client.post(f"/admin/users/{uid}/unlock")
+    assert "não está bloqueado" in client.get("/admin/users").text
+    db.expire_all()
+    assert db.query(AuditLog).filter_by(action="account_unlocked").count() == 0
+
+
+def test_only_admin_can_unlock(client, db):
+    _lock(client, "dani")
+    pw_op = _create_user(client, "edu", "operator")
+    op = _new_client()
+    assert _login(op, "edu", pw_op).status_code == 303
+    uid = db.query(User).filter_by(username="dani").one().id
+    assert op.post(f"/admin/users/{uid}/unlock").status_code in (303, 403)
+    db.expire_all()
+    assert db.query(User).filter_by(username="dani").one().blocked_until is not None     # continua bloqueada
+
+
+# ------------------------------------------------------------------ lote
+def _stores(client, *codes):
+    return [_make_store(client, code=c, unit=None) for c in codes]
+
+
+def _ll(db):
+    return db.query(RecordType).filter_by(code="ll-energia").one()
+
+
+def test_manual_page_has_the_ll_batch_button_and_batch_page_defaults_to_ll(client, db):
+    assert "/manual/lote?type=ll-energia" in client.get("/manual").text
+    page = client.get("/manual/lote?type=ll-energia").text
+    assert f'<option value="{_ll(db).id}" selected>' in page
+    assert client.get("/manual/lote").status_code == 200                       # sem ?type= cai na LL Energia
+
+
+def test_one_entry_becomes_many_records(client, db):
+    a, b, c = _stores(client, "L1", "L2", "L3")
+    r = client.post("/manual/lote", {"type_id": str(_ll(db).id), "reference": "2026-09", "value": "1.200,00",
+                                     "due_date": "2026-10-10", "store_ids": [str(a), str(c)], "notes": "contrato 2026"})
+    assert r.status_code == 303 and "/notas?" in r.headers["location"]
+    db.expire_all()
+    recs = db.query(ManualRecord).order_by(ManualRecord.store_id).all()
+    assert [x.store_id for x in recs] == [a, c]                                # a loja L2 ficou de fora
+    assert all(x.value == Decimal("1200.00") and x.reference == date(2026, 9, 1) and x.unit_id is None for x in recs)
+    assert all(x.due_date == date(2026, 10, 10) and x.notes == "contrato 2026" for x in recs)
+    flash = client.get("/notas").text
+    assert "em 2 loja(s)" in flash and "R$ 1.200,00" in flash
+    batches = {a_.details["batch"] for a_ in db.query(AuditLog).filter_by(entity="manual_record", action="create")}
+    assert len(batches) == 1                                                   # auditoria agrupa o lote
+
+
+def test_batch_validation(client, db):
+    a, = _stores(client, "V1")
+    base = {"type_id": str(_ll(db).id), "reference": "2026-09", "value": "100,00", "store_ids": [str(a)]}
+    for bad, field in [({"store_ids": []}, "Marque pelo menos uma loja"), ({"value": ""}, "Informe o valor"),
+                       ({"reference": ""}, "Informe o mês"), ({"value": "abc"}, "Informe o valor"),
+                       ({"store_ids": ["99999"]}, "loja inválida"), ({"due_date": "31/02/xx"}, "Data inválida"),
+                       ({"type_id": str(db.query(RecordType).filter_by(code="cemig").one().id)}, "Selecione o tipo")]:
+        r = client.post("/manual/lote", {**base, **bad})
+        assert r.status_code == 400 and field in r.text, (bad, r.text[:200])
+    assert db.query(ManualRecord).count() == 0                                 # nada gravado em erro
+
+
+def test_inactive_store_cannot_receive_a_batch_entry(client, db):
+    a, b = _stores(client, "A1", "A2")
+    from app.models import Store
+    db.get(Store, b).active = False
+    db.commit()
+    r = client.post("/manual/lote", {"type_id": str(_ll(db).id), "reference": "2026-09", "value": "10", "store_ids": [str(a), str(b)]})
+    assert r.status_code == 400 and db.query(ManualRecord).count() == 0
+
+
+def test_duplicates_must_be_decided_then_skip_or_replace(client, db):
+    a, b = _stores(client, "D1", "D2")
+    form = {"type_id": str(_ll(db).id), "reference": "2026-09", "value": "1000,00", "store_ids": [str(a)]}
+    assert client.post("/manual/lote", form).status_code == 303
+    both = {**form, "value": "1500,00", "store_ids": [str(a), str(b)]}
+    r = client.post("/manual/lote", both)                                      # D1 já tem: pergunta antes de gravar
+    assert r.status_code == 409 and "D1" in r.text and "O que fazer" in r.text and db.query(ManualRecord).count() == 1
+    assert 'value="' + str(a) + '" checked' in r.text                           # seleção preservada
+    r = client.post("/manual/lote", {**both, "duplicate_action": "skip"})
+    assert r.status_code == 303
+    db.expire_all()
+    vals = {x.store_id: x.value for x in db.query(ManualRecord)}
+    assert vals == {a: Decimal("1000.00"), b: Decimal("1500.00")}              # D1 mantida, D2 criada
+    assert client.post("/manual/lote", {**both, "duplicate_action": "replace"}).status_code == 303
+    db.expire_all()
+    assert {x.store_id: x.value for x in db.query(ManualRecord)} == {a: Decimal("1500.00"), b: Decimal("1500.00")}
+    assert db.query(ManualRecord).count() == 2                                 # substituiu, não duplicou
+
+
+def test_batch_records_feed_the_store_summary(client, db):
+    from app.models import Store
+    from app.services import chart_service
+    a, b = _stores(client, "S1", "S2")
+    client.post("/manual/lote", {"type_id": str(_ll(db).id), "reference": "2026-09", "value": "700,00", "store_ids": [str(a), str(b)]})
+    db.expire_all()
+    for sid in (a, b):
+        summary = chart_service.store_summary(db, db.get(Store, sid), date(2026, 9, 1), date(2026, 9, 1))
+        row = next(r for r in summary["rows"] if r["type"].code == "ll-energia")
+        assert [str(v) for v in row["values"]] == ["700.00"]
+
+
+def test_viewer_cannot_use_batch(client, db):
+    pw = _create_user(client, "gil", "viewer")
+    v = _new_client()
+    assert _login(v, "gil", pw).status_code == 303
+    assert v.get("/manual/lote", follow_redirects=False).status_code in (303, 403)

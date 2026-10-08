@@ -11,11 +11,13 @@
 <div class="card flush"><div class="tablewrap"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Último acesso</th><th>Situação</th><th><span class="sr">Ações</span></th></tr></thead><tbody>
   {% for u in users %}<tr><td>{{ u.username }}{% if u.id == user.id %} <span class="muted small">(você)</span>{% endif %}</td>
     <td>{% if u.id != user.id %}<form method="post" action="/admin/users/{{ u.id }}/role" class="actions">{{ csrf(csrf_token) }}
-      <select name="role" data-autosubmit style="width:auto" aria-label="Perfil de {{ u.username }}">{% for k, v in roles.items() %}<option value="{{ k }}" {{ 'selected' if (u.role == k or (u.role == 'user' and k == 'operator')) }}>{{ v }}</option>{% endfor %}</select></form>
+      <select name="role" data-autosubmit style="width:auto;max-width:300px" aria-label="Perfil de {{ u.username }}">{% for k, v in roles.items() %}<option value="{{ k }}" {{ 'selected' if (u.role == k or (u.role == 'user' and k == 'operator')) }}>{{ v }}</option>{% endfor %}</select></form>
       {% else %}{{ roles.get(u.role, u.role) }}{% endif %}</td>
     <td class="muted small">{{ (u.last_login|dt_br) if u.last_login else 'nunca' }}</td>
-    <td>{% if not u.active %}<span class="badge">Inativo</span>{% elif u.must_change_password %}{% if u.temp_expires_at and u.temp_expires_at.replace(tzinfo=None) < now_naive %}<span class="badge bad">Senha provisória expirada</span>{% else %}<span class="badge warn" {% if u.temp_expires_at %}title="Expira em {{ u.temp_expires_at|dt_br(short=true) }}"{% endif %}>Troca de senha pendente</span>{% endif %}{% else %}<span class="badge ok">Ativo</span>{% endif %}</td>
-    <td class="right nowrap">{% if u.id != user.id %}
+    <td>{% if not u.active %}<span class="badge">Inativo</span>{% elif u.id in blocked %}<span class="badge bad" title="Bloqueado por tentativas erradas">Bloqueado até {{ blocked[u.id]|dt_br(short=true) }}</span>{% elif u.must_change_password %}{% if u.temp_expires_at and u.temp_expires_at.replace(tzinfo=None) < now_naive %}<span class="badge bad">Senha provisória expirada</span>{% else %}<span class="badge warn" {% if u.temp_expires_at %}title="Expira em {{ u.temp_expires_at|dt_br(short=true) }}"{% endif %}>Troca de senha pendente</span>{% endif %}{% else %}<span class="badge ok">Ativo</span>{% endif %}</td>
+    <td class="right nowrap">{% if u.id in blocked %}
+      <form method="post" action="/admin/users/{{ u.id }}/unlock" style="display:inline">{{ csrf(csrf_token) }}<button class="btn sm primary">Desbloquear</button></form>{% endif %}
+    {% if u.id != user.id %}
       <form method="post" action="/admin/users/{{ u.id }}/reset-password" style="display:inline" data-confirm="Gerar uma nova senha provisória para {{ u.username }}? As sessões abertas dele serão encerradas.">{{ csrf(csrf_token) }}<button class="btn sm">Redefinir senha</button></form>
       <form method="post" action="/admin/users/{{ u.id }}/toggle" style="display:inline">{{ csrf(csrf_token) }}<button class="btn sm">{{ 'Desativar' if u.active else 'Reativar' }}</button></form>{% endif %}</td></tr>{% endfor %}
 </tbody></table></div></div>

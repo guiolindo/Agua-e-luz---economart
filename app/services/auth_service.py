@@ -107,6 +107,17 @@ def attempt_login(db: Session, request: Request, username: str, password: str) -
     return LoginResult(user, True)
 
 
+def is_blocked(user: User, now=None):
+    """Até quando a conta está bloqueada por tentativas erradas (None se não está)."""
+    until = _aware(user.blocked_until)
+    return until if until and until > (now or utcnow()) else None
+
+
+def unlock(user: User) -> None:
+    """Libera a conta bloqueada por tentativas erradas, sem mexer na senha nem nas sessões."""
+    user.failed_attempts, user.blocked_until = 0, None
+
+
 def set_password(db: Session, user: User, new_password: str, *, must_change: bool = False) -> None:
     """Troca a senha e revoga todas as sessões existentes (incrementa a época).
     `must_change=True` = senha provisória: ganha validade (`temp_password_hours`) e obriga a troca no 1º acesso."""

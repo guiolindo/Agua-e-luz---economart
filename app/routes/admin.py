@@ -30,7 +30,10 @@ def _active_admins(db: Session) -> int:
 def _page(request, db, user, **extra):
     from datetime import datetime, timezone
 
-    return render(request, "admin/users.html", user=user, users=db.scalars(select(User).order_by(User.username)).all(),
+    users = db.scalars(select(User).order_by(User.username)).all()
+    now = utcnow()
+    blocked = {u.id: until for u in users if (until := auth_service.is_blocked(u, now))}
+    return render(request, "admin/users.html", user=user, users=users, blocked=blocked,
                   roles=ROLES, temp_hours=get_settings().temp_password_hours,
                   now_naive=datetime.now(timezone.utc).replace(tzinfo=None), **extra)
 
@@ -72,6 +75,21 @@ def user_reset(request: Request, user_id: int, user: User = Depends(admin_requir
     audit_service.log(db, user.id, "password_reset", "user", target.id, {"by_admin": True})
     db.commit()
     return _page(request, db, user, temp_for=target.username, temp_password=temp)
+
+
+@router.post("/admin/users/{user_id}/unlock", dependencies=[Depends(verify_csrf)])
+def user_unlock(request: Request, user_id: int, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    target = db.get(User, user_id)
+    if target is None:
+        flash(request, "Usuário não encontrado.", "error")
+    elif auth_service.is_blocked(target) is None and not target.failed_attempts:
+        flash(request, f"{target.username} não está bloqueado.", "info")
+    else:
+        auth_service.unlock(target)
+        audit_service.log(db, user.id, "account_unlocked", "user", target.id, {"by_admin": True})
+        db.commit()
+        flash(request, f"{target.username} desbloqueado: já pode tentar entrar de novo.")
+    return RedirectResponse("/admin/users", status_code=303)
 
 
 @router.post("/admin/users/{user_id}/role", dependencies=[Depends(verify_csrf)])
