@@ -10,7 +10,7 @@ from app.config import get_settings
 from app.main import app
 from app.models import AuditLog, User
 from app.services import audit_service, totp_service
-from tests.conftest import Client
+from tests.conftest import PNG as PNG_BYTES, Client
 from tests.test_security import _create_user, _login, _new_client
 
 
@@ -222,3 +222,69 @@ def test_audit_page_verify_button(client, db):
     db.execute(text("UPDATE audit_log SET action='x' WHERE id=(SELECT MIN(id) FROM audit_log)"))
     db.commit()
     assert "Adulteração detectada" in client.post("/admin/audit/verify").text
+
+
+# ---------------------------------------------------------------- disjuntor do Gemini
+def test_circuit_breaker_opens_after_failures_and_recovers():
+    from app.services.circuit_breaker import BreakerOpen, CircuitBreaker
+    t = [0.0]
+    b = CircuitBreaker("x", failure_threshold=2, reset_seconds=30, clock=lambda: t[0])
+
+    def boom():
+        with b.call():
+            raise ValueError
+
+    for _ in range(2):
+        with pytest.raises(ValueError):
+            boom()
+    with pytest.raises(BreakerOpen):
+        with b.call():
+            pass
+    t[0] = 31                                   # meio-aberto: uma chamada de teste
+    with b.call():
+        pass
+    with b.call():                              # sucesso fechou
+        pass
+
+
+def test_breaker_ignores_caller_errors():
+    from app.services.circuit_breaker import CircuitBreaker
+    b = CircuitBreaker("y", failure_threshold=1)
+    for _ in range(3):
+        with pytest.raises(KeyError):
+            with b.call(counts=lambda e: False):
+                raise KeyError
+    with b.call():
+        pass
+
+
+def test_gemini_service_fast_fails_when_breaker_open(monkeypatch):
+    from app.services import gemini_service
+    from app.services.circuit_breaker import gemini_breaker
+    from google import genai
+    from google.genai import errors
+
+    class FakeModels:
+        calls = 0
+
+        def generate_content(self, **kw):
+            FakeModels.calls += 1
+            raise errors.APIError(503, {"error": {"message": "x"}})
+
+    class FakeClient:
+        def __init__(self, **kw):
+            self.models = FakeModels()
+
+    monkeypatch.setattr(genai, "Client", FakeClient)
+    gemini_breaker.reset()
+    svc = gemini_service.GeminiService(api_key="k", sleep=lambda s: None)
+    try:
+        for _ in range(gemini_breaker.failure_threshold):
+            with pytest.raises(gemini_service.ExtractionError):
+                svc.extract(PNG_BYTES, "image/png")
+        before = FakeModels.calls
+        with pytest.raises(gemini_service.ExtractionError, match="instável"):
+            svc.extract(PNG_BYTES, "image/png")
+        assert FakeModels.calls == before            # rejeitou sem chamar o Google
+    finally:
+        gemini_breaker.reset()

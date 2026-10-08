@@ -11,6 +11,7 @@ import time
 
 from app.config import get_settings
 from app.schemas.extraction import BillExtraction
+from app.services.circuit_breaker import BreakerOpen, gemini_breaker
 from app.utils.images import prepare_for_model
 
 log = logging.getLogger(__name__)
@@ -67,6 +68,10 @@ class ExtractionError(RuntimeError):
     """Falha de extração com mensagem apresentável ao usuário (nunca contém chave, URL ou stack)."""
 
 
+class UpstreamError(ExtractionError):
+    """O problema é do Google (429/5xx, rede, timeout) e não do arquivo: só estas falhas abrem o disjuntor."""
+
+
 def message_for_code(code: int | None) -> str:
     if code == 400:
         return "O Gemini rejeitou o arquivo (formato inválido ou muito grande). Verifique a foto/PDF e tente de novo."
@@ -113,6 +118,13 @@ class GeminiService:
         contents = [types.Part.from_bytes(data=data, mime_type=mime_type), build_prompt(catalog)]
         config = types.GenerateContentConfig(response_mime_type="application/json", response_schema=BillExtraction,
                                              temperature=0)
+        try:
+            with gemini_breaker.call(counts=lambda e: isinstance(e, UpstreamError)):
+                return self._call_with_retries(client, contents, config, errors)
+        except BreakerOpen as exc:
+            raise ExtractionError("O Gemini está instável no momento. Aguarde cerca de 30 segundos e tente de novo.") from exc
+
+    def _call_with_retries(self, client, contents, config, errors) -> BillExtraction:
         last: Exception | None = None
         for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
@@ -127,14 +139,14 @@ class GeminiService:
                 if code in RETRY_CODES and attempt < MAX_ATTEMPTS:
                     self._sleep(2 ** attempt)
                     continue
-                raise ExtractionError(message_for_code(code)) from exc
+                raise (UpstreamError if code in RETRY_CODES or (code or 0) >= 500 else ExtractionError)(message_for_code(code)) from exc
             except Exception as exc:  # rede, timeout, SSL... nunca expor str(exc): pode conter URL
                 last = exc
                 log.exception("Falha ao chamar o Gemini")
                 if attempt < MAX_ATTEMPTS and _is_transient(exc):
                     self._sleep(2 ** attempt)
                     continue
-                raise ExtractionError(message_for_exception(exc)) from exc
+                raise UpstreamError(message_for_exception(exc)) from exc
         raise ExtractionError(message_for_code(None)) from last
 
 
