@@ -66,7 +66,8 @@ async def manual_save(request: Request, user: User = Depends(writer_required), d
         errors["store"] = "Selecione a loja."
     if unit is not None and store_id is not None and unit.store_id != store_id:
         errors["unit"] = "A unidade não pertence à loja selecionada."
-    if rtype is not None and rtype.is_bill and unit is None:
+    bill_path = rtype is not None and rtype.is_bill and not edit_record_id   # editar lançamento antigo segue o caminho manual
+    if bill_path and unit is None:
         errors["unit"] = "Selecione a unidade consumidora."
 
     def rerender(dups=None, status=400):
@@ -77,7 +78,7 @@ async def manual_save(request: Request, user: User = Depends(writer_required), d
                              edit_record=db.get(ManualRecord, int(edit_record_id)) if edit_record_id else None))
 
     action = posted.get("duplicate_action", "")
-    if rtype is not None and rtype.is_bill:
+    if bill_path:
         values, form_errors = parse_bill_form(posted)
         errors.update(form_errors)
         if errors:

@@ -33,6 +33,10 @@ PROMPT = """Você é um extrator estruturado de dados de contas de energia elét
   (CEMIG e Coelba: "N.º/NÚMERO DA UNIDADE CONSUMIDORA", ex.: 9.089.187.028-65; Energisa: "NÚMERO DA UC", ex.: 461.615.050-40). NÃO confunda com nota fiscal, código de
   débito em conta, nosso número, número do documento ou número do medidor. Mantenha pontos e hífens.
 - "total_value": o "Valor a pagar"/"Total a pagar" da fatura.
+- CEMIG Geração e Transmissão (compra de energia no mercado livre) tem o MESMO layout da conta da CEMIG, mas outro
+  emitente: "utility" = "Cemig Geração e Transmissão S.A." (não "CEMIG"). Os itens são "Energia Ativa" e "Perdas RB"
+  (ICMS e PIS/COFINS costumam ser 0,00). O arquivo pode trazer várias páginas do mesmo documento (conta, demonstrativo
+  de grandezas, DANFE e boleto): o valor do DANFE e do boleto repetem o total da conta, NÃO some de novo.
 - A foto pode estar GIRADA (90° ou 180°) ou inclinada: leia mesmo assim, sem pedir outra foto.
 - Consumo: se a conta separa ponta (HP) e fora ponta (HFP) (e HR), preencha consumption_hp_kwh / consumption_hfp_kwh /
   consumption_hr_kwh e demand_*_kw com os valores do MÊS de referência (primeira linha do histórico de consumo e/ou os

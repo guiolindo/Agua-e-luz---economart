@@ -40,7 +40,7 @@
   <fieldset data-set="bill" hidden disabled style="border:0;padding:0;margin:0">
     {{ bill_fields(form, errors, []) }}
   </fieldset>
-  {% for t in types if not t.is_bill %}
+  {% for t in types if not t.is_bill or (edit_record and edit_record.record_type_id == t.id) %}
   <fieldset data-set="{{ t.id }}" hidden disabled style="border:0;padding:0;margin:0">
     <div class="row row-3">
       {{ field("reference", "Mês de referência", form, errors, type="month", required=true) }}
@@ -78,7 +78,7 @@
   const store = document.getElementById('store'), unit = document.getElementById('unit'), type = document.getElementById('type'),
         pick = document.getElementById('pick'), row = document.getElementById('submit-row'), req = document.getElementById('unit-req');
   function sync() {
-    const sid = store.value, opt = type.options[type.selectedIndex], tid = type.value, isBill = opt && opt.dataset.bill === '1';
+    const sid = store.value, opt = type.options[type.selectedIndex], tid = type.value, isBill = !{{ 'true' if edit_record else 'false' }} && opt && opt.dataset.bill === '1';
     [...unit.options].forEach((o) => { o.hidden = !!o.value && o.dataset.store !== sid; });
     const cur = unit.options[unit.selectedIndex]; if (cur && cur.value && cur.dataset.store !== sid) unit.value = '';
     req.textContent = isBill ? '(obrigatória)' : '(opcional)';

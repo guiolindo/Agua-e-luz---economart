@@ -17,6 +17,7 @@ from app.services.chart_service import _fetch_range, month_of
 from app.utils import formatting as fmt
 from app.utils.timezone import local_today
 
+NO_OWN_KWH_TYPES = {"cemig-geracao"}   # compra de energia: os kWh já estão na conta da distribuição (não somar 2x)
 PARTIAL_RATIO = 0.6   # mês com menos de 60% das lojas (vs. o melhor mês) é tratado como parcial
 MIN_PREV_MONTHS = 3  # histórico mínimo de uma loja no período anterior para compará-la
 TYPE_COLORS = ["#1b4f8a", "#f47920", "#4f9a94", "#8a6aa3", "#b08a3e", "#7a8f5a", "#7f8b9b", "#b0605f"]
@@ -58,6 +59,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
     types = list(db.scalars(select(RecordType).order_by(RecordType.sort_order, RecordType.name)))
     color_of = {t.id: TYPE_COLORS[i % len(TYPE_COLORS)] for i, t in enumerate(types)}
     use_types = set(type_ids) if type_ids else {t.id for t in types}
+    type_code = {t.id: t.code for t in types}
 
     qs, qe = _fetch_range(prev_start, end, by)
     bills = list(db.scalars(select(EnergyBill).options(joinedload(EnergyBill.unit))
@@ -89,7 +91,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
         add(b.unit.store_id, b.record_type_id, m, b.total_value)
         if m in idx and b.unit.store_id in store_ids and b.record_type_id in use_types:
             kwh = b.consumption_total
-            if kwh and kwh > 0:
+            if kwh and kwh > 0 and type_code.get(b.record_type_id) not in NO_OWN_KWH_TYPES:
                 eff[b.unit.store_id]["value"] += b.total_value
                 eff[b.unit.store_id]["kwh"] += kwh
             if b.contracted_demand and b.contracted_demand > 0:

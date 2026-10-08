@@ -52,7 +52,12 @@ def pending_items(db: Session, month: date, prev: date) -> list[dict]:
 
     cur = {(r.store_id, r.unit_id, r.record_type_id) for r in
            db.scalars(select(ManualRecord).where(ManualRecord.reference == month))}
+    bill_now = {(u.store_id, b.record_type_id) for b, u in db.execute(
+        select(EnergyBill, ConsumerUnit).join(ConsumerUnit, ConsumerUnit.id == EnergyBill.unit_id)
+        .where(EnergyBill.reference == month))}
     for r in db.scalars(select(ManualRecord).where(ManualRecord.reference == prev)):
+        if types[r.record_type_id].is_bill and (r.store_id, r.record_type_id) in bill_now:
+            continue   # tipo que era manual e agora vem em conta: a conta do mês já cobre
         if (r.store_id, r.unit_id, r.record_type_id) not in cur and types[r.record_type_id].active:
             items.append({"store": r.store, "unit": r.unit, "type": r.record_type,
                           "text": "Lançado no mês anterior; falta este mês"})

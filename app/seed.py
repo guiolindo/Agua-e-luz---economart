@@ -20,9 +20,11 @@ DEFAULT_TYPES = [
          aliases=["ENERGISA MINAS RIO", "ENERGISA MINAS RIO DISTRIBUIDORA DE ENERGIA", "ENERGISA SUL SUDESTE",
                   "ENERGISA DISTRIBUIDORA", "ENERGISA S.A."],
          description="Conta de energia da Energisa (Minas Rio e outras), lida por foto. Baixa tensão: consumo único em kWh."),
-    dict(code="cemig-geracao", name="CEMIG Geração e Transmissão", kind="manual", sort_order=12,
+    dict(code="cemig-geracao", name="CEMIG Geração e Transmissão", kind="bill", sort_order=12,
          fields=[{"key": "energia_kwh", "label": "Energia", "unit": "kWh"}],
-         description="Compra de energia (CEMIG Geração e Transmissão S.A.), lançamento mensal."),
+         aliases=["CEMIG GERACAO E TRANSMISSAO", "CEMIG GERACAO E TRANSMISSAO S.A.", "CEMIG GT"],
+         description="Compra de energia no mercado livre (CEMIG Geração e Transmissão S.A.), conta lida por foto. "
+                     "Tem unidade consumidora própria, diferente da conta da distribuição."),
     dict(code="ll-energia", name="LL Energia", kind="manual", sort_order=20,
          fields=[{"key": "consumo_kwh", "label": "Consumo", "unit": "kWh"}],
          description="LL Energia - Consultoria (lançamento mensal)."),
@@ -44,8 +46,13 @@ def seed(db: Session) -> None:
         existing = db.scalar(select(RecordType).where(RecordType.code == t["code"]))
         if existing is None:
             db.add(RecordType(**t))
-        elif not existing.aliases and t.get("aliases"):
-            existing.aliases = t["aliases"]  # bancos criados antes do campo existir
+        else:
+            if not existing.aliases and t.get("aliases"):
+                existing.aliases = t["aliases"]  # bancos criados antes do campo existir
+            # CEMIG G&T nasceu como lançamento manual; agora tem conta própria (UC). Muda só o tipo — os lançamentos
+            # manuais antigos continuam no mesmo tipo e seguem somando nas tabelas e gráficos.
+            if t["code"] == "cemig-geracao" and existing.kind == "manual":
+                existing.kind = "bill"
     settings = get_settings()
     if db.scalar(select(User).limit(1)) is None:
         password = settings.admin_password

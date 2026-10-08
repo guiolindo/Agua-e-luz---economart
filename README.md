@@ -67,7 +67,7 @@ cria lojas **fictícias** para visualizar o painel.
 - **Retenção:** a foto/PDF fica no PostgreSQL por 6 meses e então é apagada automaticamente (rotina na subida e a cada
   6 h; manual: `python -m scripts.purge_documents`). Os dados lidos, valores e gráficos permanecem; a tela mostra
   “Original expirado”.
-- **Fornecedores da planilha atual:** já vêm cadastrados CEMIG (distribuição), COELBA, ENERGISA, CEMIG Geração e Transmissão, LL Energia,
+- **Fornecedores da planilha atual:** já vêm cadastrados CEMIG (distribuição), COELBA, ENERGISA, CEMIG Geração e Transmissão (conta lida por foto, com unidade consumidora própria; os lançamentos manuais antigos continuam somando), LL Energia,
   Câmara de Comercialização de Energia (CCEE), Compra de combustível para gerador e Manutenção de Gerador. O relatório e o
   resumo mensal podem **agrupar por mês de referência (competência) ou por mês de vencimento** — a planilha impressa usa o
   vencimento (a conta de SET/2026, que vence em outubro, cai na coluna out/2026). Lançamentos manuais aceitam “Vencimento”

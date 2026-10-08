@@ -125,7 +125,7 @@ O funcionário é o responsável por manter tudo de energia da empresa, então �
 
 **Para editar uma unidade já criada** (número, descrição, distribuidora, dia de vencimento, situação): abra a unidade e clique em **Editar unidade**, ou use **Editar** na lista de unidades da loja. Unidades criadas sem vencimento **continuam funcionando normalmente**; apenas não geram aviso até você definir o dia (o painel do funcionário lista quais ainda estão sem vencimento).
 
-**3. Fornecedores (tipos de registro).** Menu **Tipos de registro**. Já vêm cadastrados: CEMIG, COELBA, ENERGISA, CEMIG Geração e Transmissão, LL Energia, Câmara de Comercialização de Energia, Compra de combustível para gerador e Manutenção de Gerador. Para outra distribuidora (ex.: Light, Copel) crie um tipo **"Conta de distribuidora"**; para outros custos, **"Lançamento manual"**.
+**3. Fornecedores (tipos de registro).** Menu **Tipos de registro**. Já vêm cadastrados: CEMIG, COELBA, ENERGISA, CEMIG Geração e Transmissão (esta também vem em conta com foto, como as distribuidoras), LL Energia, Câmara de Comercialização de Energia, Compra de combustível para gerador e Manutenção de Gerador. Para outra distribuidora (ex.: Light, Copel) crie um tipo **"Conta de distribuidora"**; para outros custos, **"Lançamento manual"**.
 
 Se algo for cadastrado errado, o próprio funcionário corrige. Tudo fica registrado na **Auditoria** (quem fez, o quê e quando), que o administrador acompanha.
 

@@ -43,6 +43,17 @@ BILL_INDICATORS = [
 ]
 
 
+class _LegacyManual:
+    """Lançamento manual antigo de um tipo que virou conta: expõe só o valor com a interface de EnergyBill."""
+
+    def __init__(self, rec):
+        self.total_value = rec.value
+        self.reference = rec.reference
+
+    def __getattr__(self, name):   # consumo, demanda, dias... não existem no lançamento manual
+        return None
+
+
 def indicators_for_type(rt: RecordType) -> list[Indicator]:
     if rt.is_bill:
         return BILL_INDICATORS
@@ -124,6 +135,10 @@ def build_chart(db: Session, store: Store, *, record_type: RecordType | None, in
     if record_type.is_bill:
         for b in repo.bills_for_units(db, unit_ids, start, end, record_type.id):
             rows[b.unit_id][b.reference].append(b)
+        if not unit_id:   # tipo que já foi manual (CEMIG G&T): o histórico sem unidade aparece como "Sem unidade"
+            for r in repo.manual_for_store(db, store.id, start, end, record_type.id):
+                if r.unit_id is None:
+                    rows[None][r.reference].append(_LegacyManual(r))
     else:
         for r in repo.manual_for_store(db, store.id, start, end, record_type.id):
             if unit_id and r.unit_id != unit_id:
