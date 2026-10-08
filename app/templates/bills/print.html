@@ -22,7 +22,7 @@
   <header class="report-head">
     <div><h1>{{ rtype.name if rtype else 'Conta de energia' }} — {{ bill.reference|month_label }}</h1>
       <div class="muted">{{ store.code }}{% if store.name %} — {{ store.name }}{% endif %} · Unidade <strong class="mono">{{ unit.number }}</strong>{% if unit.description %} · {{ unit.description }}{% endif %}</div></div>
-    <div class="report-meta"><div class="small muted">Origem: {{ 'foto/IA' if bill.source == 'import' else 'lançamento manual' }}</div>
+    <div class="report-meta" style="text-align:right"><div class="small muted">Origem: {{ 'foto/IA' if bill.source == 'import' else 'lançamento manual' }}</div>
       <div class="small muted">Impresso por {{ user.username }}</div></div>
   </header>
 

@@ -57,7 +57,7 @@ def provisioning_uri(username: str, secret: str) -> str:
 def qr_svg(uri: str) -> str:
     import segno
 
-    return segno.make(uri, error="m").svg_inline(scale=5, border=2, dark="#111111", light="#ffffff", title="QR Code do 2FA")
+    return segno.make(uri, error="m").svg_inline(scale=4, border=2, dark="#111111", light="#ffffff", title="QR Code do 2FA")
 
 
 def start_enrollment(user: User) -> str:

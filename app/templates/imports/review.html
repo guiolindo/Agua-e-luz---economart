@@ -4,7 +4,7 @@
 {% block content %}
 {% set e = extraction %}
 <div class="page-head"><div><div class="crumbs"><a href="/import">Importar conta</a> /</div><h1>Conferir conta identificada</h1>
-  <div class="muted">A leitura é feita por IA e pode conter erros. Confira os campos e corrija o que for necessário antes de salvar.</div></div></div>
+  <div class="muted">Confira os dados lidos antes de salvar.</div></div></div>
 
 <div class="review">
 <form method="post" action="/import/{{ job.id }}/confirm" id="confirm">
@@ -47,7 +47,7 @@
   {# --- Possível duplicidade --- #}
   {% if dups %}
   <section class="card" style="border-color:var(--warn-line);background:var(--warn-soft)">
-    <h2>Esta conta aparentemente já está cadastrada</h2>
+    <h2>Já existe uma conta para este período</h2>
     <div class="tablewrap"><table><thead><tr><th>Referência</th><th class="num">Valor</th><th>Nº da nota</th><th>Origem</th></tr></thead><tbody>
       {% for d in dups %}<tr><td>{{ d.reference|month_label }}</td><td class="num">{{ d.total_value|brl }}</td><td>{{ d.invoice_number or '—' }}</td><td>{{ 'Foto/IA' if d.source == 'import' else 'Manual' }}</td></tr>{% endfor %}
     </tbody></table></div>
