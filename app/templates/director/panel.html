@@ -10,7 +10,7 @@
 
 
 {% if insights %}<section class="card insights" aria-labelledby="ins-h">
-  <h2 id="ins-h">Resumo em poucas palavras</h2>
+  <h2 id="ins-h">Destaques{{ " de " ~ focus_label if focus_label }}</h2>
   <ul>{% for i in insights %}<li class="ins-{{ i.tone }}"><span class="ins-dot" aria-hidden="true">{{ '▲' if i.tone == 'bad' else '▼' if i.tone == 'good' else '●' }}</span><span>{{ i.text }}</span></li>{% endfor %}</ul>
   <p class="hint">▲ atenção · ▼ melhora · ● informação</p>
 </section>{% endif %}

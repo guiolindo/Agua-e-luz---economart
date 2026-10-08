@@ -192,5 +192,5 @@ def test_director_summary_in_plain_language(client, db):
     _world(db)
     d = _user(client, "diretor7", "director")
     html = d.get("/diretoria").text
-    assert "Resumo em poucas palavras" in html and "a empresa gastou" in html
+    assert "Destaques de" in html and "a empresa gastou" in html
     assert "A loja que mais pesa no período é" in html
