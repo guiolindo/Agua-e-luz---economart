@@ -69,6 +69,10 @@ def run_import(import_id: int, extractor: Extractor | None = None, session_facto
             _fail(db, job, "Ocorreu um erro inesperado ao analisar a conta.")
             return
 
+        reason = rejection_reason(extraction)
+        if reason:
+            _reject(db, job, extractor.name, reason, extraction)
+            return
         job.extracted = extraction.model_dump()
         job.provider = extractor.name
         job.stage = "matching"
@@ -83,6 +87,29 @@ def run_import(import_id: int, extractor: Extractor | None = None, session_facto
         db.commit()
     finally:
         db.close()
+
+
+def rejection_reason(e: BillExtraction) -> str | None:
+    """Motivo para barrar o arquivo (não é conta de energia), ou None se parece uma conta.
+    Barra quando a IA disse que não é conta, ou quando não leu NADA que identifique uma conta."""
+    if e.is_energy_bill is False:
+        return (e.not_bill_reason or "documento que não é conta de energia").strip()[:120]
+    identifies = (e.consumer_unit_number, e.total_value, e.reference_month, e.invoice_number, e.due_date)
+    if not any(v not in (None, "") for v in identifies) and not e.line_items:
+        return "não foi possível reconhecer uma conta de energia no arquivo"
+    return None
+
+
+def _reject(db: Session, job: Import, provider: str, reason: str, extraction: BillExtraction) -> None:
+    """Arquivo que não é conta: nada é lançado e os bytes são APAGADOS na hora (só ficam nome e motivo, na auditoria)."""
+    doc = job.document
+    audit_service.log(db, job.created_by, "import_rejected", "import", job.id,
+                      {"filename": doc.filename, "reason": reason, "provider": provider, "bytes_deleted": True})
+    doc.data = None
+    job.status, job.stage, job.provider, job.extracted = "rejected", "done", provider, None
+    job.error = ("Este arquivo não parece ser uma conta de energia (" + reason + "). Ele foi descartado e não foi "
+                 "salvo. Envie a foto ou o PDF da conta de energia.")
+    db.commit()
 
 
 def store_catalog(db: Session) -> str | None:

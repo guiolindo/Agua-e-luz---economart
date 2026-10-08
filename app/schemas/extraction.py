@@ -21,6 +21,12 @@ class FieldConfidence(BaseModel):
 
 
 class BillExtraction(BaseModel):
+    is_energy_bill: bool | None = Field(
+        None, description="true SOMENTE se o documento é uma conta/fatura de energia elétrica de distribuidora; "
+                          "false para qualquer outra coisa (outro tipo de conta, boleto, nota de compra, foto de pessoa, "
+                          "paisagem, tela, documento qualquer)")
+    not_bill_reason: str | None = Field(
+        None, description="Quando is_energy_bill=false: o que o documento parece ser, em poucas palavras (pt-BR)")
     utility: str | None = Field(None, description="Concessionária, ex.: CEMIG")
     consumer_unit_number: str | None = Field(
         None, description="Número da unidade consumidora exatamente como impresso, ex.: 12.060.073.018-19"

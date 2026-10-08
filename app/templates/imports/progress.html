@@ -8,6 +8,10 @@
   <div class="actions"><form method="post" action="/import/{{ job.id }}/retry">{{ csrf(csrf_token) }}<button class="btn primary">Tentar novamente</button></form>
     <a class="btn" href="/import">Enviar outra foto</a></div>
   <p class="muted small">Dica: fotografe a conta inteira, de frente, com boa iluminação e sem reflexos.</p></div>
+{% elif job.status == 'rejected' %}
+<div class="card" style="max-width:640px"><div class="flash error" role="alert"><strong>Arquivo barrado.</strong> {{ job.error }}</div>
+  <div class="actions"><a class="btn primary" href="/import">Enviar a conta certa</a></div>
+  <p class="muted small">Nada foi lançado e o arquivo enviado foi apagado do sistema. Se este arquivo for mesmo uma conta de energia, tente uma foto mais nítida, inteira e de frente — ou use o <a href="/manual">Lançamento manual</a>.</p></div>
 {% elif job.status in ('confirmed', 'cancelled') %}
 <div class="card" style="max-width:640px"><p>Esta importação já foi {{ 'salva' if job.status == 'confirmed' else 'descartada' }}.</p><a class="btn" href="/import">Importar outra conta</a></div>
 {% else %}

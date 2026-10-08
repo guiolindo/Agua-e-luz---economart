@@ -23,6 +23,12 @@ MAX_ATTEMPTS = 3
 PROMPT = """Você é um extrator estruturado de dados de contas de energia elétrica brasileiras
 (CEMIG em Minas Gerais, Coelba na Bahia, Energisa e outras distribuidoras). Analise a imagem/PDF e preencha o JSON do schema.
 
+## Primeiro: é uma conta de energia?
+- "is_energy_bill" = true SOMENTE se for fatura/conta de energia elétrica de uma distribuidora (CEMIG, Coelba, Energisa...).
+- Qualquer outra coisa (conta de água/telefone/internet, boleto avulso, nota de compra, cardápio, contrato, foto de
+  pessoa/lugar/objeto, print de tela, documento aleatório): "is_energy_bill" = false, "not_bill_reason" = o que parece ser,
+  e TODOS os demais campos null. Não tente adivinhar dados de um documento que não é conta de energia.
+
 ## Regras gerais
 - ZERO CHUTE: se um campo não estiver visível ou legível, devolva null. Nunca invente nem complete valores.
 - Números no formato brasileiro: ponto é milhar e vírgula é decimal ("20.505,00" -> 20505.00; "58.372" kWh -> 58372).

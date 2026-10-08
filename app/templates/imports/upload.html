@@ -29,7 +29,7 @@
   <section class="card"><h2>Últimas importações</h2>
     {% for j in recent %}<div style="padding:7px 0;border-bottom:1px solid var(--line-soft)">
       <a href="/import/{{ j.id }}">{{ j.document.filename }}</a>
-      <span class="badge {{ 'ok' if j.status == 'confirmed' else 'bad' if j.status == 'failed' else 'warn' if j.status in ('ready','processing') else '' }}">{{ {'confirmed':'Salva','failed':'Falhou','ready':'Aguardando conferência','processing':'Lendo','cancelled':'Descartada'}[j.status] }}</span>
+      <span class="badge {{ 'ok' if j.status == 'confirmed' else 'bad' if j.status in ('failed','rejected') else 'warn' if j.status in ('ready','processing') else '' }}">{{ {'confirmed':'Salva','failed':'Falhou','ready':'Aguardando conferência','processing':'Lendo','cancelled':'Descartada','rejected':'Barrada (não é conta)'}[j.status] }}</span>
       <div class="muted small">{{ j.created_at|dt_br }}</div></div>
     {% else %}<p class="muted">Nenhuma importação ainda.</p>{% endfor %}
   </section>

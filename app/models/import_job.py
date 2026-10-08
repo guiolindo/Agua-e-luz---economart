@@ -5,7 +5,7 @@ from app.database import Base
 from app.models.document import Document
 from app.models.mixins import TimestampMixin
 
-# status: processing -> ready -> confirmed | cancelled ;  processing -> failed
+# status: processing -> ready -> confirmed | cancelled ;  processing -> failed | rejected (não é conta de energia; bytes apagados)
 # stage (para o feedback visual): received -> extracting -> matching -> done
 
 
