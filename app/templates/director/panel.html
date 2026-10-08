@@ -90,5 +90,5 @@
 <script type="application/json" id="dir-data">{{ payload|tojson }}</script>
 {% endblock %}
 {% block scripts %}
-{% if rows %}<script src="/static/js/vendor/chart.umd.min.js"></script><script src="/static/js/director.js"></script>{% endif %}
+{% if rows %}<script src="/static/js/vendor/chart.umd.min.js"></script><script src="/static/js/director.js?v={{ ASSET_VERSION }}"></script>{% endif %}
 {% endblock %}

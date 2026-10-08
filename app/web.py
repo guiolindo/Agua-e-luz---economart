@@ -14,10 +14,11 @@ BASE_DIR = Path(__file__).resolve().parent
 
 
 def _asset_version() -> str:
-    """Hash curto do app.css + app.js para derrotar o cache do browser quando
-    o CSS/JS mudam (templates vão incluir ?v={{ ASSET_VERSION }} nos links)."""
+    """Hash curto dos CSS/JS que mudam, para derrotar o cache do browser quando
+    qualquer um deles mudar. Templates incluem ?v={{ ASSET_VERSION }} nos links.
+    Vendor fixo (chart.umd.min.js) fica de fora — nunca muda."""
     h = hashlib.sha1()
-    for rel in ("static/css/app.css", "static/js/app.js"):
+    for rel in ("static/css/app.css", "static/js/app.js", "static/js/chart_panel.js", "static/js/director.js"):
         p = BASE_DIR / rel
         if p.exists():
             h.update(p.read_bytes())
