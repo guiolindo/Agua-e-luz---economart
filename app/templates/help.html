@@ -1,53 +1,151 @@
 {% extends "base.html" %}
 {% block title %}Ajuda · Economart Energia{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Ajuda</h1><div class="muted">Passo a passo rápido para cada perfil. Você está como <strong>{{ {'admin': 'administrador', 'operator': 'funcionário', 'director': 'diretoria', 'viewer': 'consulta', 'user': 'funcionário'}.get(user.role, user.role) }}</strong>.</div></div></div>
+{% set role_name = {'admin': 'administrador', 'operator': 'funcionário', 'director': 'diretoria', 'viewer': 'consulta', 'user': 'funcionário'}.get(user.role, user.role) %}
+<div class="page-head"><div><h1>Ajuda</h1>
+  <div class="muted">Guia feito para o seu perfil: você está como <strong>{{ role_name }}</strong>. Só aparece o que você pode usar.</div></div></div>
+
+{# ---------- resumo do perfil: a primeira coisa que a pessoa lê ---------- #}
+<section class="card help-hero">
+  {% if user.is_admin %}
+  <h2>O que o administrador faz</h2>
+  <p>Você cuida de <strong>quem pode entrar</strong> no sistema e de conferir que tudo está seguro. O lançamento das contas é do funcionário.</p>
+  <ul><li>Criar pessoas e dar a elas o perfil certo — <a href="#admin-usuarios">como fazer</a>.</li>
+    <li>Destravar quem errou a senha, ou redefinir a senha de quem esqueceu — <a href="#admin-usuarios">como fazer</a>.</li>
+    <li>Proteger a sua conta com o Google Authenticator — <a href="#admin-2fa">passo a passo</a>.</li>
+    <li>Ver quem fez o quê e conferir se o histórico não foi alterado — <a href="#admin-auditoria">como fazer</a>.</li></ul>
+  {% elif user.is_director %}
+  <h2>O que a diretoria faz</h2>
+  <p>Você <strong>acompanha</strong> os custos de energia de todas as lojas. Não precisa digitar nada: tudo já vem pronto no <a href="/diretoria">Painel da diretoria</a>.</p>
+  <ul><li>Ver qual loja gasta mais e o que mudou desde o mês passado — <a href="#dir-painel">como ler o painel</a>.</li>
+    <li>Comparar duas lojas lado a lado — <a href="#dir-comparar">como fazer</a>.</li>
+    <li>Procurar ou imprimir uma conta específica — <a href="#achar">como fazer</a>.</li></ul>
+  {% elif user.can_write %}
+  <h2>O que o funcionário faz</h2>
+  <p>Você é o responsável por <strong>manter as contas de energia em dia</strong>: enviar as contas, lançar o que não tem foto e pagar no vencimento.</p>
+  <ul><li>Mandou a foto ou o PDF da conta? <a href="#func-importar">Envie aqui</a> e o sistema lê sozinho.</li>
+    <li>Conta sem foto (gerador, manutenção, LL Energia)? <a href="#func-manual">Lance à mão</a>.</li>
+    <li>Quer achar ou imprimir uma conta? <a href="#achar">Veja como</a>.</li>
+    <li>Chegou o vencimento? <a href="#func-vencimento">Veja os avisos</a>.</li></ul>
+  {% else %}
+  <h2>O que a consulta faz</h2>
+  <p>Você <strong>vê e imprime</strong> as contas e os gráficos. Não altera nada — por isso não aparecem botões de enviar, editar ou excluir.</p>
+  <ul><li>Procurar e imprimir uma conta — <a href="#achar">como fazer</a>.</li>
+    <li>Entender os gráficos — <a href="#graficos">como ler</a>.</li></ul>
+  {% endif %}
+</section>
 
 <div class="grid cols-2">
+  {# ======================= FUNCIONÁRIO ======================= #}
   {% if user.can_write %}
-  <section class="card"><h2>Enviar uma conta (foto ou PDF)</h2>
+  <section class="card" id="func-importar"><h2>Enviar uma conta (foto ou PDF)</h2>
     <ol class="steps-help">
-      <li>Clique em <strong>Importar conta</strong> e arraste a foto ou o PDF (ou toque para fotografar).</li>
+      <li>No menu, clique em <strong>Importar conta</strong>. No celular, toque em <strong>Importar</strong> na barra de baixo.</li>
+      <li>Arraste a foto ou o PDF para a caixa (ou toque nela para fotografar). Pode ser CEMIG, CEMIG Geração e Transmissão, COELBA ou Energisa.</li>
       <li>Aguarde alguns segundos: o sistema lê a conta e descobre sozinho a loja e a unidade.</li>
-      <li><strong>Confira</strong> os campos ao lado da imagem. A leitura é feita por IA e pode errar; campos marcados com “conferir” merecem atenção.</li>
+      <li><strong>Confira</strong> os campos ao lado da imagem. A leitura é feita por inteligência artificial e pode errar; o que estiver marcado como “conferir” merece atenção. Pode corrigir qualquer campo.</li>
       <li>Clique em <strong>Confirmar e salvar</strong>. O gráfico da loja já aparece atualizado.</li>
-    </ol></section>
-  <section class="card"><h2>Cadastrar um ponto de energia e o vencimento</h2>
-    <ol class="steps-help">
-      <li>Em qualquer tela, clique em <strong>+ Novo ponto de energia</strong> (canto superior direito).</li>
-      <li>Escolha a loja, informe o número da unidade consumidora e a <strong>data de vencimento</strong>.</li>
-      <li>Pronto: todo mês, no dia do vencimento, <strong>o funcionário</strong> vê um aviso do lado ao entrar no sistema (some sozinho em 15 segundos). O <strong>sino</strong> guarda a lista; marque <strong>Já paguei</strong> para dar baixa. Administrador, diretoria e consulta não recebem esses avisos.</li>
-    </ol></section>
-  <section class="card"><h2>Cadastros: lojas, unidades e fornecedores</h2>
-    <p>O funcionário é responsável por manter tudo de energia da empresa:</p>
-    <ul><li><strong>Lojas/filiais:</strong> <em>Lojas → Nova loja</em> (código, nome, região/UF e apelidos como “CD 300”).</li>
-      <li><strong>Unidades consumidoras:</strong> dentro da loja, <em>Cadastro → Adicionar unidade</em> (com o <strong>dia de vencimento</strong>, opcional), ou <strong>+ Novo ponto de energia</strong> de qualquer tela.</li>
-      <li><strong>Editar uma unidade</strong> (número, descrição, distribuidora, <strong>dia de vencimento</strong>, situação): abra a unidade e clique em <strong>Editar unidade</strong>, ou use <strong>Editar</strong> na lista de unidades da loja. Unidades sem vencimento continuam funcionando; só não geram aviso.</li>
-      <li><strong>Fornecedores:</strong> <em>Tipos de registro</em> (ex.: outra distribuidora ou outro custo).</li>
-      <li><strong>Correções:</strong> editar ou excluir uma conta/lançamento errado (fica registrado na auditoria).</li></ul></section>
-  <section class="card"><h2>Lançamento manual</h2>
-    <p>Use para fornecedores sem foto (Câmara, combustível, manutenção…) e para meses antigos: <strong>Lançamento manual</strong> → loja, tipo, mês e valor. O vencimento é opcional. A <strong>LL Energia</strong> tem o cartão laranja <em>LL Energia · várias lojas</em>: um valor só para todas as lojas que você marcar.</p></section>
+    </ol>
+    <p class="hint">Se o sistema avisar que a conta <strong>já existe</strong>, ele pergunta se você quer substituir ou salvar como nova. Na dúvida, escolha substituir — assim não duplica.</p></section>
+
+  <section class="card" id="func-manual"><h2>Lançar à mão (sem foto)</h2>
+    <p>Menu <strong>Lançamento manual</strong>. Aparecem dois cartões grandes; escolha um:</p>
+    <ul><li><strong>Lançamento de uma loja</strong> — para gerador, manutenção e meses antigos de antes do sistema. Escolha a loja, o tipo, o mês e o valor.</li>
+      <li><strong>LL Energia · várias lojas</strong> (cartão laranja) — a LL cobra um valor só para várias lojas. Digite o valor <em>uma vez</em>, marque as lojas e salve: de uma vez saem todos os lançamentos.</li></ul>
+    <p class="hint">Errou? Na lista “Últimos lançamentos” (ou em <strong>Contas</strong>) clique em <strong>Editar</strong>. Tudo fica registrado na auditoria.</p></section>
+
+  <section class="card" id="func-vencimento"><h2>Vencimentos e avisos</h2>
+    <p>Quando cadastrar uma unidade, informe o <strong>dia de vencimento</strong> da conta. Todo mês, nesse dia, aparece um aviso do lado quando você entra no sistema (some sozinho em 15 segundos).</p>
+    <ul><li>O <strong>sino</strong> guarda a lista de contas a vencer.</li>
+      <li>Depois de pagar, marque <strong>Já paguei</strong> para tirar da lista.</li>
+      <li>Quando a conta chegar e for enviada ao sistema, o aviso some sozinho.</li></ul>
+    <p class="hint">Os avisos são só do funcionário. Administrador, diretoria e consulta não recebem.</p></section>
+
+  <section class="card" id="func-cadastros"><h2>Cadastros: lojas, unidades e tipos</h2>
+    <ul><li><strong>Nova loja:</strong> menu <em>Lojas → Nova loja</em>. Informe código, nome, região e, se quiser, apelidos (como “CD 300”) — ajudam o sistema a reconhecer a loja na conta.</li>
+      <li><strong>Nova unidade (instalação):</strong> clique em <strong>+ Novo ponto de energia</strong>, escolha a loja, digite o número da unidade consumidora e a <strong>Distribuidora</strong> (CEMIG, CEMIG Geração e Transmissão, COELBA ou Energisa). Escolher a distribuidora certa faz o sistema ler a conta do jeito certo.</li>
+      <li><strong>Mudar algo:</strong> abra a unidade e clique em <strong>Editar unidade</strong> (número, descrição, vencimento, ativa ou inativa).</li>
+      <li><strong>Outros custos</strong> (outro fornecedor, nova despesa): menu <em>Tipos de registro</em>.</li></ul></section>
   {% endif %}
+
+  {# ======================= DIRETORIA ======================= #}
   {% if user.can_see_executive %}
-  <section class="card"><h2>Painel da diretoria</h2>
-    <p>Compare lojas, veja o ranking, as variações do último mês, o custo por kWh e o uso da demanda contratada. Use os filtros de período, região e fornecedor, e <strong>Comparar duas lojas</strong> para ver a diferença mês a mês. Meses ainda incompletos aparecem com * e não entram nas variações.</p></section>
+  <section class="card" id="dir-painel"><h2>Como ler o Painel da diretoria</h2>
+    <ol class="steps-help">
+      <li>Abra <strong>Painel da diretoria</strong> no menu. No topo, escolha o <strong>período</strong>, a <strong>região</strong> ou o <strong>fornecedor</strong>.</li>
+      <li>Os quadros de cima mostram o total e o que mudou em relação ao mês anterior: <strong>↑</strong> gastou mais, <strong>↓</strong> gastou menos.</li>
+      <li>O <strong>ranking</strong> mostra quais lojas custam mais. O <strong>custo por kWh</strong> mostra quanto se paga por cada unidade de energia — quanto menor, melhor.</li>
+      <li>A <strong>demanda contratada</strong> mostra se a loja usa muito menos ou mais do que contratou. Passar do contratado gera cobrança extra; contratar demais é dinheiro parado.</li>
+    </ol>
+    <p class="hint">Mês com <strong>*</strong> ainda está incompleto (faltam contas) e não entra nas variações.</p></section>
+  <section class="card" id="dir-comparar"><h2>Comparar duas lojas</h2>
+    <p>Mais abaixo no painel, em <strong>Comparar duas lojas</strong>, escolha as duas lojas e veja mês a mês a diferença de valor e de consumo.</p>
+    <p class="hint">O painel só <strong>consulta</strong>: você não precisa (nem consegue) alterar contas por aqui. Se algo parecer errado, avise o funcionário.</p></section>
   {% endif %}
+
+  {# ======================= ADMINISTRADOR ======================= #}
   {% if user.is_admin %}
-  <section class="card"><h2>Administração</h2>
-    <p>O papel do administrador é cuidar dos acessos:</p>
-    <ul><li><strong>Usuários:</strong> crie funcionários, diretoria e consulta. A senha provisória (4 dígitos) aparece uma única vez, vale 48 horas e deve ser trocada no primeiro acesso.</li>
-      <li><strong>Redefinir senha e desativar</strong> quem saiu da empresa.</li>
-      <li><strong>Auditoria:</strong> quem entrou, falhas de login e o que cada pessoa alterou.</li></ul></section>
+  <section class="card" id="admin-usuarios"><h2>Usuários e acessos</h2>
+    <ol class="steps-help">
+      <li>Menu <strong>Usuários</strong> → informe o nome de usuário e escolha o <strong>perfil</strong>: funcionário (cuida das contas), diretoria (painel) ou consulta (só vê).</li>
+      <li>O sistema mostra uma <strong>senha provisória de 4 dígitos, uma única vez</strong>. Anote e passe para a pessoa. Ela vale 48 horas e deve ser trocada no primeiro acesso.</li>
+      <li>Alguém esqueceu a senha? Clique em <strong>Redefinir senha</strong>: sai uma nova senha provisória.</li>
+      <li>Alguém errou a senha várias vezes e foi bloqueado (15 min)? Clique em <strong>Desbloquear</strong>.</li>
+      <li>Pessoa saiu da empresa? Clique em <strong>Desativar</strong>: ela perde o acesso na hora.</li>
+    </ol></section>
+  <section class="card" id="admin-2fa"><h2>Proteger sua conta com Google Authenticator (2FA)</h2>
+    <p>O 2FA pede, além da senha, um código de 6 dígitos que muda a cada 30 segundos no celular. Mesmo que descubram a sua senha, não conseguem entrar.</p>
+    <ol class="steps-help">
+      <li>Instale o <strong>Google Authenticator</strong> no celular (Android ou iPhone).</li>
+      <li>No menu lateral clique em <strong>Verificação em 2 etapas</strong>.</li>
+      <li>No app, toque em <strong>+ → Ler código QR</strong> e aponte para a imagem da tela.</li>
+      <li>Digite o código que o app mostrar e clique em <strong>Ativar 2FA</strong>.</li>
+      <li><strong>Guarde os 8 códigos de recuperação</strong> (cofre de senhas ou papel). Eles só aparecem uma vez e cada um vale uma vez.</li>
+    </ol>
+    <p class="hint"><strong>Perdeu o celular?</strong> Entre com um código de recuperação, ou peça a outro administrador para clicar em <strong>Redefinir 2FA</strong> em Usuários.</p></section>
+  <section class="card" id="admin-auditoria"><h2>Auditoria</h2>
+    <p>Menu <strong>Auditoria</strong>: lista quem entrou, quem errou a senha, bloqueios e o que cada pessoa criou, alterou ou excluiu — com data, hora e endereço IP.</p>
+    <p>O botão <strong>Verificar integridade</strong> confere se alguém mexeu no histórico por fora do sistema. Se aparecer <em>“Auditoria íntegra”</em>, está tudo certo. Se aparecer <em>“Adulteração detectada”</em>, guarde uma cópia do banco e investigue.</p>
+    <p class="hint">Use o filtro <strong>Evento</strong> para ver só logins com falha, só exclusões etc.</p></section>
   {% endif %}
-  <section class="card"><h2>Imprimir</h2>
-    <p><strong>Lojas → (loja) → Imprimir relatório:</strong> folha A4 com resumo, gráfico e dados do fornecedor escolhido.<br>
-      <strong>Unidade → Contas → Imprimir:</strong> ficha de uma conta com gráficos.</p></section>
-  <section class="card"><h2>Palavras que aparecem</h2>
+
+  {# ======================= TODOS ======================= #}
+  <section class="card" id="achar"><h2>Achar, abrir e imprimir uma conta</h2>
+    <ol class="steps-help">
+      <li>Clique em <strong>Contas</strong> no menu. Ali ficam <strong>todas</strong> as contas e lançamentos.</li>
+      <li>Digite na busca (loja, unidade, nº da nota ou mês, ex.: SET/2026) ou use os filtros Loja, Tipo, Origem e período, e clique em <strong>Filtrar</strong>.</li>
+      <li>Na linha da conta, clique em <strong>Imprimir</strong> para a ficha com gráficos. Marque <strong>Incluir foto/PDF original</strong> para o documento sair junto, na página seguinte.</li>
+      <li>Para ver só a foto ou o PDF original, clique em <strong>PDF</strong> (abre em outra aba).</li>
+    </ol>
+    <p class="hint">Relatório da loja inteira: <strong>Lojas → (loja) → Imprimir relatório</strong>.</p></section>
+
+  <section class="card" id="graficos"><h2>Como ler os gráficos</h2>
+    <ul><li><strong>Barras</strong> = quanto custou cada mês (R$) ou quanto se consumiu (kWh).</li>
+      <li><strong>Linha</strong> = quanto subiu ou desceu em relação ao mês anterior (%). Acima de zero, subiu; abaixo, desceu.</li>
+      <li>Passe o dedo (ou o mouse) numa barra ou ponto para ver o valor exato.</li>
+      <li>Clique no nome na legenda para esconder ou mostrar uma série.</li></ul></section>
+
+  <section class="card" id="faq"><h2>Dúvidas comuns</h2>
+    <details><summary>Esqueci minha senha</summary><p>Peça ao administrador para <strong>Redefinir senha</strong>. Ele te passa uma senha provisória de 4 dígitos; você cria a sua no primeiro acesso.</p></details>
+    <details><summary>Apareceu “acesso bloqueado”</summary><p>Foram muitas tentativas erradas seguidas. Espere o tempo que a tela informa (15 minutos) ou peça ao administrador para <strong>Desbloquear</strong>.</p></details>
+    <details><summary>O sistema me desconectou sozinho</summary><p>Por segurança, após 60 minutos sem usar (ou 12 horas de uso) é preciso entrar de novo. Nada é perdido.</p></details>
+    <details><summary>Qual senha posso criar?</summary><p>Pelo menos 8 caracteres, misturando letras e números (ou símbolos). Evite nomes, “123456” e “senha”. Não use a senha de outros sistemas.</p></details>
+    {% if user.can_write %}<details><summary>O sistema leu um valor errado na conta</summary><p>Na tela de conferência, corrija o campo antes de salvar. Se já salvou, abra <strong>Contas</strong> e clique em <strong>Editar</strong>.</p></details>
+    <details><summary>A conta não achou a loja ou a unidade</summary><p>Na conferência, escolha a unidade na lista. Se ela não existe, cadastre antes em <strong>+ Novo ponto de energia</strong> e reenvie.</p></details>
+    <details><summary>O gráfico não mostra um mês</summary><p>Esse mês ainda não tem conta enviada ou lançada. Envie a conta ou lance manualmente que ele aparece.</p></details>{% endif %}
+    <details><summary>Preciso de uma função que não vejo</summary><p>Cada perfil vê só o que usa. Se faltar algo para o seu trabalho, peça ao administrador para ajustar o seu perfil.</p></details></section>
+
+  <section class="card" id="glossario"><h2>Palavras que aparecem</h2>
     <dl class="gloss">
-      <dt>Unidade consumidora (UC)</dt><dd>Número da instalação na conta de energia.</dd>
+      <dt>Unidade consumidora (UC)</dt><dd>Número da instalação na conta de energia — é o “CPF” do ponto de energia.</dd>
+      <dt>Distribuidora</dt><dd>Empresa que entrega a energia e emite a conta (CEMIG, COELBA, Energisa…).</dd>
+      <dt>CEMIG Geração e Transmissão</dt><dd>Conta da CEMIG para unidades que geram ou recebem energia em outro formato; tem leitura própria.</dd>
+      <dt>LL Energia</dt><dd>Fornecedora cujo valor é dividido entre várias lojas (lançamento em lote).</dd>
       <dt>Mês de referência</dt><dd>Mês do consumo. O <strong>vencimento</strong> costuma cair no mês seguinte.</dd>
-      <dt>HP / HFP</dt><dd>Horário de ponta / fora de ponta (tarifa horária).</dd>
+      <dt>kWh</dt><dd>Quantidade de energia consumida (como “litros” de energia).</dd>
+      <dt>HP / HFP</dt><dd>Horário de ponta (fim da tarde, mais caro) / fora de ponta.</dd>
       <dt>Demanda contratada</dt><dd>Potência combinada com a distribuidora; passar dela gera cobrança extra.</dd>
-      <dt>Variação</dt><dd>Diferença percentual do mês em relação ao anterior. ↑ gastou mais, ↓ gastou menos.</dd></dl></section>
+      <dt>Variação</dt><dd>Diferença percentual do mês em relação ao anterior. ↑ gastou mais, ↓ gastou menos.</dd>
+      <dt>ICMS / PIS-COFINS</dt><dd>Impostos que já vêm dentro do valor da conta.</dd></dl></section>
 </div>
 {% endblock %}

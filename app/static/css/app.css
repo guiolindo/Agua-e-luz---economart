@@ -382,3 +382,7 @@ body.drawer-open { overflow: hidden; }
 @media (max-width: 800px) { .card.flush .tablewrap { margin: 0; } }   /* cartão "flush" não tem padding: a margem negativa cortava os valores */
 #manual-body td:first-child { white-space: normal; }   /* nome longo quebra em vez de empurrar o valor para fora da tela */
 #manual-body td.num { padding-left: 4px; padding-right: 8px; }
+.help-hero { margin-bottom: 16px; border-left: 4px solid var(--accent, #1b4f8a); } .help-hero h2 { margin-top: 0; } .help-hero ul { margin: 8px 0 0; padding-left: 20px; } .help-hero li { margin: 4px 0; }
+.hint { color: var(--muted); font-size: .9em; }
+details { border-top: 1px solid var(--line-soft); padding: 8px 0; } details summary { cursor: pointer; font-weight: 600; } details p { margin: 6px 0 2px; color: var(--muted); }
+.card[id] { scroll-margin-top: 72px; }

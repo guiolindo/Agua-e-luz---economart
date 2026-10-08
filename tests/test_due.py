@@ -168,6 +168,6 @@ def test_bill_import_teaches_the_unit_its_due_day(client, png, db):
 
 def test_help_page_is_role_aware(client):
     html = client.get("/ajuda").text
-    assert "Novo ponto de energia" in html and "Administração" in html and "Painel da diretoria" in html
+    assert "Novo ponto de energia" in html and "Usuários e acessos" in html and "Painel da diretoria" in html
     assert "Ir para o conteúdo" in client.get("/").text                                  # link de acessibilidade
     assert timedelta(0) is not None

@@ -44,8 +44,8 @@ def test_admin_role_is_access_management_and_audit(client, db):
     assert "Tipos de registro" in nav and 'href="/admin/users"' not in nav and 'href="/admin/audit"' not in nav
     assert "Auditoria" in client.get("/stores").text and 'href="/admin/users"' in client.get("/stores").text
     helptxt = func.get("/ajuda").text
-    assert "Cadastros: lojas, unidades e fornecedores" in helptxt and "Administração" not in helptxt     # funcionário vê os cadastros, não a administração
-    assert "Administração" in client.get("/ajuda").text and "O papel do administrador é cuidar dos acessos" in client.get("/ajuda").text
+    assert "Cadastros: lojas, unidades e tipos" in helptxt and "Usuários e acessos" not in helptxt     # funcionário vê os cadastros, não a administração
+    assert "Usuários e acessos" in client.get("/ajuda").text and "quem pode entrar" in client.get("/ajuda").text
 
 
 def test_read_only_profiles_cannot_register_or_delete_anything(client, db):
@@ -88,3 +88,18 @@ def test_first_login_screen_shows_only_what_works(client):
     c.refresh()
     after = c.get("/stores").text
     assert 'id="bell"' in after and "data-open-point" in after and 'class="nav"' in after
+
+
+def test_help_is_tailored_to_each_role(client, db):
+    admin = client.get("/ajuda").text
+    assert "O que o administrador faz" in admin and "Google Authenticator" in admin and "Verificar integridade" in admin
+    assert "O que o funcionário faz" not in admin
+    func = _user(client, "func9", "operator").get("/ajuda").text
+    assert "O que o funcionário faz" in func and "Enviar uma conta" in func and "Lançar à mão" in func
+    assert "Google Authenticator" not in func and "Como ler o Painel da diretoria" not in func and "Usuários e acessos" not in func
+    director = _user(client, "dir9", "director").get("/ajuda").text
+    assert "O que a diretoria faz" in director and "Como ler o Painel da diretoria" in director
+    assert "Enviar uma conta" not in director and "Usuários e acessos" not in director
+    viewer = _user(client, "con9", "viewer").get("/ajuda").text
+    assert "O que a consulta faz" in viewer and "Achar, abrir e imprimir uma conta" in viewer
+    assert "Enviar uma conta" not in viewer and "Como ler o Painel da diretoria" not in viewer and "Dúvidas comuns" in viewer

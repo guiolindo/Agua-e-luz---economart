@@ -65,7 +65,7 @@
       <div class="whoami"><strong>{{ user.username }}</strong><span>{{ {'admin': 'administrador', 'operator': 'funcionário', 'director': 'diretoria', 'viewer': 'consulta', 'user': 'funcionário'}.get(user.role, user.role) }}</span></div>
       <div class="side-actions">
         {% if not user.must_change_password %}<a href="/account/password">Alterar senha</a>{% endif %}
-        {% if user.is_admin and not user.must_change_password %}<a href="/account/2fa">Verificação em 2 etapas</a>{% endif %}
+        {% if user.is_admin and not user.must_change_password %}<a href="/account/2fa">2FA</a>{% endif %}
         <form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Sair</button></form>
       </div>
     </div>
