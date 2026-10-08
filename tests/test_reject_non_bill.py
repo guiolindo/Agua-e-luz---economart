@@ -3,7 +3,7 @@ import pytest
 
 from app.models import AuditLog, Document, EnergyBill, Import
 from app.schemas.extraction import BillExtraction
-from app.services import import_service, extraction_service
+from app.services import import_service
 from app.services.extraction_service import MockExtractor
 from app.services.import_service import rejection_reason
 from tests.test_app_flow import _make_store, _upload

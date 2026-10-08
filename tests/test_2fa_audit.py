@@ -3,11 +3,9 @@ import re
 import time
 
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from app.config import get_settings
-from app.main import app
 from app.models import AuditLog, User
 from app.services import audit_service, totp_service
 from tests.conftest import PNG as PNG_BYTES, Client

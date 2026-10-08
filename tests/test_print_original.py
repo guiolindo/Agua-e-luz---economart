@@ -3,7 +3,7 @@ import io
 from PIL import Image
 
 from app.models import Document, EnergyBill
-from tests.test_app_flow import _form_from_review, _make_store, _upload
+from tests.test_app_flow import _form_from_review, _make_store
 
 
 def _pdf(pages: int) -> bytes:

@@ -1,4 +1,3 @@
-from app.models import ConsumerUnit, EnergyBill, RecordType
 from app.routes.bills import _csv_cell
 from tests.test_app_flow import _make_store
 from tests.test_director import _user

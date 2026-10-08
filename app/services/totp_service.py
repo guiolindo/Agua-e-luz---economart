@@ -11,7 +11,6 @@ import struct
 import time
 from urllib.parse import quote
 
-from app import security
 from app.models import User
 from app.services import crypto_service
 
