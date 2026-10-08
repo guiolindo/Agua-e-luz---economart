@@ -12,3 +12,4 @@ pypdfium2>=4.30
 cryptography>=42
 tzdata>=2024.1
 segno>=1.6
+alembic>=1.13

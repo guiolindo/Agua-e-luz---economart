@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     extraction_provider: str = "gemini"  # gemini | mock
 
     database_url: str = "sqlite:///app.db"
+    run_migrations: bool = True         # aplica as migrações (Alembic) ao subir; os testes usam create_all
     secret_key: str = ""
     debug: bool = False
 

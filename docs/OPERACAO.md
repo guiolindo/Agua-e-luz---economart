@@ -16,6 +16,12 @@ Opcionais: `REQUIRE_ADMIN_2FA=true` (obriga 2FA aos administradores), `TRUSTED_P
 4. **Teste a restauração a cada trimestre.** Backup que nunca foi restaurado não é backup.
 5. Os arquivos das contas (foto/PDF) ficam **cifrados dentro do banco**: o backup do banco os leva junto, mas só abrem com a `DOCUMENT_ENCRYPTION_KEY`. Guarde a chave em cofre de senhas, separada do backup.
 
+## Mudanças no banco (migrações com Alembic)
+- Ao subir, o sistema aplica sozinho as migrações pendentes (`RUN_MIGRATIONS=true`, o padrão). O banco já existente é **adotado** na primeira subida: o sistema completa colunas que faltem, carimba a revisão `0001` sem alterar dados e segue dali.
+- Para alterar o esquema (nova coluna, tabela, índice): mude o modelo em `app/models/`, rode `alembic revision --autogenerate -m "o que mudou"`, **leia o arquivo gerado em `migrations/versions/`** e faça commit dele junto com a mudança. O teste `tests/test_migrations.py` falha se um modelo mudar sem migração.
+- Conferir divergência (por exemplo depois de restaurar um backup): `python -c "from app import db_migrate; print(db_migrate.drift())"` — lista vazia significa banco em dia.
+- Antes de uma migração em produção: faça um backup (seção acima).
+
 ## Chaves
 - `DOCUMENT_ENCRYPTION_KEY`: para rotacionar use `nova,antiga` (a primeira cifra, todas decifram).
 - `SECRET_KEY`: também assina o selo da auditoria. Trocá-la invalida a verificação dos eventos antigos. Antes de trocar: *Auditoria → Baixar CSV* e *Verificar integridade*, e guarde os dois resultados.
@@ -44,5 +50,4 @@ Opcionais: `REQUIRE_ADMIN_2FA=true` (obriga 2FA aos administradores), `TRUSTED_P
 
 ## Limites conhecidos
 - Limite de requisições em memória por processo: vale para 1 instância (padrão do Railway).
-- O esquema do banco evolui por `ensure_columns` (só adiciona colunas anuláveis). Mudanças maiores exigem migração planejada (Alembic).
 - 2FA só para administradores.

@@ -11,6 +11,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app import (  # noqa: F401  (models registra as tabelas no metadata)
     database,
+    db_migrate,
     models,
     security,
 )
@@ -50,8 +51,11 @@ BASE_DIR = Path(__file__).resolve().parent
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    database.Base.metadata.create_all(database.engine)
-    database.ensure_columns()
+    if get_settings().run_migrations:
+        db_migrate.upgrade()
+    else:                                  # desenvolvimento/testes rápidos
+        database.Base.metadata.create_all(database.engine)
+        database.ensure_columns()
     with database.SessionLocal() as db:
         seed(db)
     task = asyncio.create_task(retention_loop())

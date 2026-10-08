@@ -17,6 +17,7 @@ Stack: Python · FastAPI · SQLAlchemy 2 · Jinja2 · Chart.js (embutido em `sta
 - **Arquivo que não é conta de energia** é barrado na importação e os bytes são apagados (o Gemini classifica e o servidor confere).
 - **Disjuntor do Gemini:** se o Google cair, o sistema falha rápido em vez de esperar timeouts.
 - **Contas → Baixar planilha (CSV):** exporta o que está filtrado, pronto para o Excel.
+- **Migrações do banco (Alembic):** aplicadas ao subir; bancos antigos são adotados sem perder dados. Veja `docs/OPERACAO.md`.
 - **Ajuda por perfil** (administrador, funcionário, diretoria, consulta).
 
 ## Fluxo principal
