@@ -182,6 +182,13 @@ def bill_print(request: Request, bill_id: int, doc: int = 0, user: User = Depend
         raise HTTPException(404, "Conta não encontrada.")
     data = chart_service.bill_print_data(db, bill)
     items = bill.line_items or []
-    return render(request, "bills/print.html", user=user, bill=bill, unit=bill.unit, store=bill.unit.store,
+    doc_pages = 0
+    if doc and bill.document and bill.document.available and bill.document.content_type == "application/pdf":
+        from app.services import pdf_pages
+        try:
+            doc_pages = pdf_pages.page_count(bill.document.plain())
+        except Exception:      # arquivo ilegível / chave: cai no aviso com link, a impressão da conta segue normal
+            doc_pages = 0
+    return render(request, "bills/print.html", doc_pages=doc_pages, user=user, bill=bill, unit=bill.unit, store=bill.unit.store,
                   rtype=db.get(RecordType, bill.record_type_id), include_doc=bool(doc), items=items,
                   items_sum=sum((Decimal(str(i.get("value") or 0)) for i in items), Decimal(0)), variation=variation, **data)

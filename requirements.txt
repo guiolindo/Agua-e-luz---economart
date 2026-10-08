@@ -8,5 +8,6 @@ pydantic-settings>=2.4
 google-genai>=1.0
 psycopg[binary]>=3.2
 pillow>=10.4
+pypdfium2>=4.30
 cryptography>=42
 tzdata>=2024.1

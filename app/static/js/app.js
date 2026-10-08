@@ -11,6 +11,10 @@ document.addEventListener('submit', (e) => {
 });
 document.addEventListener('change', (e) => {
   const t = e.target;
+  if (t.id === 'doc' && t.type === 'checkbox' && t.form && !t.hidden) {   // imprimir conta: incluir o original
+    const u = new URL(location.href); if (t.checked) u.searchParams.set('doc', '1'); else u.searchParams.delete('doc');
+    u.hash = t.checked ? 'original' : ''; location.href = u.toString(); return;
+  }
   if (t.matches('[data-autosubmit]') && t.form) t.form.submit();
   if (t.matches('select[data-bill-switch]')) {
     const doc = document.getElementById('doc');

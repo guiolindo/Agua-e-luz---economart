@@ -439,7 +439,7 @@ def test_pdf_flow_sends_original_bytes_as_pdf_and_serves_it_inline_and_encrypted
     from app.models import EnergyBill
     bill = db.query(EnergyBill).one()
     page = client.get(f"/bills/{bill.id}/print?doc=1").text
-    assert "O original é um PDF" in page and "<img class=\"orig\"" not in page
+    assert f"/documents/{doc.id}/pages/1.png" in page and "não pode ser embutido" not in page   # o PDF agora entra na impressão como imagem
 
 
 def test_same_file_is_not_sent_to_gemini_twice(client, db, monkeypatch):

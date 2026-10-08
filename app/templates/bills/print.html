@@ -11,6 +11,7 @@
       {% for b in all_bills %}<option value="{{ b.id }}" {{ 'selected' if b.id == bill.id }}>{{ b.reference|month_label }} · {{ b.total_value|brl }}</option>{% endfor %}
     </select>
     {% if bill.document and bill.document.available %}<label style="margin:0;font-weight:400"><input id="doc" type="checkbox" name="doc" value="1" {{ 'checked' if include_doc }} data-autosubmit> Incluir foto/PDF original</label>
+    {% if include_doc %}<a class="badge ok" href="#original" title="Ir para o documento original">Original incluído — sai depois da conta</a>{% endif %}
     {% else %}<input id="doc" type="checkbox" hidden>{% endif %}
     <button class="btn primary" type="button" data-print>Imprimir</button>
   </form>
@@ -64,10 +65,14 @@
 
 </div>{# /fitbox: só a folha é ajustada; a foto original vai na página seguinte #}
   {% if include_doc and bill.document and bill.document.available %}
-  <section class="rblock pagebreak"><h2>Documento original</h2>
-    {% if bill.document.content_type == 'application/pdf' %}<p class="muted">O original é um PDF e não pode ser embutido na impressão. Abra-o em <a href="/documents/{{ bill.document_id }}">Ver documento original</a>.</p>
+  {% if bill.document.content_type == 'application/pdf' and doc_pages %}
+  {% for n in range(1, doc_pages + 1) %}<section class="rblock pagebreak"{% if n == 1 %} id="original"{% endif %}><h2>Documento original{% if doc_pages > 1 %} — página {{ n }} de {{ doc_pages }}{% endif %}</h2>
+    <img class="orig" src="/documents/{{ bill.document_id }}/pages/{{ n }}.png" alt="Página {{ n }} da conta original"></section>{% endfor %}
+  {% else %}<section class="rblock pagebreak" id="original"><h2>Documento original</h2>
+    {% if bill.document.content_type == 'application/pdf' %}<p class="muted">Não foi possível preparar o PDF original para a impressão. Abra-o em <a href="/documents/{{ bill.document_id }}" target="_blank" rel="noopener">Ver documento original</a>.</p>
     {% else %}<img class="orig" src="/documents/{{ bill.document_id }}" alt="Foto da conta original">{% endif %}
   </section>{% endif %}
+  {% endif %}
 </div>
 <script type="application/json" id="bill-data">{{ {'labels': labels, 'selected': selected, 'series': series, 'has_split': has_split, 'has_single': has_single}|tojson }}</script>
 {% endblock %}
