@@ -19,7 +19,7 @@ que está implementado, como configurar em produção e o que ainda é risco res
 | **Cabeçalhos** | `nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, COOP/CORP, HSTS em produção, `Cache-Control: no-store` em tudo que não é estático (nada de dados da empresa no cache do navegador). |
 | **Uploads** | Extensão **e** conteúdo real (magic bytes), limite de tamanho (corte antes do parse multipart), PDF ≤ 10 páginas, nome sanitizado; imagens servidas com CSP `sandbox` e `nosniff`. |
 | **Dados em repouso** | Fotos/PDFs **criptografados** no banco (Fernet) com `DOCUMENT_ENCRYPTION_KEY` (rotação por várias chaves) e **apagados após 6 meses**. |
-| **Auditoria / LGPD** | `/admin/audit`: logins, falhas, bloqueios, trocas de senha, alterações de dados. IP e usuário digitado são gravados **pseudonimizados** (HMAC), nunca em claro. |
+| **Auditoria / LGPD** | `/admin/audit`: logins, falhas, bloqueios, trocas de senha, alterações de dados. O IP de origem é gravado em claro (uso em máquinas corporativas); o usuário digitado em login falho continua **pseudonimizado** (HMAC). |
 | **Segredos** | Chave do Gemini só em variável de ambiente e redigida de qualquer log. Em produção o servidor **se recusa a iniciar** com `SECRET_KEY` fraca, sem `DOCUMENT_ENCRYPTION_KEY`, com SQLite ou com `ADMIN_PASSWORD` fraca. |
 | **Rede** | Limite de requisições (login, upload, documentos, API, mutações), limite de corpo, IP real lido do **fim** do `X-Forwarded-For` (`TRUSTED_PROXY_COUNT`), docs/OpenAPI desativados, erros 500 sem detalhes. |
 

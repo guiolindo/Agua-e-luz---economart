@@ -216,7 +216,7 @@ Na janela de impressão do navegador:
 - O sistema **desloga sozinho** depois de 60 minutos parado.
 - Depois de 5 senhas erradas a conta é bloqueada por 15 minutos (3 se ainda estiver com a senha provisória). O administrador pode liberar na hora em **Usuários → Desbloquear**.
 - Esqueceu a senha? Peça ao administrador: **Usuários → Redefinir senha**.
-- O administrador acompanha tudo em **Auditoria** (quem entrou, tentativas falhas, bloqueios, trocas de senha e o que cada pessoa alterou, inclusive cadastros e exclusões do funcionário). O endereço de IP aparece apenas como um código, nunca em claro.
+- O administrador acompanha tudo em **Auditoria** (quem entrou, tentativas falhas, bloqueios, trocas de senha e o que cada pessoa alterou, inclusive cadastros e exclusões do funcionário). Os eventos de segurança mostram o endereço IP de origem.
 - Revise **Usuários** todo mês e desative quem saiu.
 - Guarde a `SECRET_KEY`, a `DOCUMENT_ENCRYPTION_KEY` e a chave do Gemini num cofre de senhas.
 

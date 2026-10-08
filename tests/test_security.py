@@ -134,11 +134,12 @@ def test_login_rate_limit_per_ip(client):
     assert codes[:9] == [401] * 9 and codes[9:] == [429] * 3      # a fixture já gastou 1 das 10 tentativas/min
 
 
-def test_failed_login_audit_never_stores_raw_ip_or_typed_username(client, db):
+def test_failed_login_audit_stores_real_ip_but_not_typed_username(client, db):
     _login(_new_client(), "alguem-digitou-senha-aqui", "x")
     rows = [a for a in db.query(AuditLog).filter_by(action="login_failed")]
+    assert rows and all(r.details["ip"] == "testclient" for r in rows)
     blob = str([r.details for r in rows])
-    assert "alguem-digitou-senha-aqui" not in blob and "testclient" not in blob and "h:" in blob
+    assert "alguem-digitou-senha-aqui" not in blob and "h:" in blob
 
 
 # ---------------------------------------------------------------- sessão
@@ -397,9 +398,10 @@ def test_production_rejects_weak_admin_password(db):
         mp.undo()
 
 
-def test_audit_page_admin_only_and_never_shows_raw_ip(client):
+def test_audit_page_shows_real_ip_for_security_events(client):
+    _login(_new_client(), "alguem", "x")
     html = client.get("/admin/audit").text
-    assert "login" in html and "testclient" not in html
+    assert "login" in html and "ip=testclient" in html
 
 
 # ---------------------------------------------------------------- PDF de ponta a ponta

@@ -2,7 +2,7 @@
 {% block title %}Auditoria · Economart Energia{% endblock %}
 {% block content %}
 <div class="page-head"><div><div class="crumbs"><a href="/admin/users">Usuários</a> /</div><h1>Auditoria</h1>
-  <div class="muted">Últimos 300 eventos: acessos, bloqueios, trocas de senha e alterações de dados. IPs aparecem apenas como código pseudonimizado (LGPD).</div></div>
+  <div class="muted">Últimos 300 eventos: acessos, bloqueios, trocas de senha e alterações de dados. Eventos de segurança registram o endereço IP de origem.</div></div>
   <form method="get" class="actions"><label for="a" style="margin:0">Evento</label>
     <select id="a" name="action" style="width:auto" data-autosubmit><option value="">Todos</option>{% for a in actions %}<option value="{{ a }}" {{ 'selected' if a == action }}>{{ a }}</option>{% endfor %}</select></form></div>
 <div class="card flush"><div class="tablewrap"><table><thead><tr><th>Quando</th><th>Usuário</th><th>Evento</th><th>Objeto</th><th>Detalhes</th></tr></thead><tbody>

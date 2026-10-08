@@ -57,7 +57,7 @@ def _throttle_unknown(db: Session, request: Request, username: str, now) -> Logi
 
 def security_event(db: Session, request: Request, action: str, user_id: int | None, **details) -> None:
     audit_service.log(db, user_id, action, "auth", user_id,
-                      {"ip": security.pseudonymize(security.client_ip(request)), **details})
+                      {"ip": security.client_ip(request), **details})
 
 
 def attempt_login(db: Session, request: Request, username: str, password: str) -> LoginResult:
