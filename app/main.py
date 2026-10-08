@@ -93,6 +93,15 @@ def create_app() -> FastAPI:
 
     @app.get("/health", include_in_schema=False)
     def health():
+        """Saúde do serviço: confirma que o banco responde (o Railway só promove o deploy se isto der 200)."""
+        from sqlalchemy import text
+
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+        except Exception:
+            logging.getLogger(__name__).exception("Health check: banco indisponível")
+            return PlainTextResponse("banco indisponível", status_code=503)
         return PlainTextResponse("ok")
 
     @app.exception_handler(LoginRequired)

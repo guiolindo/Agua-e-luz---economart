@@ -201,6 +201,34 @@ def audit_verify(request: Request, user: User = Depends(admin_required), db: Ses
     return _audit_context(request, db, user, integrity=report)
 
 
+@router.get("/admin/audit/export.csv")
+def audit_csv(action: str | None = None, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    """Auditoria em CSV (até 20 mil eventos mais recentes), para guardar fora do sistema ou entregar a quem fiscaliza."""
+    import csv
+    import io
+
+    from fastapi.responses import Response
+
+    from app.routes.bills import _csv_cell
+
+    stmt = select(AuditLog).order_by(AuditLog.id.desc()).limit(20000)
+    if action:
+        stmt = stmt.where(AuditLog.action == action)
+    names = {u.id: u.username for u in db.scalars(select(User))}
+    out = io.StringIO()
+    w = csv.writer(out, delimiter=";", lineterminator="\r\n")
+    w.writerow(["Quando", "Usuário", "Evento", "Registro", "Detalhes", "Selo"])
+    for r in db.scalars(stmt):
+        ent = ENTITY_LABELS.get(r.entity, "")
+        w.writerow([r.at.strftime("%d/%m/%Y %H:%M:%S"), _csv_cell(names.get(r.user_id, "")), _csv_cell(action_label(r.action, r.entity)),
+                    _csv_cell(f"{ent} #{r.entity_id}" if ent and r.entity_id else ent), _csv_cell(details_text(r.details)),
+                    (r.row_hash or "")[:16]])
+    audit_service.log(db, user.id, "export", "audit", None, {"action": action or "todos"})
+    db.commit()
+    return Response("\ufeff" + out.getvalue(), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="auditoria-economart.csv"'})
+
+
 @router.get("/admin/audit")
 def audit_page(request: Request, action: str | None = None, user: User = Depends(admin_required),
                db: Session = Depends(get_db)):

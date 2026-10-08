@@ -400,3 +400,14 @@ details { border-top: 1px solid var(--line-soft); padding: 8px 0; } details summ
 .row-searchbar { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
 .more-filters { margin-top: 8px; } .more-filters > summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--accent); padding: 4px 0; list-style: none; } .more-filters > summary::-webkit-details-marker { display: none; }
 .more-filters > summary::after { content: ' ▾'; } .more-filters[open] > summary::after { content: ' ▴'; } .more-filters .row { margin-top: 10px; }
+/* Tabelas em cartões no celular (usuários, auditoria): nada fica escondido atrás da rolagem lateral */
+@media (max-width: 760px) {
+  table.stack, table.stack tbody, table.stack tr, table.stack td { display: block; width: 100%; }
+  table.stack thead { display: none; }
+  table.stack tr { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  table.stack td { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 4px 0; border: 0; white-space: normal !important; text-align: right; }
+  table.stack td::before { content: attr(data-label); flex: 0 0 auto; color: var(--muted); font-size: 12px; font-weight: 600; text-align: left; }
+  table.stack td:not([data-label])::before { content: none; }
+  table.stack td.cell-actions { justify-content: flex-start; flex-wrap: wrap; gap: 8px; padding-top: 8px; }
+  table.stack td select { max-width: 100%; }
+}

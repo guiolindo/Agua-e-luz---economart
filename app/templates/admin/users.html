@@ -8,14 +8,14 @@
   <code style="font-size:22px;letter-spacing:.2em;user-select:all;margin:0 8px">{{ temp_password }}</code>
   <div class="small">Entregue ao usuário agora — ela não será exibida novamente. Vale por {{ temp_hours }} horas e só serve para o primeiro acesso: ele será obrigado a criar a própria senha.</div></div>
 {% endif %}
-<div class="card flush"><div class="tablewrap"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Último acesso</th><th>Situação</th><th><span class="sr">Ações</span></th></tr></thead><tbody>
-  {% for u in users %}<tr><td>{{ u.username }}{% if u.id == user.id %} <span class="muted small">(você)</span>{% endif %}</td>
-    <td>{% if u.id != user.id %}<form method="post" action="/admin/users/{{ u.id }}/role" class="actions">{{ csrf(csrf_token) }}
+<div class="card flush"><div class="tablewrap"><table class="stack"><thead><tr><th>Usuário</th><th>Perfil</th><th>Último acesso</th><th>Situação</th><th><span class="sr">Ações</span></th></tr></thead><tbody>
+  {% for u in users %}<tr><td data-label="Usuário"><strong>{{ u.username }}</strong>{% if u.id == user.id %} <span class="muted small">(você)</span>{% endif %}</td>
+    <td data-label="Perfil">{% if u.id != user.id %}<form method="post" action="/admin/users/{{ u.id }}/role" class="actions">{{ csrf(csrf_token) }}
       <select name="role" data-autosubmit style="width:auto;max-width:300px" aria-label="Perfil de {{ u.username }}">{% for k, v in roles.items() %}<option value="{{ k }}" {{ 'selected' if (u.role == k or (u.role == 'user' and k == 'operator')) }}>{{ v }}</option>{% endfor %}</select></form>
       {% else %}{{ roles.get(u.role, u.role) }}{% endif %}</td>
-    <td class="muted small">{{ (u.last_login|dt_br) if u.last_login else 'nunca' }}</td>
-    <td>{% if not u.active %}<span class="badge">Inativo</span>{% elif u.id in blocked %}<span class="badge bad" title="Bloqueado por tentativas erradas">Bloqueado até {{ blocked[u.id]|dt_br(short=true) }}</span>{% elif u.must_change_password %}{% if u.temp_expires_at and u.temp_expires_at.replace(tzinfo=None) < now_naive %}<span class="badge bad">Senha provisória expirada</span>{% else %}<span class="badge warn" {% if u.temp_expires_at %}title="Expira em {{ u.temp_expires_at|dt_br(short=true) }}"{% endif %}>Troca de senha pendente</span>{% endif %}{% else %}<span class="badge ok">Ativo</span>{% endif %}{% if u.has_2fa %} <span class="badge ok" title="Verificação em duas etapas ativa">2FA</span>{% endif %}</td>
-    <td class="right nowrap">{% if u.id in blocked %}
+    <td class="muted small" data-label="Último acesso">{{ (u.last_login|dt_br) if u.last_login else 'nunca' }}</td>
+    <td data-label="Situação">{% if not u.active %}<span class="badge">Inativo</span>{% elif u.id in blocked %}<span class="badge bad" title="Bloqueado por tentativas erradas">Bloqueado até {{ blocked[u.id]|dt_br(short=true) }}</span>{% elif u.must_change_password %}{% if u.temp_expires_at and u.temp_expires_at.replace(tzinfo=None) < now_naive %}<span class="badge bad">Senha provisória expirada</span>{% else %}<span class="badge warn" {% if u.temp_expires_at %}title="Expira em {{ u.temp_expires_at|dt_br(short=true) }}"{% endif %}>Troca de senha pendente</span>{% endif %}{% else %}<span class="badge ok">Ativo</span>{% endif %}{% if u.has_2fa %} <span class="badge ok" title="Verificação em duas etapas ativa">2FA</span>{% endif %}</td>
+    <td class="right nowrap cell-actions">{% if u.id in blocked %}
       <form method="post" action="/admin/users/{{ u.id }}/unlock" style="display:inline">{{ csrf(csrf_token) }}<button class="btn sm primary">Desbloquear</button></form>{% endif %}
     {% if u.id != user.id %}
       {% if u.has_2fa %}<form method="post" action="/admin/users/{{ u.id }}/reset-2fa" style="display:inline" data-confirm="Remover o 2FA de {{ u.username }}? Use quando ele perdeu o celular. As sessões dele serão encerradas.">{{ csrf(csrf_token) }}<button class="btn sm">Redefinir 2FA</button></form>{% endif %}

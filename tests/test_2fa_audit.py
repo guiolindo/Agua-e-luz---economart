@@ -291,3 +291,25 @@ def test_gemini_service_fast_fails_when_breaker_open(monkeypatch):
 def test_audit_page_uses_readable_labels(client):
     html = client.get("/admin/audit").text
     assert "Entrou no sistema" in html and "auth #" not in html and ">login<" not in html
+
+
+def test_health_checks_the_database(client, monkeypatch):
+    assert client.get("/health").text == "ok"
+    from app import database
+
+    class Broken:
+        def connect(self):
+            raise RuntimeError("sem banco")
+
+    monkeypatch.setattr(database, "engine", Broken())
+    r = client.get("/health")
+    assert r.status_code == 503 and "banco" in r.text
+
+
+def test_audit_csv_export_is_admin_only_and_exports_labels(client):
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    r = client.get("/admin/audit/export.csv")
+    assert r.status_code == 200 and "Entrou no sistema" in r.content.decode("utf-8")
+    assert TestClient(app).get("/admin/audit/export.csv", follow_redirects=False).status_code == 303
