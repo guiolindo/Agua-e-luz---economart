@@ -57,7 +57,7 @@ cria lojas **fictícias** para visualizar o painel.
 
 ## Distribuidoras, anotação à mão, retenção e impressão
 
-- **Várias distribuidoras:** CEMIG e COELBA (testada com a conta real “Neoenergia Coelba” de Feira de Santana) já vêm cadastradas como tipos de conta. A IA lê a distribuidora da própria
+- **Várias distribuidoras:** CEMIG, COELBA (testada com a conta real “Neoenergia Coelba” de Feira de Santana) e ENERGISA (baixa tensão, consumo único em kWh) já vêm cadastradas como tipos de conta. A IA lê a distribuidora da própria
   conta; ao cadastrar uma unidade nova pela importação, o tipo é definido por ela. Para outra distribuidora, o admin cria
   um tipo “Conta de distribuidora” em *Tipos de registro* (o nome deve aparecer na conta, ex.: ENERGISA). Contas sem
   separação ponta/fora ponta usam o campo “Consumo único (kWh)”.
@@ -67,7 +67,7 @@ cria lojas **fictícias** para visualizar o painel.
 - **Retenção:** a foto/PDF fica no PostgreSQL por 6 meses e então é apagada automaticamente (rotina na subida e a cada
   6 h; manual: `python -m scripts.purge_documents`). Os dados lidos, valores e gráficos permanecem; a tela mostra
   “Original expirado”.
-- **Fornecedores da planilha atual:** já vêm cadastrados CEMIG (distribuição), COELBA, CEMIG Geração e Transmissão, LL Energia,
+- **Fornecedores da planilha atual:** já vêm cadastrados CEMIG (distribuição), COELBA, ENERGISA, CEMIG Geração e Transmissão, LL Energia,
   Câmara de Comercialização de Energia (CCEE), Compra de combustível para gerador e Manutenção de Gerador. O relatório e o
   resumo mensal podem **agrupar por mês de referência (competência) ou por mês de vencimento** — a planilha impressa usa o
   vencimento (a conta de SET/2026, que vence em outubro, cai na coluna out/2026). Lançamentos manuais aceitam “Vencimento”

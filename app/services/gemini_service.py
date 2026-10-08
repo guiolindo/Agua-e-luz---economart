@@ -20,7 +20,7 @@ RETRY_CODES = {429, 500, 502, 503, 504}
 MAX_ATTEMPTS = 3
 
 PROMPT = """Você é um extrator estruturado de dados de contas de energia elétrica brasileiras
-(CEMIG em Minas Gerais, Coelba na Bahia e outras distribuidoras). Analise a imagem/PDF e preencha o JSON do schema.
+(CEMIG em Minas Gerais, Coelba na Bahia, Energisa e outras distribuidoras). Analise a imagem/PDF e preencha o JSON do schema.
 
 ## Regras gerais
 - ZERO CHUTE: se um campo não estiver visível ou legível, devolva null. Nunca invente nem complete valores.
@@ -28,14 +28,16 @@ PROMPT = """Você é um extrator estruturado de dados de contas de energia elét
   Devolva sempre número JSON, sem "R$" nem separador de milhar.
 - Sinal negativo pode vir DEPOIS do número ("184,37-" = -184.37). Descontos/créditos são valores negativos.
 - Datas em YYYY-MM-DD. "reference_month" em YYYY-MM (campo "Referente a"/"Mês de referência"; SET/2026 -> 2026-09).
-- "utility": nome da distribuidora emissora como impresso no topo (ex.: "CEMIG", "Neoenergia Coelba").
+- "utility": nome da distribuidora emissora como impresso no topo (ex.: "CEMIG", "Neoenergia Coelba", "Energisa Minas Rio").
 - "consumer_unit_number": o número da unidade consumidora / instalação / código do cliente exatamente como impresso
-  (CEMIG e Coelba: "N.º/NÚMERO DA UNIDADE CONSUMIDORA", ex.: 9.089.187.028-65). NÃO confunda com nota fiscal, código de
+  (CEMIG e Coelba: "N.º/NÚMERO DA UNIDADE CONSUMIDORA", ex.: 9.089.187.028-65; Energisa: "NÚMERO DA UC", ex.: 461.615.050-40). NÃO confunda com nota fiscal, código de
   débito em conta, nosso número, número do documento ou número do medidor. Mantenha pontos e hífens.
 - "total_value": o "Valor a pagar"/"Total a pagar" da fatura.
+- A foto pode estar GIRADA (90° ou 180°) ou inclinada: leia mesmo assim, sem pedir outra foto.
 - Consumo: se a conta separa ponta (HP) e fora ponta (HFP) (e HR), preencha consumption_hp_kwh / consumption_hfp_kwh /
   consumption_hr_kwh e demand_*_kw com os valores do MÊS de referência (primeira linha do histórico de consumo e/ou os
-  itens faturados). Se a conta tem um consumo único (tarifa convencional), preencha só "consumption_kwh".
+  itens faturados). Se a conta tem um consumo único (tarifa convencional, ex.: baixa tensão B1 residencial/comercial), preencha só
+  "consumption_kwh" (kWh do mês, coluna "Consumo kWh" da tabela do medidor) e deixe HP/HFP/HR e demanda como null.
 - Se houver tabela de MEDIDOR (grandezas/postos horários): "Energia Ativa" Ponta/Fora Ponta -> consumo HP/HFP em kWh e
   "Demanda Ativa" Ponta/Fora Ponta -> demand_hp_kw / demand_hfp_kw (coluna de consumo/valor medido). A demanda
   contratada ("Montante de Uso Contratado"/"Demanda Fora Ponta contratada") vai em contracted_demand_kw.

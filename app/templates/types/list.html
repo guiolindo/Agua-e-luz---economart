@@ -21,7 +21,7 @@
 <form class="card" method="post" action="/types"><h2>Novo tipo</h2>{{ csrf(csrf_token) }}
   <div class="row row-3"><div class="field"><label>Nome *</label><input type="text" name="name" required placeholder="Ex.: Energia Solar ou ENERGISA"></div>
     <div class="field"><label>Natureza</label><select name="kind"><option value="manual">Lançamento manual (valor + campos próprios)</option><option value="bill">Conta de distribuidora (lida por foto/IA)</option></select>
-      <div class="hint">O nome de contas de distribuidora deve aparecer na conta (ex.: COELBA) para a IA reconhecer.</div></div>
+      <div class="hint">O nome de contas de distribuidora deve aparecer na conta (ex.: COELBA, ENERGISA) para a IA reconhecer.</div></div>
     <div class="field"><label>Descrição</label><input type="text" name="description"></div></div>
   <div class="field"><label>Campos extras (um por linha; opcional)</label><textarea name="fields" placeholder="Geração (kWh)&#10;Créditos (kWh)"></textarea>
     <div class="hint">Todo tipo já tem “Valor (R$)” e mês de referência.</div></div>
