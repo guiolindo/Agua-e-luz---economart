@@ -88,7 +88,7 @@ def user_unlock(request: Request, user_id: int, user: User = Depends(admin_requi
         auth_service.unlock(target)
         audit_service.log(db, user.id, "account_unlocked", "user", target.id, {"by_admin": True})
         db.commit()
-        flash(request, f"{target.username} desbloqueado: já pode tentar entrar de novo.")
+        flash(request, f"{target.username} desbloqueado.")
     return RedirectResponse("/admin/users", status_code=303)
 
 
@@ -127,12 +127,12 @@ def user_reset_2fa(request: Request, user_id: int, user: User = Depends(admin_re
     """Outro administrador perdeu o celular: remove o 2FA dele (ele configura de novo no próximo acesso)."""
     target = db.get(User, user_id)
     if target is None or target.id == user.id or not target.has_2fa:
-        flash(request, "Nada a redefinir.", "info")
+        flash(request, "Este usuário não tem 2FA ativo.", "info")
     else:
         totp_service.disable(target)       # também encerra as sessões dele
         audit_service.log(db, user.id, "2fa_reset", "user", target.id, {"by_admin": True})
         db.commit()
-        flash(request, f"2FA de {target.username} removido. Ele pode configurar de novo em Conta → Verificação em duas etapas.")
+        flash(request, f"2FA de {target.username} removido.")
     return RedirectResponse("/admin/users", status_code=303)
 
 

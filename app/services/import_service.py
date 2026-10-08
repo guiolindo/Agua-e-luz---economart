@@ -107,8 +107,7 @@ def _reject(db: Session, job: Import, provider: str, reason: str, extraction: Bi
                       {"filename": doc.filename, "reason": reason, "provider": provider, "bytes_deleted": True})
     doc.data = None
     job.status, job.stage, job.provider, job.extracted = "rejected", "done", provider, None
-    job.error = ("Este arquivo não parece ser uma conta de energia (" + reason + "). Ele foi descartado e não foi "
-                 "salvo. Envie a foto ou o PDF da conta de energia.")
+    job.error = ("O arquivo não foi reconhecido como conta de energia (" + reason + "). Nada foi lançado e o arquivo foi descartado.")
     db.commit()
 
 

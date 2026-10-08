@@ -67,7 +67,7 @@ def point_create(request: Request, store_id: int = Form(...), number: str = Form
     audit_service.log(db, user.id, "create", "consumer_unit", unit.id, {"due_day": due.day, "quick": True})
     db.commit()
     when = "hoje" if due == due_service.local_today() else f"dia {due.day} de cada mês"
-    flash(request, f"Ponto de energia {unit.number} cadastrado em {unit.store.code}. Você será avisado quando a conta vencer ({when}).")
+    flash(request, f"Ponto de energia {unit.number} cadastrado em {unit.store.code}. Vencimento: {when}.")
     return RedirectResponse(_safe_next(next), status_code=303)
 
 

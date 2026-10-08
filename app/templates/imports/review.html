@@ -9,7 +9,7 @@
 <div class="review">
 <form method="post" action="/import/{{ job.id }}/confirm" id="confirm">
   {{ csrf(csrf_token) }}
-  {% if errors %}<div class="flash error">Corrija os campos destacados para continuar.</div>{% endif %}
+  {% if errors %}<div class="flash error">Há campos a corrigir.</div>{% endif %}
 
   {% for w in warnings %}<div class="flash warn" role="alert">{{ w }}</div>{% endfor %}
   {# --- Identificação: loja/unidade --- #}
@@ -26,8 +26,8 @@
     <div class="unit-choice"><label class="radio"><input type="radio" name="unit_mode" value="matched" {{ 'checked' if unit_mode == 'matched' }}> Unidade encontrada no cadastro</label>
       <div class="body"><strong>{{ unit.store.code }}</strong> · <span class="mono">{{ unit.number }}</span>{% if unit.description %} · {{ unit.description }}{% endif %}</div></div>
     {% else %}
-    <div class="flash warn"><strong>Unidade consumidora não cadastrada.</strong> A conta não será descartada: cadastre a unidade ou associe a uma já existente.
-      {% if similar %}<br>Parecidas no cadastro (possível erro de leitura):
+    <div class="flash warn"><strong>Unidade consumidora não cadastrada.</strong> Cadastre a unidade ou associe a uma já existente.
+      {% if similar %}<br>Unidades parecidas no cadastro:
         <ul class="notice-list">{% for u in similar %}<li>{{ u.store.code }} · <span class="mono">{{ u.number }}</span></li>{% endfor %}</ul>{% endif %}</div>
     {% endif %}
 
@@ -46,7 +46,7 @@
 
   {# --- Possível duplicidade --- #}
   {% if dups %}
-  <section class="card" style="border-color:#ecd09a;background:#fffaf0">
+  <section class="card" style="border-color:var(--warn-line);background:var(--warn-soft)">
     <h2>Esta conta aparentemente já está cadastrada</h2>
     <div class="tablewrap"><table><thead><tr><th>Referência</th><th class="num">Valor</th><th>Nº da nota</th><th>Origem</th></tr></thead><tbody>
       {% for d in dups %}<tr><td>{{ d.reference|month_label }}</td><td class="num">{{ d.total_value|brl }}</td><td>{{ d.invoice_number or '—' }}</td><td>{{ 'Foto/IA' if d.source == 'import' else 'Manual' }}</td></tr>{% endfor %}
@@ -54,8 +54,7 @@
     <div class="field" style="margin:12px 0 0"><label for="dup">O que fazer?</label>
       <select id="dup" name="duplicate_action" required><option value="">Escolha uma opção…</option>
         <option value="replace" {{ 'selected' if posted.get('duplicate_action') == 'replace' }}>Substituir o registro existente por esta conta</option>
-        <option value="new" {{ 'selected' if posted.get('duplicate_action') == 'new' }}>Salvar como novo registro (manter os dois)</option></select>
-      <div class="hint">Para cancelar, use “Descartar importação”.</div></div>
+        <option value="new" {{ 'selected' if posted.get('duplicate_action') == 'new' }}>Salvar como novo registro (manter os dois)</option></select></div>
   </section>
   {% endif %}
 

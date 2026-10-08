@@ -35,7 +35,7 @@ def test_unit_without_due_day_is_allowed_and_never_blocked(client, db):
     assert func.get(f"/units/{u.id}").status_code == 200 and func.get(f"/stores/{store.id}").status_code == 200
     assert u.id not in [i.unit.id for i in ds.due_items(db)]                                                # e não gera aviso
     dash = func.get("/").text
-    assert "Pontos de energia sem dia de vencimento" in dash and "Nada está travado" in dash and f"/units/{u.id}/edit" in dash
+    assert "Pontos de energia sem dia de vencimento" in dash and "não gera o aviso mensal" in dash and f"/units/{u.id}/edit" in dash
 
 
 def test_edit_page_exists_and_edits_every_field_including_due_day(client, db):

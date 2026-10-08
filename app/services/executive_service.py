@@ -230,8 +230,6 @@ def insights(data: dict) -> list[dict]:
             out.append({"tone": "bad", "text": f"Custo por kWh acima da média da empresa ({fmt.brl(avg, 3)}) em mais de 15%: {names(dear)}."})
     if k["pending"]:
         out.append({"tone": "info", "text": f"Faltam {k['pending']} conta(s) ou lançamento(s) de {focus} (veja a lista de pendências no fim da página)."})
-    if data.get("partial_labels"):
-        out.append({"tone": "info", "text": "Meses ainda incompletos aparecem com * nos gráficos e não entram nas variações."})
     return out
 
 

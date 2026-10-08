@@ -12,9 +12,9 @@
 {% if insights %}<section class="card insights" aria-labelledby="ins-h">
   <h2 id="ins-h">Resumo em poucas palavras</h2>
   <ul>{% for i in insights %}<li class="ins-{{ i.tone }}"><span class="ins-dot" aria-hidden="true">{{ '▲' if i.tone == 'bad' else '▼' if i.tone == 'good' else '●' }}</span><span>{{ i.text }}</span></li>{% endfor %}</ul>
-  <p class="hint">Gerado automaticamente a partir dos números abaixo. ▲ pede atenção · ▼ boa notícia · ● informação.</p>
+  <p class="hint">▲ atenção · ▼ melhora · ● informação</p>
 </section>{% endif %}
-{% if partial_labels %}<div class="flash warn no-print" role="status"><strong>Mês em andamento:</strong> {{ partial_labels|join(', ') }} — poucas lojas já lançaram. Esses meses aparecem marcados com * e <strong>não entram nas variações</strong>; os indicadores usam {{ focus_label }}, o último mês completo.</div>{% endif %}
+{% if partial_labels %}<div class="flash warn no-print" role="status"><strong>Incompleto:</strong> {{ partial_labels|join(', ') }}. Marcado com * e fora das variações; os indicadores usam {{ focus_label }}.</div>{% endif %}
 <div class="grid cols-4 kpis dir-kpis">
   <div class="kpi"><div class="label">Total no período</div><div class="value">{{ kpi.total|brl(0) }}</div><div class="sub">{{ delta(kpi.vs_prev) }} <span class="muted">média/mês vs. período anterior{% if kpi.comparable_stores %} ({{ kpi.comparable_stores }} lojas com histórico){% endif %}</span></div></div>
   <div class="kpi"><div class="label">Último mês ({{ focus_label }})</div><div class="value">{{ kpi.last_month|brl(0) }}</div><div class="sub">{{ delta(kpi.last_vs_prev) }} <span class="muted">vs. {{ prev_label or 'mês anterior' }}</span></div></div>

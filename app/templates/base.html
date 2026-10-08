@@ -84,7 +84,7 @@
       </div>
       {% endif %}
     </div>{% endif %}
-    {% if user and user.is_admin and not user.has_2fa and not path.startswith('/account/2fa') and not user.must_change_password %}<div class="flash warn" role="status">Sua conta de administrador ainda não tem verificação em duas etapas. <a href="/account/2fa"><strong>Ativar o 2FA</strong></a> (leva 1 minuto, com o Google Authenticator).</div>{% endif %}
+    {% if user and user.is_admin and not user.has_2fa and path in ('/', '/admin/users') and not user.must_change_password %}<div class="flash warn" role="status">Ative a verificação em duas etapas da sua conta de administrador. <a href="/account/2fa"><strong>Ativar</strong></a></div>{% endif %}
     {% for f in flashes %}<div class="flash {{ f.level }}" role="{{ 'alert' if f.level == 'error' else 'status' }}" data-flash="{{ f.level }}">{{ f.text }}</div>{% endfor %}
     {% block content %}{% endblock %}
   </main>

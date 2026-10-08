@@ -109,9 +109,14 @@ def test_unknown_user_lock_expires_and_stores_no_raw_name(client, db):
     reset_rate_limits()
 
 
-def test_login_page_explains_the_lockout_rule_up_front(client):
+def test_login_page_is_clean_and_the_lockout_rule_appears_only_when_it_happens(client):
     html = _new_client().get("/login").text
-    assert "bloqueado por 15 minutos" in html and "5 tentativas" in html
+    assert "tentativas erradas" not in html and "Fale com o administrador" in html
+    pw = _create_user(client, "ana", "operator")
+    c = _new_client()
+    for _ in range(5):
+        _login(c, "ana", "errada-errada")
+    assert "15 minuto" in _login(c, "ana", pw).text
 
 
 def test_lockout_expires(client, db):

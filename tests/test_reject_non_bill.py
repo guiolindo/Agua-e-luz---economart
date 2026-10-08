@@ -19,7 +19,7 @@ def test_non_bill_is_rejected_and_file_is_deleted(client, png, db, monkeypatch, 
     monkeypatch.setattr(import_service, "get_extractor", lambda: MockExtractor(payload=payload))
     job_id = _upload(client, png)
     page = client.get(f"/import/{job_id}", follow_redirects=False)
-    assert page.status_code == 200 and "Arquivo barrado" in page.text and "não parece ser uma conta" in page.text
+    assert page.status_code == 200 and "Arquivo não reconhecido" in page.text and "não foi reconhecido como conta" in page.text
     db.expire_all()
     job = db.get(Import, job_id)
     assert job.status == "rejected" and job.extracted is None and job.bill_id is None

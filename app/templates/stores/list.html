@@ -9,6 +9,6 @@
       <td class="num">{{ s.units|length }}</td><td>{% if s.active %}<span class="badge ok">Ativa</span>{% else %}<span class="badge">Inativa</span>{% endif %}</td>
       <td class="right actions" style="justify-content:flex-end"><a class="btn sm" href="/stores/{{ s.id }}">Histórico</a>
         {% if user.can_write %}<a class="btn sm" href="/stores/{{ s.id }}/settings">Cadastro</a>{% endif %}</td></tr>
-  {% else %}<tr><td colspan="6"><div class="empty"><strong>Nenhuma loja cadastrada ainda</strong>{% if user.can_write %}Comece cadastrando a primeira loja e depois as unidades consumidoras dela.<br><a class="btn primary" style="margin-top:10px" href="/stores/new">Cadastrar a primeira loja</a>{% else %}Peça a um funcionário para cadastrar as lojas.{% endif %}</div></td></tr>{% endfor %}
+  {% else %}<tr><td colspan="6"><div class="empty"><strong>Nenhuma loja cadastrada ainda</strong>{% if user.can_write %}<br><a class="btn primary" style="margin-top:10px" href="/stores/new">Cadastrar loja</a>{% else %}Peça a um funcionário para cadastrar as lojas.{% endif %}</div></td></tr>{% endfor %}
   </tbody></table></div></div>
 {% endblock %}

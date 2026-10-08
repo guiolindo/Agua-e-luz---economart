@@ -65,7 +65,7 @@ def store_create(request: Request, code: str = Form(...), name: str = Form(""), 
     db.flush()
     audit_service.log(db, user.id, "create", "store", store.id, {"code": code})
     db.commit()
-    flash(request, f"Loja {code} cadastrada. Agora cadastre as unidades consumidoras.")
+    flash(request, f"Loja {code} cadastrada.")
     return RedirectResponse(f"/stores/{store.id}/settings", status_code=303)
 
 

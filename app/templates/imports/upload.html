@@ -3,7 +3,7 @@
 {% block title %}Importar conta · Economart Energia{% endblock %}
 {% block content %}
 <div class="page-head"><div><h1>Importar conta de energia</h1>
-  <div class="muted">Envie a foto ou o PDF da conta (CEMIG, Coelba, Energisa e outras distribuidoras). O sistema lê os dados, identifica a loja pela unidade consumidora e mostra tudo para você conferir antes de salvar.</div></div></div>
+  <div class="muted">Envie a foto ou o PDF da conta. Os dados lidos são mostrados para conferência antes de salvar.</div></div></div>
 
 <div class="grid cols-main">
   <form class="card" method="post" action="/import" enctype="multipart/form-data" id="up">
@@ -13,7 +13,7 @@
     <label class="drop" for="file" id="drop">
       <svg class="drop-ico" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       <strong>Arraste a conta aqui ou clique para escolher</strong>
-      <span class="muted">JPG, PNG, WEBP ou PDF · até {{ max_mb }} MB · no celular, você pode tirar a foto direto</span>
+      <span class="muted">JPG, PNG, WEBP ou PDF · até {{ max_mb }} MB</span>
       <input id="file" type="file" name="file" accept="image/jpeg,image/png,image/webp,application/pdf" required hidden>
       <span id="picked" style="display:block;margin-top:10px;font-weight:600"></span>
       <img id="preview" class="preview" alt="" hidden>
@@ -22,7 +22,7 @@
       <select id="store" name="store_id"><option value="">Identificar automaticamente pela conta</option>
         {% for s in stores %}<option value="{{ s.id }}" {{ 'selected' if store_id == s.id }}>{{ s.label }}</option>{% endfor %}</select>
       <div class="hint">Só é usada se a unidade lida ainda não estiver cadastrada.</div></div>
-    <p class="muted small">A foto/PDF fica guardada por {{ (retention_days / 30.5)|round|int }} meses e depois é apagada automaticamente; os dados lidos permanecem.</p>
+    <p class="muted small">O arquivo original é mantido por {{ (retention_days / 30.5)|round|int }} meses; os dados lidos permanecem.</p>
     <button class="btn primary" id="go" disabled>Enviar e analisar</button>
   </form>
 
