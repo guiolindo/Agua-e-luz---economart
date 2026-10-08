@@ -77,7 +77,7 @@ def test_duplicate_requires_decision_then_replace(client, png, db):
 
     second = _upload(client, png + b"\x00")  # 2ª via: arquivo diferente, mesma conta (mesmo arquivo seria barrado pelo hash)
     html2 = client.get(f"/import/{second}/review").text
-    assert "já está cadastrada" in html2
+    assert "Já existe uma conta para este período" in html2
     form2 = {**_form_from_review(html2), "unit_mode": "matched", "total_value": "21000,00"}
     r = client.post(f"/import/{second}/confirm", form2)  # sem decisão -> não salva
     assert r.status_code == 409 and db.query(EnergyBill).count() == 1
