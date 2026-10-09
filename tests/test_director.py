@@ -194,3 +194,47 @@ def test_director_summary_in_plain_language(client, db):
     html = d.get("/diretoria").text
     assert "Destaques de" in html and "a empresa gastou" in html
     assert "A loja que mais pesa no período é" in html
+
+
+def _store_with_bills(db, code, series):
+    """series: {(ano, mês): valor} em contas CEMIG de uma unidade nova."""
+    cemig = _t(db, "cemig")
+    s = Store(code=code, name=f"Loja {code}", region="MG")
+    db.add(s)
+    db.flush()
+    u = ConsumerUnit(store_id=s.id, number=code, number_normalized=code, record_type_id=cemig.id)
+    db.add(u)
+    db.flush()
+    for (y, m), v in series.items():
+        db.add(EnergyBill(unit_id=u.id, record_type_id=cemig.id, reference=date(y, m, 1), total_value=D(v)))
+    db.commit()
+
+
+def test_year_over_year_compares_same_month_only_stores_with_both(db):
+    _store_with_bills(db, "Y1", {(2025, 8): 1000, (2026, 5): 900, (2026, 6): 950, (2026, 7): 980, (2026, 8): 1300})
+    _store_with_bills(db, "NOVA", {(2026, 7): 500, (2026, 8): 500})              # sem ago/2025: não entra no comparativo
+    d = executive_service.build(db, date(2026, 1, 1), date(2026, 8, 1))
+    y = d["kpi"]["yoy"]
+    assert y and y["label"] == "AGO/2025" and y["stores"] == 1 and y["cur"] == 1300 and y["prev"] == 1000
+    assert round(y["var"]["pct"], 1) == 30.0
+    assert any("AGO/2025" in i["text"] and "a mais" in i["text"] for i in executive_service.insights(d))
+
+
+def test_store_far_from_its_own_pattern_is_flagged(db):
+    _store_with_bills(db, "OSC", {(2026, 1): 1000, (2026, 2): 1000, (2026, 3): 1000, (2026, 4): 1000, (2026, 5): 1500})
+    _store_with_bills(db, "OK", {(2026, 1): 800, (2026, 2): 800, (2026, 3): 800, (2026, 4): 800, (2026, 5): 810})
+    d = executive_service.build(db, date(2026, 1, 1), date(2026, 5, 1))
+    txt = " ".join(i["text"] for i in executive_service.insights(d))
+    assert "Fora do próprio padrão" in txt and "OSC +50,00%" in txt and "OK +" not in txt
+
+
+def test_director_csv_export_and_copy_button(client, db):
+    _world(db)
+    d = _user(client, "diretor8", "director")
+    r = d.get("/diretoria/export.csv?start=2026-01&end=2026-02")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
+    body = r.content.decode("utf-8")
+    assert body.startswith("﻿Loja;Nome;Região;Total no período (R$)") and "\r\nA;Loja A;MG;" in body
+    assert "data-copy-insights" in d.get("/diretoria").text and "/diretoria/export.csv" in d.get("/diretoria").text
+    viewer = _user(client, "consul8", "viewer")
+    assert viewer.get("/diretoria/export.csv").status_code == 403

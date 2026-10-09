@@ -5,20 +5,21 @@
 {% block content %}
 <div class="page-head no-print">
   <div><h1>Painel da diretoria</h1><div class="muted">Custos de energia e despesas relacionadas, comparando lojas · {{ start|month_label }} a {{ end|month_label }}</div></div>
-  <button class="btn" type="button" data-print>Imprimir painel</button>
+  <div class="actions"><a class="btn" href="/diretoria/export.csv?{{ request.url.query }}" title="Baixa o comparativo entre lojas em planilha">Baixar planilha</a><button class="btn" type="button" data-print>Imprimir painel</button></div>
 </div>
 
 
 {% if insights %}<section class="card insights" aria-labelledby="ins-h">
-  <h2 id="ins-h">Destaques{{ " de " ~ focus_label if focus_label }}</h2>
+  <div class="card-head" style="margin:0 0 8px"><h2 id="ins-h" style="margin:0">Destaques{{ " de " ~ focus_label if focus_label }}</h2><button class="btn sm no-print" type="button" data-copy-insights>Copiar resumo</button></div>
   <ul>{% for i in insights %}<li class="ins-{{ i.tone }}"><span class="ins-dot" aria-hidden="true">{{ '▲' if i.tone == 'bad' else '▼' if i.tone == 'good' else '●' }}</span><span>{{ i.text }}</span></li>{% endfor %}</ul>
   <p class="hint">▲ atenção · ▼ melhora · ● informação</p>
 </section>{% endif %}
 {% if partial_labels %}<div class="flash warn no-print" role="status"><strong>Incompleto:</strong> {{ partial_labels|join(', ') }}. Marcado com * e fora das variações; os indicadores usam {{ focus_label }}.</div>{% endif %}
 <div class="grid cols-4 kpis dir-kpis">
-  <div class="kpi"><div class="label">Total no período</div><div class="value">{{ kpi.total|brl(0) }}</div><div class="sub">{{ delta(kpi.vs_prev) }} <span class="muted">média/mês vs. período anterior{% if kpi.comparable_stores %} ({{ kpi.comparable_stores }} lojas com histórico){% endif %}</span></div></div>
+  <div class="kpi"><div class="label">Total no período</div><div class="value">{{ kpi.total|brl(0) }}</div><div class="sub">{% if kpi.vs_prev and kpi.vs_prev.pct is not none %}{{ delta(kpi.vs_prev) }} <span class="muted">média/mês vs. período anterior{% if kpi.comparable_stores %} ({{ kpi.comparable_stores }} lojas com histórico){% endif %}</span>{% else %}<span class="muted">{{ months|length }} meses no período</span>{% endif %}</div></div>
   <div class="kpi"><div class="label">Último mês ({{ focus_label }})</div><div class="value">{{ kpi.last_month|brl(0) }}</div><div class="sub">{{ delta(kpi.last_vs_prev) }} <span class="muted">vs. {{ prev_label or 'mês anterior' }}</span></div></div>
-  <div class="kpi"><div class="label">Média mensal</div><div class="value">{{ kpi.avg_month|brl(0) }}</div><div class="sub muted">{{ kpi.stores }} lojas com dados</div></div>
+  {% if kpi.yoy %}<div class="kpi"><div class="label">Contra {{ kpi.yoy.label }}</div><div class="value">{{ kpi.yoy.cur|brl(0) }}</div><div class="sub">{{ delta(kpi.yoy.var) }} <span class="muted">mesmo mês, ano anterior ({{ kpi.yoy.stores }} loja(s))</span></div></div>
+  {% else %}<div class="kpi"><div class="label">Média mensal</div><div class="value">{{ kpi.avg_month|brl(0) }}</div><div class="sub muted">{{ kpi.stores }} lojas com dados</div></div>{% endif %}
   <div class="kpi"><div class="label">Custo médio da energia</div><div class="value">{{ kpi.rs_kwh|brl(3) if kpi.rs_kwh else '—' }}<span class="unit">/kWh</span></div><div class="sub muted">contas de distribuidora</div></div>
   <div class="kpi"><div class="label">Maior gasto</div><div class="value sm">{{ kpi.top.code if kpi.top else '—' }}</div><div class="sub muted">{{ kpi.top.share|num(1) ~ '% do total' if kpi.top else '' }}</div></div>
   <div class="kpi"><div class="label">Maior alta em {{ focus_label }}</div><div class="value sm">{{ kpi.rise.code if kpi.rise else '—' }}</div><div class="sub">{{ delta(kpi.rise.vs_last_month) if kpi.rise else '' }}</div></div>
@@ -60,7 +61,7 @@
 
 <section class="card">
   <div class="card-head"><h2>Comparar duas lojas</h2>
-    <div class="actions no-print"><select id="pair-a" aria-label="Loja A"></select><span class="muted">×</span><select id="pair-b" aria-label="Loja B"></select></div></div>
+    <div class="actions no-print pair-actions"><select id="pair-a" aria-label="Loja A"></select><span class="muted">×</span><select id="pair-b" aria-label="Loja B"></select></div></div>
   <div class="dchart"><canvas id="c-pair" role="img" aria-label="Comparação entre duas lojas"></canvas></div>
   <div class="tablewrap"><table class="rtable" id="pair-table"></table></div>
 </section>

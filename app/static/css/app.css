@@ -506,3 +506,6 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
 @keyframes bye-in { to { opacity: 1; transform: none; } } @keyframes bye-out { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .bye { display: none !important; } body.is-leaving .shell, body.is-leaving .m-topbar { transform: none; filter: none; } }
 @media print { .bye { display: none !important; } }
+
+.pair-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; } .pair-actions select { width: auto; min-width: 190px; max-width: 280px; }
+@media (max-width: 760px) { .pair-actions { justify-content: stretch; } .pair-actions select { width: 100%; max-width: none; } .pair-actions .muted { display: none; } }

@@ -70,6 +70,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
     cur = defaultdict(lambda: defaultdict(Decimal))     # store -> mês -> valor (período atual)
     prev_total = defaultdict(Decimal)                    # store -> total do período anterior
     prev_months_with_data: dict[int, set] = defaultdict(set)
+    prev_cell = defaultdict(lambda: defaultdict(Decimal))   # store -> mês (janela anterior) -> valor
     by_type_month = defaultdict(lambda: [Decimal(0)] * n)
     mix = defaultdict(lambda: defaultdict(Decimal))      # store -> tipo -> valor
     eff = defaultdict(lambda: {"value": Decimal(0), "kwh": Decimal(0)})
@@ -85,6 +86,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
         elif month in pidx:
             prev_total[store_id] += value
             prev_months_with_data[store_id].add(month)
+            prev_cell[store_id][month] += value
 
     for b in bills:
         m = month_of(b.reference, b.due_date, by)
@@ -113,6 +115,18 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
     complete = [i for i in with_data if not partial[i]]
     focus = (complete or with_data or [n - 1])[-1]          # último mês COMPLETO
     focus_prev = focus - 1
+    yoy = None                                   # mesmo mês do ano anterior, só com as lojas que têm dado nos dois
+    if months and not partial[focus]:
+        ym = add_months(months[focus], -12)
+        pairs = []
+        for st in stores:
+            a = cur[st.id].get(months[focus])
+            b = cur[st.id].get(ym) if ym in idx else prev_cell[st.id].get(ym)
+            if a and b:
+                pairs.append((a, b))
+        if pairs:
+            ca, cb = sum((a for a, _ in pairs), Decimal(0)), sum((b for _, b in pairs), Decimal(0))
+            yoy = {"label": fmt.month_label(ym), "stores": len(pairs), "cur": _f(ca), "prev": _f(cb), "var": _var(cb, ca)}
 
     # --- lojas
     rows = []
@@ -164,7 +178,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
     regions = sorted({(s.region or "").upper() for s in db.scalars(select(Store).where(Store.active.is_(True))) if s.region})
     return {
         "start": start, "end": end, "by": by, "months": months, "labels": [fmt.month_short(m) for m in months],
-        "focus_label": fmt.month_label(months[focus]) if months else "", "prev_label": fmt.month_label(months[focus_prev]) if focus_prev >= 0 else "",
+        "focus_idx": focus, "focus_label": fmt.month_label(months[focus]) if months else "", "prev_label": fmt.month_label(months[focus_prev]) if focus_prev >= 0 else "",
         "region": region, "regions": regions, "types": types, "type_ids": sorted(use_types), "colors": color_of,
         "kpi": {
             "total": _f(total),
@@ -176,6 +190,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
                                  month_totals[focus] if months else None),
             "top": rows[0] if rows else None, "rise": rise, "fall": fall, "pending": len(pending),
             "rs_kwh": _f(eff_value / eff_kwh) if eff_kwh else None,
+            "yoy": yoy,
         },
         "month_totals": [_f(t) for t in month_totals_opt],
         "partial": partial, "coverage": coverage, "peak": peak,
@@ -210,6 +225,11 @@ def insights(data: dict) -> list[dict]:
             out.append({"tone": tone, "text": f"Em {focus} a empresa gastou {reais(k['last_month'])}, {fmt.pct(abs(lv['pct']))} {verb} que em {prev}."})
         else:
             out.append({"tone": "info", "text": f"Em {focus} a empresa gastou {reais(k['last_month'])}."})
+    y = k.get("yoy")
+    if y and y["var"]["pct"] is not None:
+        verb = "a mais" if y["var"]["pct"] > 0 else "a menos"
+        tone = "bad" if y["var"]["pct"] > 5 else "good" if y["var"]["pct"] < -5 else "info"
+        out.append({"tone": tone, "text": f"Contra {y['label']} (mesmo mês do ano anterior, {y['stores']} loja(s) com dado nos dois): {fmt.pct(abs(y['var']['pct']))} {verb}."})
     if k["top"]:
         out.append({"tone": "info", "text": f"A loja que mais pesa no período é {k['top']['code']}, com {fmt.pct(k['top']['share'])} do gasto total."})
     for key, word, tone in (("rise", "alta", "bad"), ("fall", "queda", "good")):
@@ -217,9 +237,25 @@ def insights(data: dict) -> list[dict]:
         if r and r["vs_last_month"]["pct"] is not None and abs(r["vs_last_month"]["pct"]) >= 5:
             out.append({"tone": tone, "text": f"Maior {word} em {focus}: {r['code']} ({fmt.pct(r['vs_last_month']['pct'], signed=True)})."
                         + (" Vale conferir o motivo: consumo, demanda ou tarifa." if key == "rise" else "")})
+    fi, part = data.get("focus_idx"), data.get("partial") or []
+    odd = []
+    if fi is not None:
+        for r in rows:
+            vals = r["values"]
+            cur_v = vals[fi] if fi < len(vals) else None
+            hist = [v for i, v in enumerate(vals[:fi]) if v and not (i < len(part) and part[i])][-6:]
+            if cur_v and len(hist) >= 3:
+                dev = (cur_v / (sum(hist) / len(hist)) - 1) * 100
+                if abs(dev) >= 25:
+                    odd.append((abs(dev), r["code"], dev))
+    if odd:
+        odd.sort(reverse=True)
+        out.append({"tone": "bad" if any(d > 0 for _, _, d in odd[:3]) else "info",
+                    "text": f"Fora do próprio padrão em {focus} (contra a média dos meses anteriores da loja): "
+                            + ", ".join(f"{c} {fmt.pct(d, signed=True)}" for _, c, d in odd[:3]) + "."})
     over = [r["code"] for r in rows if (r.get("demand_over") or 0) > 0]
     if over:
-        out.append({"tone": "bad", "text": f"Ultrapassaram a demanda contratada (pagam multa de ultrapassagem): {names(over)}."})
+        out.append({"tone": "bad", "text": f"Ultrapassaram a demanda contratada em algum mês do período (cobrança de ultrapassagem): {names(over)}."})
     low = [r["code"] for r in rows if r.get("demand_use") is not None and r["demand_use"] < 60]
     if low:
         out.append({"tone": "info", "text": f"Usam menos de 60% da demanda contratada (pode haver contrato maior que o necessário): {names(low)}."})

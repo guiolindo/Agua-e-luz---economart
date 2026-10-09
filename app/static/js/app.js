@@ -315,3 +315,13 @@ document.querySelectorAll('form[action="/logout"]').forEach((f) => f.addEventLis
     else HTMLFormElement.prototype.submit.call(f);
   });
 }));
+
+// Painel da diretoria: copia o resumo em texto (para WhatsApp/e-mail).
+document.querySelectorAll('[data-copy-insights]').forEach((btn) => btn.addEventListener('click', async () => {
+  const card = btn.closest('.insights'); if (!card) return;
+  const lines = [...card.querySelectorAll('li')].map((li) => '• ' + li.lastElementChild.textContent.trim());
+  const text = card.querySelector('h2').textContent.trim() + ' — Economart Energia\n' + lines.join('\n');
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch (_) { /* sem permissão */ } t.remove(); }
+  const old = btn.textContent; btn.textContent = 'Copiado'; setTimeout(() => { btn.textContent = old; }, 1600);
+}));
