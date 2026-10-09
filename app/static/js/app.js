@@ -288,3 +288,14 @@ document.querySelectorAll('[data-login-form]').forEach((f) => f.addEventListener
   const go = () => setTimeout(() => { sp.classList.add('out'); setTimeout(done, 340); }, hold);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
 })();
+
+// Telas de acesso: a logo nasce do ponto final do gráfico. Mede o deslocamento até o ponto e entrega ao CSS.
+(function () {
+  const logo = document.querySelector('.auth-logo'), dot = document.querySelector('.auth-art .dot');
+  if (!logo || !dot || !dot.getBoundingClientRect().width) return;
+  logo.style.animation = 'none';                       // mede sem a transformação do primeiro quadro da animação
+  const a = logo.getBoundingClientRect(), d = dot.getBoundingClientRect();
+  logo.style.setProperty('--lx', (d.left + d.width / 2 - (a.left + a.width / 2)) + 'px');
+  logo.style.setProperty('--ly', (d.top + d.height / 2 - (a.top + a.height / 2)) + 'px');
+  void logo.offsetWidth; logo.style.animation = '';    // reinicia a animação já com os valores
+})();

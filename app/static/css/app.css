@@ -144,7 +144,10 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 .auth-glow.g1 { width: 380px; height: 380px; right: -90px; bottom: 8%; background: rgba(244,121,32,.24); animation: glow-a 22s ease-in-out infinite alternate; }
 .auth-glow.g2 { width: 320px; height: 320px; left: -80px; top: 36%; background: rgba(88,160,235,.32); animation: glow-b 26s ease-in-out infinite alternate; }
 @keyframes glow-a { to { transform: translate(-60px, -40px) scale(1.12); } } @keyframes glow-b { to { transform: translate(50px, 30px) scale(1.1); } }
-.auth-logo { align-self: flex-start; display: block; animation: auth-rise .7s cubic-bezier(.2,.7,.2,1) both; filter: drop-shadow(0 6px 18px rgba(0,0,0,.28)); }
+.auth-logo { align-self: flex-start; display: block; opacity: 0; will-change: transform, opacity, filter; animation: logo-emerge 1.5s 2.9s cubic-bezier(.3,.6,.2,1) both; filter: drop-shadow(0 6px 18px rgba(0,0,0,.28)); }
+/* A logo nasce do ponto final do gráfico (--lx/--ly = deslocamento até ele, medido em app.js) e cresce até o lugar dela. */
+@keyframes logo-emerge { 0% { opacity: 0; transform: translate(var(--lx, 0px), var(--ly, 14px)) scale(.1); filter: blur(12px) drop-shadow(0 0 0 transparent); }
+  55% { opacity: 1; filter: blur(2px) drop-shadow(0 6px 18px rgba(0,0,0,.2)); } 100% { opacity: 1; transform: none; filter: blur(0) drop-shadow(0 6px 18px rgba(0,0,0,.28)); } }
 .auth-logo img { display: block; width: 210px; height: auto; }
 .auth-pitch { max-width: 460px; animation: auth-rise .8s .12s cubic-bezier(.2,.7,.2,1) both; }
 .auth-pitch h2 { font-size: 34px; line-height: 1.15; font-weight: 700; margin: 0 0 12px; color: #fff; letter-spacing: -.02em; }
@@ -197,14 +200,14 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
   .auth { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .auth-brand { display: flex; padding: 22px 22px 84px; min-height: 0; }
   .auth-brand .auth-pitch, .auth-brand .auth-foot, .auth-brand .auth-glass { display: none; }
-  .auth-logo img { width: 150px; }
+  .auth-logo img { width: 150px; } .auth-logo { animation-delay: .5s; animation-duration: .9s; }
   .auth-form { align-items: flex-start; padding: 0 20px 32px; background: #fff; }
   .auth-box { position: relative; z-index: 2; margin-top: -44px; background: #fff; border-radius: 18px; padding: 26px 22px 22px; box-shadow: 0 18px 40px -18px rgba(16,36,63,.35); border: 1px solid var(--line-soft); }
   .auth-box h1 { font-size: 24px; }
 }
 @media (max-height: 700px) and (min-width: 861px) { .auth-glass { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .auth-glow, .auth-logo, .auth-pitch, .auth-glass, .auth-foot, .auth-box > *, .auth-box .flash.error { animation: none !important; }
+  .auth-glow, .auth-logo, .auth-pitch, .auth-glass, .auth-foot, .auth-box > *, .auth-box .flash.error { animation: none !important; } .auth-logo { opacity: 1; }
   .auth-art .bar, .auth-art .dot { animation: none !important; opacity: 1; transform: none; } .auth-art .trend { animation: none !important; stroke-dashoffset: 0; } .auth-art .pulse { display: none; }
 }
 
@@ -461,7 +464,7 @@ details { border-top: 1px solid var(--line-soft); padding: 8px 0; } details summ
 
 .auth-box input[type=text].code { padding: 0 14px; height: 58px; }
 /* Depois de um erro de login a página recarrega: sem repetir a abertura, só o aviso balança. */
-.auth.again .auth-glow, .auth.again .auth-logo, .auth.again .auth-pitch, .auth.again .auth-glass, .auth.again .auth-foot, .auth.again .auth-box > * { animation: none !important; }
+.auth.again .auth-glow, .auth.again .auth-logo, .auth.again .auth-pitch, .auth.again .auth-glass, .auth.again .auth-foot, .auth.again .auth-box > * { animation: none !important; } .auth.again .auth-logo { opacity: 1; }
 .auth.again .auth-box .flash.error { animation: shake .45s cubic-bezier(.36,.07,.19,.97) both !important; }
 .auth.again .auth-art .bar, .auth.again .auth-art .dot { animation: none !important; opacity: 1; transform: none; } .auth.again .auth-art .trend { animation: none !important; stroke-dashoffset: 0; }
 
