@@ -478,3 +478,10 @@ def test_new_pages_are_csp_clean(client, db):
         assert not re.search(r"\son(click|change|submit|input|load|error)\s*=", html, re.I), path
         for tag in re.findall(r"<script(?![^>]*\bsrc=)(?![^>]*type=)[^>]*>", html):
             assert "nonce=" in tag, (path, tag)
+
+
+def test_failed_login_keeps_the_typed_username_but_never_the_password(client):
+    c = _new_client()
+    html = _login(c, "ana.silva", "senha-secreta-errada").text
+    assert 'value="ana.silva"' in html and "senha-secreta-errada" not in html
+    assert 'class="auth again"' in html

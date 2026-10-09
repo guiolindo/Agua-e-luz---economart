@@ -26,7 +26,7 @@ def login(request: Request, username: str = Form(..., max_length=80), password: 
     result = auth_service.attempt_login(db, request, username, password)
     if not result.ok:
         error = LOCKED_ERROR.format(minutes=result.minutes) if result.locked else GENERIC_ERROR
-        return render(request, "login.html", status_code=401, next=next, error=error)
+        return render(request, "login.html", status_code=401, next=next, error=error, username=username.strip()[:80])
     target = next if next.startswith("/") and not next.startswith("//") and "\\" not in next else "/"
     if result.user.is_admin and result.user.has_2fa:
         # senha certa, mas a sessão só nasce depois do código do autenticador

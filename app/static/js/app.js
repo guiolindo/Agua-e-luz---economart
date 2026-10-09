@@ -181,7 +181,13 @@ document.querySelectorAll('[data-toggle-password]').forEach((b) => b.addEventLis
   const i = document.querySelector(b.dataset.togglePassword); if (!i) return;
   const show = i.type === 'password'; i.type = show ? 'text' : 'password'; b.textContent = show ? 'Ocultar' : 'Mostrar'; b.setAttribute('aria-pressed', String(show)); }));
 document.querySelectorAll('[data-login-form]').forEach((f) => f.addEventListener('submit', () => {
-  const b = f.querySelector('button[type="submit"]'); if (b) { setTimeout(() => { b.disabled = true; b.classList.add('loading'); b.textContent = 'Entrando…'; }, 0); } }));
+  const b = f.querySelector('button[type="submit"]'); if (b) { setTimeout(() => { b.classList.add('loading'); b.setAttribute('aria-busy', 'true'); const l = b.querySelector('.lbl'); if (l) l.textContent = 'Entrando…'; else b.textContent = 'Entrando…'; b.disabled = true; }, 0); } }));
+// Aviso de Caps Lock no campo de senha.
+(function () {
+  const p = document.getElementById('p'), w = document.getElementById('caps'); if (!p || !w) return;
+  const check = (e) => { if (e.getModifierState) w.hidden = !e.getModifierState('CapsLock'); };
+  p.addEventListener('keydown', check); p.addEventListener('keyup', check); p.addEventListener('blur', () => { w.hidden = true; });
+})();
 
 // Barra de progresso no topo quando o usuário clica em um link interno
 // (dá sensação de responsividade enquanto a próxima página carrega).

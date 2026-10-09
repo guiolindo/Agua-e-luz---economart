@@ -1,0 +1,16 @@
+{# Painel da marca das telas de acesso: gráfico decorativo (barras que crescem + linha que se desenha). Só CSS; some com "reduzir movimento". #}
+<aside class="auth-brand">
+  <div class="auth-glow g1" aria-hidden="true"></div><div class="auth-glow g2" aria-hidden="true"></div>
+  <div class="auth-logo"><img src="/static/img/logo.png" alt="Economart Atacadista" width="445" height="113"></div>
+  <div class="auth-pitch">
+    <h2>Controle de Energia</h2>
+    <p>{{ pitch }}</p>
+  </div>
+  <svg class="auth-art" viewBox="0 0 600 230" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false">
+    <g class="grid"><line x1="0" y1="60" x2="600" y2="60"/><line x1="0" y1="110" x2="600" y2="110"/><line x1="0" y1="160" x2="600" y2="160"/></g>
+    <g class="bars"><rect class="bar" style="--i:0" x="24" y="149" width="26" height="61" rx="4"/><rect class="bar" style="--i:1" x="64" y="127" width="26" height="83" rx="4"/><rect class="bar" style="--i:2" x="104" y="136" width="26" height="74" rx="4"/><rect class="bar" style="--i:3" x="144" y="108" width="26" height="102" rx="4"/><rect class="bar" style="--i:4" x="184" y="117" width="26" height="93" rx="4"/><rect class="bar" style="--i:5" x="224" y="95" width="26" height="115" rx="4"/><rect class="bar" style="--i:6" x="264" y="104" width="26" height="106" rx="4"/><rect class="bar" style="--i:7" x="304" y="76" width="26" height="134" rx="4"/><rect class="bar" style="--i:8" x="344" y="85" width="26" height="125" rx="4"/><rect class="bar" style="--i:9" x="384" y="63" width="26" height="147" rx="4"/><rect class="bar" style="--i:10" x="424" y="72" width="26" height="138" rx="4"/><rect class="bar" style="--i:11" x="464" y="44" width="26" height="166" rx="4"/></g>
+    <path class="trend" d="M37,141 L77,109 L117,124 L157,100 L197,99 L237,83 L277,96 L317,58 L357,73 L397,55 L437,54 L477,32" pathLength="1"/>
+    <circle class="pulse" cx="477" cy="32" r="9"/><circle class="dot" cx="477" cy="32" r="5"/>
+  </svg>
+  <div class="auth-foot">Economart Atacadista · uso interno</div>
+</aside>
