@@ -57,3 +57,13 @@
     <div class="field"><label for="f-notes">Observações</label><textarea id="f-notes" name="notes">{{ form.get('notes', '') }}</textarea></div>
   </details>
 {% endmacro %}
+
+{# Faixa de abertura das telas de entrada (mesma linguagem do login). `caller()` traz os botões. #}
+{% macro hero(eyebrow, title, sub) %}
+<section class="hero no-print">
+  <div class="hero-top">
+    <div class="hero-txt"><div class="hero-eyebrow">{{ eyebrow }}</div><h1>{{ title }}</h1><div class="hero-sub">{{ sub }}</div></div>
+    <div class="hero-actions">{{ caller() if caller }}</div>
+  </div>
+</section>
+{% endmacro %}

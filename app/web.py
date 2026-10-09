@@ -27,6 +27,24 @@ def _asset_version() -> str:
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["retention_days"] = get_settings().document_retention_days
+def greeting_now() -> str:
+    from app.utils.timezone import local_now
+
+    h = local_now().hour
+    return "Bom dia" if h < 12 else "Boa tarde" if h < 18 else "Boa noite"
+
+
+def today_long() -> str:
+    from app.utils.timezone import local_today
+
+    d = local_today()
+    dias = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+    meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+    return f"{dias[d.weekday()]}, {d.day} de {meses[d.month - 1]} de {d.year}"
+
+
+templates.env.globals["greeting_now"] = greeting_now
+templates.env.globals["today_long"] = today_long
 templates.env.globals["login_max_attempts"] = get_settings().max_login_attempts
 templates.env.globals["login_block_minutes"] = get_settings().login_block_minutes
 templates.env.globals["ASSET_VERSION"] = _asset_version()

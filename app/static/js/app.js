@@ -325,3 +325,34 @@ document.querySelectorAll('[data-copy-insights]').forEach((btn) => btn.addEventL
   catch (e) { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch (_) { /* sem permissão */ } t.remove(); }
   const old = btn.textContent; btn.textContent = 'Copiado'; setTimeout(() => { btn.textContent = old; }, 1600);
 }));
+
+// Indicadores: os números "contam" até o valor (700 ms, uma vez). Só mexe em valores puramente numéricos (R$ 1.234, 17, 12,5%).
+(function () {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const re = /^(R\$\s?)?(\d{1,3}(?:\.\d{3})+|\d+)(,\d+)?(\s*%)?$/;
+  const items = [];
+  document.querySelectorAll('.kpi .value').forEach((el, i) => {
+    const node = [...el.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+    if (!node) return;
+    const m = node.textContent.trim().match(re); if (!m) return;
+    const dec = m[3] ? m[3].length - 1 : 0, target = parseFloat(m[2].replace(/\./g, '') + (m[3] ? '.' + m[3].slice(1) : ''));
+    if (!isFinite(target) || target === 0) return;
+    items.push({ node, final: node.textContent, prefix: m[1] || '', suffix: m[4] || '', dec, target, delay: 120 + i * 60 });
+  });
+  if (!items.length) return;
+  const fmt = (v, d) => v.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const t0 = performance.now();
+  const tick = (now) => {
+    let live = false;
+    items.forEach((it) => {
+      const p = Math.min(1, Math.max(0, (now - t0 - it.delay) / 700));
+      if (p < 1) live = true;
+      const e = 1 - Math.pow(1 - p, 3);
+      it.node.textContent = p >= 1 ? it.final : it.prefix + fmt(it.target * e, it.dec) + it.suffix;
+    });
+    if (live) requestAnimationFrame(tick);
+  };
+  items.forEach((it) => { it.node.textContent = it.prefix + fmt(0, it.dec) + it.suffix; });
+  requestAnimationFrame(tick);
+  addEventListener('beforeprint', () => items.forEach((it) => { it.node.textContent = it.final; }));
+})();

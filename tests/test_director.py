@@ -245,3 +245,14 @@ def test_director_print_has_report_header_with_user_and_period(client, db):
     html = _user(client, "diretor9", "director").get("/diretoria?start=2026-01&end=2026-02").text
     assert 'class="print-head"' in html and "Impresso por diretor9" in html and "JAN/2026 a FEV/2026" in html
     assert "size: A4 landscape" in html
+
+
+def test_entry_screens_open_with_the_brand_hero(client, db):
+    _world(db)
+    home = client.get("/").text
+    assert 'class="hero no-print"' in home and "Painel" in home and ("Bom dia" in home or "Boa tarde" in home or "Boa noite" in home)
+    assert 'href="/import"' in home and "Importar conta" in home
+    d = _user(client, "diretor10", "director").get("/diretoria").text
+    assert 'class="hero no-print"' in d and "Painel da diretoria" in d and "Baixar planilha" in d
+    viewer = _user(client, "consul10", "viewer").get("/").text
+    assert 'class="hero no-print"' in viewer and 'href="/import"' not in viewer.split("</section>", 1)[0]
