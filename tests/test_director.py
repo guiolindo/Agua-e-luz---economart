@@ -238,3 +238,10 @@ def test_director_csv_export_and_copy_button(client, db):
     assert "data-copy-insights" in d.get("/diretoria").text and "/diretoria/export.csv" in d.get("/diretoria").text
     viewer = _user(client, "consul8", "viewer")
     assert viewer.get("/diretoria/export.csv").status_code == 403
+
+
+def test_director_print_has_report_header_with_user_and_period(client, db):
+    _world(db)
+    html = _user(client, "diretor9", "director").get("/diretoria?start=2026-01&end=2026-02").text
+    assert 'class="print-head"' in html and "Impresso por diretor9" in html and "JAN/2026 a FEV/2026" in html
+    assert "size: A4 landscape" in html

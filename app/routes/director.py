@@ -17,7 +17,9 @@ def executive_panel(request: Request, start: str | None = None, end: str | None 
                     user: User = Depends(director_required), db: Session = Depends(get_db)):
     data = executive_service.build(db, parse_reference(start), parse_reference(end), "due" if by == "due" else "reference",
                                    types or None, region or None)
-    return render(request, "director/panel.html", user=user, payload=executive_service.client_payload(data),
+    from app.models.mixins import utcnow
+
+    return render(request, "director/panel.html", user=user, payload=executive_service.client_payload(data), printed_at=utcnow(),
                   insights=executive_service.insights(data), **data)
 
 

@@ -3,6 +3,12 @@
 {% macro delta(v) %}{% if v and v.pct is not none %}<span class="var var-{{ v.direction }}">{{ v.text }}</span>{% else %}<span class="muted">—</span>{% endif %}{% endmacro %}
 {% block title %}Painel da diretoria · Economart Energia{% endblock %}
 {% block content %}
+<style>@page { size: A4 landscape; margin: 8mm; }</style>
+<header class="print-head" aria-hidden="true">
+  <img src="/static/img/logo.png" alt="" width="445" height="113">
+  <div class="ph-title"><strong>Painel da diretoria</strong><span>{{ start|month_label }} a {{ end|month_label }}{% if region %} · região {{ region }}{% endif %}</span></div>
+  <div class="ph-meta">Impresso por {{ user.username }}<br>{{ printed_at|dt_br }}</div>
+</header>
 <div class="page-head no-print">
   <div><h1>Painel da diretoria</h1><div class="muted">Custos de energia e despesas relacionadas, comparando lojas · {{ start|month_label }} a {{ end|month_label }}</div></div>
   <div class="actions"><a class="btn" href="/diretoria/export.csv?{{ request.url.query }}" title="Baixa o comparativo entre lojas em planilha">Baixar planilha</a><button class="btn" type="button" data-print>Imprimir painel</button></div>
@@ -50,7 +56,7 @@
 
 <section class="card">
   <div class="card-head"><h2>Evolução das lojas</h2><span class="muted small">marque as lojas que quer comparar</span></div>
-  <div class="storepick" id="storepick"></div>
+  <div class="storepick no-print" id="storepick"></div>
   <div class="dchart"><canvas id="c-line" role="img" aria-label="Evolução mensal por loja"></canvas></div>
 </section>
 
