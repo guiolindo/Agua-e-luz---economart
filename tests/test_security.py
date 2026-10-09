@@ -485,3 +485,16 @@ def test_failed_login_keeps_the_typed_username_but_never_the_password(client):
     html = _login(c, "ana.silva", "senha-secreta-errada").text
     assert 'value="ana.silva"' in html and "senha-secreta-errada" not in html
     assert 'class="auth again"' in html
+
+
+def test_splash_is_in_the_app_shell_but_not_on_the_login_page(client):
+    assert 'id="splash"' in client.get("/").text and "logo-white.png" in client.get("/").text
+    html = _new_client().get("/login").text
+    assert 'id="splash"' not in html and "logo-white.png" in html
+
+
+def test_splash_script_is_nonced_and_csp_allows_it(client):
+    r = client.get("/")
+    import re
+    nonce = re.search(r"'nonce-([^']+)'", r.headers["content-security-policy"]).group(1)
+    assert f'<script nonce="{nonce}">try{{if(sessionStorage' in r.text

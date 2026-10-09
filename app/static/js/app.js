@@ -277,3 +277,14 @@ document.querySelectorAll('[data-login-form]').forEach((f) => f.addEventListener
   // Clicar no sino mobile dispara o click no sino desktop (abre o mesmo painel)
   mBell.addEventListener('click', () => document.getElementById('bell')?.click());
 })();
+
+// Abertura do sistema: segura ~0,3 s e some em fade; uma vez por login e por aba.
+(function () {
+  const sp = document.getElementById('splash'); if (!sp) return;
+  const done = () => sp.remove();
+  if (document.documentElement.classList.contains('no-splash')) { done(); return; }
+  try { sessionStorage.setItem('economart_splash', sp.dataset.stamp || ''); } catch (e) { /* sem storage: abre de novo na próxima, sem problema */ }
+  const hold = Math.max(0, 340 - performance.now());
+  const go = () => setTimeout(() => { sp.classList.add('out'); setTimeout(done, 340); }, hold);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+})();

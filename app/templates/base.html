@@ -9,10 +9,13 @@
   <meta name="theme-color" content="#1B4F8A">
   {% if user %}<meta name="csrf-token" content="{{ csrf_token }}">{% endif %}
   <link rel="stylesheet" href="/static/css/app.css?v={{ ASSET_VERSION }}">
+  {% if user %}<script nonce="{{ csp_nonce }}">try{if(sessionStorage.getItem('economart_splash')==='{{ login_stamp }}'||matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('no-splash')}catch(e){}</script>{% endif %}
 </head>
 <body data-login="{{ login_stamp }}">
 <a class="skip" href="#content">Ir para o conteúdo</a>
 {% if user %}
+{# Abertura do sistema: ~0,3 s com a marca, uma vez por login e por aba. Visível desde o primeiro desenho (sem piscar o sistema antes). #}
+<div class="splash no-print" id="splash" data-stamp="{{ login_stamp }}" aria-hidden="true"><div class="splash-in"><img src="/static/img/logo-white.png" alt="" width="445" height="113"><div class="splash-bar"><i></i></div></div></div>
 {# Topbar mobile: só aparece em telas <= 800px. Hamburger abre o drawer (a mesma .side), bell e logo. #}
 <header class="m-topbar no-print" aria-hidden="false">
   <button class="m-ham" type="button" aria-label="Abrir menu" aria-controls="side" aria-expanded="false" data-drawer-toggle>
