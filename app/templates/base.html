@@ -15,6 +15,14 @@
 <a class="skip" href="#content">Ir para o conteúdo</a>
 {% if user %}
 {# Abertura do sistema: ~0,3 s com a marca, uma vez por login e por aba. Visível desde o primeiro desenho (sem piscar o sistema antes). #}
+{# Despedida do logout: o logout real é enviado no 1º instante (app.js); a animação é só apresentação. #}
+<div class="bye no-print" id="bye" hidden role="status" aria-live="polite"><div class="bye-in">
+  <img src="/static/img/logo-white.png" alt="" width="445" height="113">
+  <svg class="bye-art" viewBox="0 0 214 30" aria-hidden="true" focusable="false"><rect class="b" style="--i:0" x="0" y="18" width="12" height="10" rx="2.5"/><rect class="b" style="--i:1" x="18" y="14" width="12" height="14" rx="2.5"/><rect class="b" style="--i:2" x="36" y="16" width="12" height="12" rx="2.5"/><rect class="b" style="--i:3" x="54" y="11" width="12" height="17" rx="2.5"/><rect class="b" style="--i:4" x="72" y="13" width="12" height="15" rx="2.5"/><rect class="b" style="--i:5" x="90" y="8" width="12" height="20" rx="2.5"/><rect class="b" style="--i:6" x="108" y="10" width="12" height="18" rx="2.5"/><rect class="b" style="--i:7" x="126" y="5" width="12" height="23" rx="2.5"/><rect class="b" style="--i:8" x="144" y="7" width="12" height="21" rx="2.5"/><rect class="b" style="--i:9" x="162" y="2" width="12" height="26" rx="2.5"/><rect class="b" style="--i:10" x="180" y="4" width="12" height="24" rx="2.5"/><rect class="b" style="--i:11" x="198" y="0" width="12" height="28" rx="2.5"/></svg>
+  <div class="bye-msg"><span class="m1">Encerrando sessão…</span>
+    <span class="m2"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" class="ring" pathLength="1"/><path d="M7.5 12.5l3 3 6-6.5" class="tick" pathLength="1"/></svg>Até logo, {{ user.username }}</span></div>
+  <div class="bye-bar"><i></i></div>
+</div></div>
 <div class="splash no-print" id="splash" data-stamp="{{ login_stamp }}" aria-hidden="true"><div class="splash-in"><img src="/static/img/logo-white.png" alt="" width="445" height="113"><div class="splash-bar"><i></i></div></div></div>
 {# Topbar mobile: só aparece em telas <= 800px. Hamburger abre o drawer (a mesma .side), bell e logo. #}
 <header class="m-topbar no-print" aria-hidden="false">

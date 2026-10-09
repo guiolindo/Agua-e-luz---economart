@@ -16,8 +16,8 @@ LOCKED_ERROR = ("Acesso bloqueado por excesso de tentativas. Tente de novo em {m
 
 
 @router.get("/login")
-def login_page(request: Request, next: str = "/"):
-    return render(request, "login.html", next=next)
+def login_page(request: Request, next: str = "/", saiu: str = ""):
+    return render(request, "login.html", next=next, bye=bool(saiu))
 
 
 @router.post("/login", dependencies=[Depends(verify_csrf)])

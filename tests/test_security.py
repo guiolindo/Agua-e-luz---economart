@@ -498,3 +498,17 @@ def test_splash_script_is_nonced_and_csp_allows_it(client):
     import re
     nonce = re.search(r"'nonce-([^']+)'", r.headers["content-security-policy"]).group(1)
     assert f'<script nonce="{nonce}">try{{if(sessionStorage' in r.text
+
+
+def test_logout_via_fetch_header_revokes_the_session_like_the_form(client):
+    stolen = client.tc.cookies.get("energia_session")
+    r = client.tc.post("/logout", headers={"X-CSRF-Token": client.token}, follow_redirects=False)   # o que o app.js envia na despedida
+    assert r.status_code == 303 and r.headers["location"] == "/login"
+    thief = TestClient(app, cookies={"energia_session": stolen})
+    assert thief.get("/stores", follow_redirects=False).status_code == 303
+
+
+def test_goodbye_overlay_is_in_the_shell_and_login_shows_the_notice(client):
+    assert 'id="bye"' in client.get("/").text and "Até logo," in client.get("/").text
+    c = _new_client()
+    assert "Sessão encerrada." in c.get("/login?saiu=1").text and "Sessão encerrada." not in c.get("/login").text

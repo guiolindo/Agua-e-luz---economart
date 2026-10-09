@@ -482,3 +482,27 @@ details { border-top: 1px solid var(--line-soft); padding: 8px 0; } details summ
 html.no-splash .splash { display: none; }
 @media print { .splash { display: none !important; } }
 @media (prefers-reduced-motion: reduce) { .splash { display: none; } }
+
+/* ---------- Despedida do logout ---------- */
+body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ease, filter .6s ease; transform: scale(.985); filter: blur(3px) saturate(.8); }
+.bye { position: fixed; inset: 0; z-index: 10001; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .35s ease;
+  background: radial-gradient(120% 90% at 0% 0%, #1d5ea8 0%, var(--accent) 38%, var(--navy) 100%); } .bye[hidden] { display: none; } .bye.on { opacity: 1; }
+.bye-in { display: flex; flex-direction: column; align-items: center; gap: 22px; width: min(86vw, 360px); }
+.bye-in img { width: 200px; height: auto; filter: drop-shadow(0 8px 22px rgba(0,0,0,.3)); transform: translateY(8px) scale(.98); opacity: 0; }
+.bye.on .bye-in img { animation: bye-logo .5s .1s cubic-bezier(.2,.7,.2,1) forwards, bye-logo-up .5s 1s ease forwards; }
+.bye-art { width: 214px; height: auto; overflow: visible; } .bye-art .b { fill: rgba(255,255,255,.28); transform-box: fill-box; transform-origin: 50% 100%; }
+.bye-art .b:nth-child(4n) { fill: var(--orange); }
+.bye.on .bye-art .b { animation: bye-fall .6s calc(.45s + var(--i) * .035s) cubic-bezier(.5,0,.75,0) forwards; }
+.bye-msg { position: relative; height: 26px; width: 100%; color: #fff; font-weight: 600; font-size: 16px; text-align: center; }
+.bye-msg span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 9px; }
+.bye-msg .m1 { color: rgba(255,255,255,.8); font-weight: 500; opacity: 0; } .bye.on .bye-msg .m1 { animation: bye-in .3s .25s forwards, bye-out .25s 1s forwards; }
+.bye-msg .m2 { opacity: 0; transform: translateY(6px); } .bye.on .bye-msg .m2 { animation: bye-in .4s 1.05s forwards; }
+.bye-msg .m2 svg { color: var(--orange); } .bye-msg .ring, .bye-msg .tick { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.bye.on .bye-msg .ring { animation: draw .45s 1.05s ease forwards; } .bye.on .bye-msg .tick { animation: draw .3s 1.3s ease forwards; }
+.bye-bar { width: 130px; height: 3px; border-radius: 2px; background: rgba(255,255,255,.18); overflow: hidden; } .bye-bar i { display: block; height: 100%; background: var(--orange); transform-origin: left; transform: scaleX(1); }
+.bye.on .bye-bar i { animation: bye-empty .8s .3s ease-in-out forwards; }
+@keyframes bye-logo { to { opacity: 1; transform: none; } } @keyframes bye-logo-up { to { opacity: 1; transform: translateY(-4px); } }
+@keyframes bye-fall { to { transform: scaleY(.08); opacity: .6; } } @keyframes bye-empty { to { transform: scaleX(0); } }
+@keyframes bye-in { to { opacity: 1; transform: none; } } @keyframes bye-out { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bye { display: none !important; } body.is-leaving .shell, body.is-leaving .m-topbar { transform: none; filter: none; } }
+@media print { .bye { display: none !important; } }

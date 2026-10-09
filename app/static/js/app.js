@@ -299,3 +299,19 @@ document.querySelectorAll('[data-login-form]').forEach((f) => f.addEventListener
   logo.style.setProperty('--ly', (d.top + d.height / 2 - (a.top + a.height / 2)) + 'px');
   void logo.offsetWidth; logo.style.animation = '';    // reinicia a animação já com os valores
 })();
+
+// Logout: envia o encerramento da sessão já no primeiro instante e toca a despedida (~1,5 s) antes de ir ao login.
+// Se o envio falhar, cai no formulário normal (nunca mostra "sessão encerrada" sem ter encerrado).
+document.querySelectorAll('form[action="/logout"]').forEach((f) => f.addEventListener('submit', (e) => {
+  const ov = document.getElementById('bye');
+  if (!ov || matchMedia('(prefers-reduced-motion: reduce)').matches || f.dataset.busy) return;
+  e.preventDefault(); f.dataset.busy = '1';
+  const token = f.querySelector('[name=csrf_token]').value;
+  ov.hidden = false; void ov.offsetWidth; ov.classList.add('on'); document.body.classList.add('is-leaving');
+  const sent = fetch('/logout', { method: 'POST', headers: { 'X-CSRF-Token': token }, credentials: 'same-origin', redirect: 'manual', keepalive: true }).catch(() => null);
+  const shown = new Promise((r) => setTimeout(r, 1500));
+  Promise.all([sent, shown]).then(([resp]) => {
+    if (resp && resp.type === 'opaqueredirect') location.replace('/login?saiu=1');
+    else HTMLFormElement.prototype.submit.call(f);
+  });
+}));
