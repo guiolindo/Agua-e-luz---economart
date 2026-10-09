@@ -239,15 +239,10 @@ def insights(data: dict) -> list[dict]:
                         + (" Vale conferir o motivo: consumo, demanda ou tarifa." if key == "rise" else "")})
     fi, part = data.get("focus_idx"), data.get("partial") or []
     odd = []
-    if fi is not None:
-        for r in rows:
-            vals = r["values"]
-            cur_v = vals[fi] if fi < len(vals) else None
-            hist = [v for i, v in enumerate(vals[:fi]) if v and not (i < len(part) and part[i])][-6:]
-            if cur_v and len(hist) >= 3:
-                dev = (cur_v / (sum(hist) / len(hist)) - 1) * 100
-                if abs(dev) >= 25:
-                    odd.append((abs(dev), r["code"], dev))
+    for r in rows:
+        dev = _own_deviation(r, fi, part)
+        if dev is not None and abs(dev) >= 25:
+            odd.append((abs(dev), r["code"], dev))
     if odd:
         odd.sort(reverse=True)
         out.append({"tone": "bad" if any(d > 0 for _, _, d in odd[:3]) else "info",
@@ -282,3 +277,51 @@ def client_payload(data: dict) -> dict:
                  for r in data["rows"]],
         "avg_rs_kwh": data["kpi"]["rs_kwh"],
     }
+
+
+def _own_deviation(row: dict, fi: int | None, partial: list) -> float | None:
+    """Desvio (%) do mês em foco contra a média dos até 6 meses completos anteriores da própria loja (mín. 3 meses)."""
+    if fi is None:
+        return None
+    vals = row["values"]
+    cur_v = vals[fi] if fi < len(vals) else None
+    hist = [v for i, v in enumerate(vals[:fi]) if v and not (i < len(partial) and partial[i])][-6:]
+    if not cur_v or len(hist) < 3:
+        return None
+    return (cur_v / (sum(hist) / len(hist)) - 1) * 100
+
+
+def store_profile(data: dict, store_id: int) -> dict | None:
+    """Ficha executiva de UMA loja dentro da empresa: posição, custo por kWh contra a média, demanda e frases de destaque."""
+    rows = data["rows"]
+    row = next((r for r in rows if r["id"] == store_id), None)
+    if row is None:
+        return None
+    order = [r["id"] for r in sorted(rows, key=lambda r: r["total"] or 0, reverse=True)]
+    rank, n = order.index(store_id) + 1, len(rows)
+    focus, prev = data["focus_label"], data["prev_label"]
+    avg = data["kpi"].get("rs_kwh")
+    kwh_diff = ((row["rs_kwh"] / avg - 1) * 100) if row.get("rs_kwh") and avg else None
+    out = []
+    lv = row["vs_last_month"]
+    if row.get("last") is not None and focus:
+        if lv and lv["pct"] is not None and prev:
+            verb = "a mais" if lv["pct"] > 0 else "a menos"
+            out.append({"tone": "bad" if lv["pct"] > 5 else "good" if lv["pct"] < -5 else "info",
+                        "text": f"Em {focus} gastou {fmt.brl(row['last'], 0)}, {fmt.pct(abs(lv['pct']))} {verb} que em {prev}."})
+        else:
+            out.append({"tone": "info", "text": f"Em {focus} gastou {fmt.brl(row['last'], 0)}."})
+    out.append({"tone": "info", "text": f"É a {rank}ª de {n} lojas em gasto no período, com {fmt.pct(row['share'])} do total da empresa."})
+    dev = _own_deviation(row, data.get("focus_idx"), data.get("partial") or [])
+    if dev is not None and abs(dev) >= 25:
+        out.append({"tone": "bad" if dev > 0 else "info", "text": f"Fora do próprio padrão em {focus}: {fmt.pct(dev, signed=True)} contra a média dos meses anteriores da loja."})
+    if kwh_diff is not None and abs(kwh_diff) >= 5:
+        out.append({"tone": "bad" if kwh_diff > 0 else "good",
+                    "text": f"Paga {fmt.brl(row['rs_kwh'], 3)}/kWh, {fmt.pct(abs(kwh_diff))} {'acima' if kwh_diff > 0 else 'abaixo'} da média da empresa ({fmt.brl(avg, 3)})."})
+    if row.get("demand_use") is not None:
+        txt = f"Usa {fmt.pct(row['demand_use'])} da demanda contratada"
+        if row.get("demand_over"):
+            out.append({"tone": "bad", "text": txt + f" e ultrapassou o contratado em {row['demand_over']} mês(es) (cobrança de ultrapassagem)."})
+        elif row["demand_use"] < 60:
+            out.append({"tone": "info", "text": txt + ": o contrato pode estar maior que o necessário."})
+    return {"rank": rank, "n": n, "row": row, "kwh_diff": kwh_diff, "avg_kwh": avg, "focus_label": focus, "prev_label": prev, "insights": out}

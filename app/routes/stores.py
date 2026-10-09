@@ -80,7 +80,12 @@ def store_history(request: Request, store_id: int, type_id: int | None = None, i
     chosen = next((t for t in types if t.id == type_id), None) or default_bill_type(db) or (types[0] if types else None)
     start_d, end_d = chart_service.default_range(db, store.id, parse_reference(start), parse_reference(end))
     summary = chart_service.store_summary(db, store, start_d, end_d, by)
-    return render(request, "stores/history.html", user=user, store=store, types=types, chosen=chosen,
+    profile = None
+    if user.can_see_executive:                       # ficha executiva: só diretoria e administrador
+        from app.services import executive_service
+
+        profile = executive_service.store_profile(executive_service.build(db, start_d, end_d, by), store.id)
+    return render(request, "stores/history.html", user=user, profile=profile, store=store, types=types, chosen=chosen,
                   view=view if view in ("units", "types") else "units", indicator=indicator, start=start_d, end=end_d,
                   highlight=highlight, unit_id=unit_id, summary=summary, by=by)
 

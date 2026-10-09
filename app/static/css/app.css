@@ -552,3 +552,5 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
 @keyframes row-in { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
 .kpi { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .main td.mono, .main td .mono, .main td a.mono { white-space: nowrap; }
+
+.hero-back { display: inline-block; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.78); } .hero-back:hover { color: #fff; text-decoration: none; transform: translateX(-2px); }

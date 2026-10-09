@@ -59,10 +59,10 @@
 {% endmacro %}
 
 {# Faixa de abertura das telas de entrada (mesma linguagem do login). `caller()` traz os botões. #}
-{% macro hero(eyebrow, title, sub) %}
+{% macro hero(eyebrow, title, sub, back_href="", back_text="") %}
 <section class="hero no-print">
   <div class="hero-top">
-    <div class="hero-txt"><div class="hero-eyebrow">{{ eyebrow }}</div><h1>{{ title }}</h1><div class="hero-sub">{{ sub }}</div></div>
+    <div class="hero-txt">{% if back_href %}<a class="hero-back" href="{{ back_href }}">← {{ back_text }}</a>{% endif %}<div class="hero-eyebrow">{{ eyebrow }}</div><h1>{{ title }}</h1><div class="hero-sub">{{ sub }}</div></div>
     <div class="hero-actions">{{ caller() if caller }}</div>
   </div>
 </section>

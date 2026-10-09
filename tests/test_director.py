@@ -256,3 +256,33 @@ def test_entry_screens_open_with_the_brand_hero(client, db):
     assert 'class="hero no-print"' in d and "Painel da diretoria" in d and "Baixar planilha" in d
     viewer = _user(client, "consul10", "viewer").get("/").text
     assert 'class="hero no-print"' in viewer and 'href="/import"' not in viewer.split("</section>", 1)[0]
+
+
+def test_store_executive_profile_for_director_only(client, db):
+    w = _world(db)
+    sid = w["A"][0].id
+    url = f"/stores/{sid}?start=2026-01&end=2026-02"
+    html = _user(client, "diretor11", "director").get(url).text
+    assert "Destaques da loja" in html and "Posição no ranking" in html and "2º" in html and "de 3" in html
+    assert "É a 2ª de 3 lojas" in html and "ultrapassou o contratado" in html          # A usou 120% da demanda em fev
+    assert 'class="hero no-print"' in html and "Imprimir relatório" in html
+    func = _user(client, "func11", "operator").get(url).text
+    assert "Destaques da loja" not in func and 'class="hero no-print"' in func and "Importar conta" in func
+    assert "Destaques da loja" in client.get(url).text                                # administrador também vê
+
+
+def test_store_profile_unit_ranks_and_compares_kwh(db):
+    _world(db)
+    d = executive_service.build(db, date(2026, 1, 1), date(2026, 2, 1))
+    ids = {r["code"]: r["id"] for r in d["rows"]}
+    pa, pb = executive_service.store_profile(d, ids["A"]), executive_service.store_profile(d, ids["B"])
+    assert pb["rank"] == 1 and pa["rank"] == 2 and pa["n"] == 3
+    assert executive_service.store_profile(d, 99999) is None
+    assert any("demanda contratada" in i["text"] for i in pa["insights"])
+
+
+def test_store_profile_does_not_claim_demand_status_without_readings(client, db):
+    _store_with_bills(db, "SEMDEM", {(2026, 1): 1000, (2026, 2): 1100})
+    sid = db.query(Store).filter_by(code="SEMDEM").one().id
+    html = _user(client, "diretor12", "director").get(f"/stores/{sid}?start=2026-01&end=2026-02").text
+    assert "sem leitura de demanda" in html and "dentro do contratado" not in html

@@ -1,15 +1,26 @@
 {% extends "base.html" %}
-{% from "macros.html" import variation %}
+{% from "macros.html" import variation, hero %}
 {% block title %}{{ store.code }} · Economart Energia{% endblock %}
 {% block content %}
-<div class="page-head">
-  <div><div class="crumbs"><a href="/stores">Lojas</a> /</div><h1>{{ store.code }} — Histórico</h1>
-    <div class="muted">{{ store.name or '' }}{% if store.location %} · {{ store.location }}{% endif %}</div></div>
-  <div class="actions">{% if user.can_write %}<a class="btn primary" href="/import?store_id={{ store.id }}">Importar conta</a>{% endif %}
-    <a class="btn" id="print-link" href="/stores/{{ store.id }}/report?start={{ start.strftime('%Y-%m') }}&end={{ end.strftime('%Y-%m') }}">Imprimir relatório</a>
-    {% if user.can_write %}<a class="btn" href="/manual?store_id={{ store.id }}">Lançamento manual</a>{% endif %}
-    {% if user.can_write %}<a class="btn" href="/stores/{{ store.id }}/settings">Cadastro</a>{% endif %}</div>
+{% call hero("Loja" ~ (" · " ~ store.region if store.region else ""), store.code ~ (" — " ~ store.name if store.name else ""), (store.location or "Histórico de custos e contas"), "/stores", "Lojas") %}
+  {% if user.can_write %}<a class="btn cta" href="/import?store_id={{ store.id }}">Importar conta</a>{% endif %}
+  <a class="btn on-dark" id="print-link" href="/stores/{{ store.id }}/report?start={{ start.strftime('%Y-%m') }}&end={{ end.strftime('%Y-%m') }}">Imprimir relatório</a>
+  {% if user.can_write %}<a class="btn on-dark" href="/manual?store_id={{ store.id }}">Lançamento manual</a>
+  <a class="btn on-dark" href="/stores/{{ store.id }}/settings">Cadastro</a>{% endif %}
+{% endcall %}
+
+{% if profile %}
+{% set r = profile.row %}
+<div class="grid cols-4 kpis" style="margin-bottom:16px">
+  <div class="kpi"><div class="label">Posição no ranking</div><div class="value">{{ profile.rank }}º <span class="unit">de {{ profile.n }}</span></div><div class="sub muted">{{ r.share|num(1) }}% do gasto da empresa</div></div>
+  <div class="kpi"><div class="label">{{ profile.focus_label }}</div><div class="value">{{ r.last|brl(0) if r.last is not none else '—' }}</div><div class="sub">{% if r.vs_last_month and r.vs_last_month.pct is not none %}<span class="var var-{{ r.vs_last_month.direction }}">{{ r.vs_last_month.text }}</span> <span class="muted">vs. {{ profile.prev_label }}</span>{% else %}<span class="muted">sem mês anterior para comparar</span>{% endif %}</div></div>
+  <div class="kpi"><div class="label">Custo por kWh</div><div class="value">{{ r.rs_kwh|brl(3) if r.rs_kwh else '—' }}{% if r.rs_kwh %}<span class="unit">/kWh</span>{% endif %}</div><div class="sub muted">{% if profile.kwh_diff is not none %}{{ profile.kwh_diff|abs|num(1) }}% {{ 'acima' if profile.kwh_diff > 0 else 'abaixo' }} da média ({{ profile.avg_kwh|brl(3) }}){% else %}sem leitura de consumo{% endif %}</div></div>
+  <div class="kpi"><div class="label">Demanda contratada usada</div><div class="value">{{ r.demand_use|num(0) ~ '%' if r.demand_use is not none else '—' }}</div><div class="sub muted">{% if r.demand_use is none %}sem leitura de demanda{% elif r.demand_over %}{{ r.demand_over }} mês(es) acima do contratado{% else %}dentro do contratado{% endif %}</div></div>
 </div>
+<section class="card insights" aria-labelledby="sp-h"><h2 id="sp-h">Destaques da loja</h2>
+  <ul>{% for i in profile.insights %}<li class="ins-{{ i.tone }}"><span class="ins-dot" aria-hidden="true">{{ '▲' if i.tone == 'bad' else '▼' if i.tone == 'good' else '●' }}</span><span>{{ i.text }}</span></li>{% endfor %}</ul>
+</section>
+{% endif %}
 
 {% set state = {'view': view, 'type_id': chosen.id if chosen else None, 'indicator': indicator, 'start': start.strftime('%Y-%m'),
                 'end': end.strftime('%Y-%m'), 'highlight': highlight, 'unit_id': unit_id} %}
