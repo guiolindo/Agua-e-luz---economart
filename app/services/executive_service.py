@@ -101,7 +101,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
                 if measured > 0:
                     util[b.unit.store_id].append(measured / b.contracted_demand)
     for r in manual:
-        add(r.store_id, r.record_type_id, month_of(r.reference, r.due_date, by), r.value)
+        add(r.store_id, r.record_type_id, month_of(r.reference, None, by), r.value)
 
     # --- empresa por mês
     month_totals = [sum((cur[s.id].get(m, Decimal(0)) for s in stores), Decimal(0)) for m in months]

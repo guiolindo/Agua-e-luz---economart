@@ -158,7 +158,7 @@ Para os demais fornecedores sem foto (Câmara, combustível, manutenção) e par
 
 1. Menu **Lançamento manual**.
 2. Escolha a **loja**, a **unidade** (opcional para os fornecedores manuais) e o **tipo**.
-3. Informe o **mês**, o **valor** e, se quiser, o **vencimento** (usado para agrupar pelo mês de vencimento). Campos extras aparecem conforme o tipo (ex.: litros, horas).
+3. Informe o **mês**, o **valor** e, se quiser, o **vencimento** (só para consulta: o lançamento manual vale sempre pelo mês escolhido). Campos extras aparecem conforme o tipo (ex.: litros, horas).
 4. **Salvar**. Se já existir lançamento para o mesmo período, o sistema pergunta se é para substituir.
 
 Para corrigir uma conta: **Lojas → (loja) → (unidade) → Contas → Editar**. O funcionário também pode **excluir** uma conta ou lançamento errado (a exclusão fica registrada na Auditoria).

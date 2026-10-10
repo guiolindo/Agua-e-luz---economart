@@ -20,7 +20,7 @@ class ManualRecord(TimestampMixin, Base):
     unit_id: Mapped[int | None] = mapped_column(ForeignKey("consumer_units.id"), nullable=True)
     record_type_id: Mapped[int] = mapped_column(ForeignKey("record_types.id"), index=True)
     reference: Mapped[date] = mapped_column(Date, index=True)
-    due_date: Mapped[date | None] = mapped_column(Date, nullable=True)  # opcional: agrupar por mês de vencimento
+    due_date: Mapped[date | None] = mapped_column(Date, nullable=True)  # opcional, só informativo (o mês vale pela referência)
     value: Mapped[Decimal] = mapped_column(Numeric(14, 2))
     data: Mapped[dict] = mapped_column(JSON, default=dict)
     notes: Mapped[str | None] = mapped_column(String(2000), nullable=True)
