@@ -87,10 +87,11 @@
 
 <section class="card flush">
   <div style="padding:14px 18px 0"><h2>Comparativo entre lojas</h2></div>
+  {% set ns = namespace(prev=false) %}{% for r in rows %}{% if r.vs_prev_period and r.vs_prev_period.pct is not none %}{% set ns.prev = true %}{% endif %}{% endfor %}
   <div class="tablewrap"><table>
-    <thead><tr><th>Loja</th><th>Região</th><th class="num">Total no período</th><th class="num">% da empresa</th><th class="num">Média/mês</th><th class="num" title="média mensal vs. média do período anterior">vs. período anterior</th><th class="num">{{ focus_label }}</th><th class="num">vs. {{ prev_label }}</th><th class="num">R$/kWh</th><th class="num">Demanda usada</th></tr></thead>
+    <thead><tr><th>Loja</th><th>Região</th><th class="num">Total no período</th><th class="num">% da empresa</th><th class="num">Média/mês</th>{% if ns.prev %}<th class="num" title="média mensal vs. média do período anterior">vs. período anterior</th>{% endif %}<th class="num">{{ focus_label }}</th><th class="num">vs. {{ prev_label }}</th><th class="num">R$/kWh</th><th class="num">Demanda usada</th></tr></thead>
     <tbody>{% for r in rows %}<tr><td><a href="/stores/{{ r.id }}"><strong>{{ r.code }}</strong></a><div class="muted small">{{ r.name }}</div></td><td>{{ r.region or '—' }}</td>
-      <td class="num">{{ r.total|brl(0) }}</td><td class="num">{{ r.share|num(1) }}%</td><td class="num">{{ r.avg|brl(0) }}</td><td class="num">{{ delta(r.vs_prev_period) }}</td>
+      <td class="num">{{ r.total|brl(0) }}</td><td class="num">{{ r.share|num(1) }}%</td><td class="num">{{ r.avg|brl(0) }}</td>{% if ns.prev %}<td class="num">{{ delta(r.vs_prev_period) }}</td>{% endif %}
       <td class="num">{{ r.last|brl(0) if r.last is not none else '—' }}</td><td class="num">{{ delta(r.vs_last_month) }}</td>
       <td class="num">{{ r.rs_kwh|brl(3) if r.rs_kwh else '—' }}</td>
       <td class="num">{% if r.demand_use is not none %}{{ r.demand_use|num(0) }}%{% if r.demand_over %} <span class="badge warn" title="Contas com demanda acima da contratada">{{ r.demand_over }} acima</span>{% endif %}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
