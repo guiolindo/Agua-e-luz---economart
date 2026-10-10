@@ -5,7 +5,7 @@
 {% block content %}
 <div class="dirpanel" data-stores="{{ rows|length }}">
 <style id="page-a4">@page { size: A4 landscape; margin: 8mm; }</style>
-<style id="page-a3" media="not all">@page { size: A3 landscape; margin: 8mm; }</style>
+<style id="page-a3" media="not all">@page { size: 420mm 297mm; margin: 8mm; }</style>
 <header class="print-head" aria-hidden="true">
   <img src="/static/img/logo.png" alt="" width="445" height="113">
   <div class="ph-title"><strong>Painel da diretoria</strong><span>{{ start|month_label }} a {{ end|month_label }}{% if region %} · região {{ region }}{% endif %}</span></div>
@@ -18,7 +18,7 @@
     <button class="btn cta" type="button" data-print-menu aria-haspopup="true" aria-expanded="false">Imprimir painel ▾</button>
     <span class="printmenu-list" role="menu" hidden>
       <button type="button" role="menuitem" data-print-size="a4"><strong>A4 · várias páginas</strong><small>4 páginas, uma ideia por página</small></button>
-      <button type="button" role="menuitem" data-print-size="a3"><strong>A3 · uma folha só</strong><small>o painel inteiro numa folha grande</small></button>
+      <button type="button" role="menuitem" data-print-size="a3"><strong>A3 · uma folha só</strong><small>horizontal (paisagem), o painel inteiro numa folha</small></button>
     </span>
   </span>
 {% endcall %}

@@ -321,6 +321,7 @@ def test_director_print_button_offers_a4_and_a3(client, db):
     html = d.get("/diretoria?start=2026-01&end=2026-02").text
     assert "data-print-menu" in html and 'data-print-size="a4"' in html and 'data-print-size="a3"' in html
     assert 'id="page-a4"' in html and 'id="page-a3" media="not all"' in html           # o A3 só liga quando escolhido
+    assert "size: 420mm 297mm" in html and "horizontal" in html                         # A3 sempre deitado (420 x 297 mm)
     assert 'data-stores="3"' in html                                                    # a escala do A3 depende do nº de lojas
     js = open("app/static/js/app.js", encoding="utf-8").read()
     assert "print-a3" in js and "afterprint" in js                                      # liga ao escolher e desliga ao terminar
