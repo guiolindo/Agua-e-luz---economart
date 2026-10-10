@@ -117,7 +117,7 @@ async def batch_save(request: Request, user: User = Depends(writer_required), db
         parts.append(f"{replaced} substituído(s)")
     if skipped:
         parts.append(f"{skipped} já existia(m) e foi(ram) mantido(s)")
-    flash(request, f"{rtype.name} de {fmt.month_label(reference)}: {fmt.brl(value)} em {created + replaced} loja(s)"
+    flash(request, f"{rtype.name} de {fmt.month_label(reference)}: {fmt.brl(value)} em {created + replaced} {'loja' if created + replaced == 1 else 'lojas'}"
                    f" ({', '.join(parts)}).")
     month = reference.strftime("%Y-%m")
     return RedirectResponse(f"/notas?type_id={rtype.id}&start={month}&end={month}&origin=manual", status_code=303)

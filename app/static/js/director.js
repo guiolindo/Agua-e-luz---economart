@@ -66,7 +66,7 @@
        (v) => nfBRL3.format(v) + '/kWh', { tick: (v) => nfBRL3.format(v), refs: D.avg_rs_kwh ? [refLine(D.avg_rs_kwh, BLUE, 'média ' + nfBRL3.format(D.avg_rs_kwh))] : [] });
   const eu = rows.filter((r) => r.demand_use != null).sort((a, b) => b.demand_use - a.demand_use);
   hbar('c-util', eu.map((r) => r.code), eu.map((r) => r.demand_use), eu.map((r) => r.demand_use > 100 ? UP : r.demand_use < 70 ? '#c9a227' : '#5b9a6b'),
-       (v, i) => nfN.format(v) + '% da demanda contratada' + (eu[i].demand_over ? ' · ' + eu[i].demand_over + ' conta(s) acima' : ''),
+       (v, i) => nfN.format(v) + '% da demanda contratada' + (eu[i].demand_over ? ' · ' + eu[i].demand_over + (eu[i].demand_over === 1 ? ' conta acima' : ' contas acima') : ''),
        { tick: (v) => v + '%', refs: [refLine(100, UP, '100%')], x: { suggestedMax: 110 } });
 
   // 8) comparar duas lojas

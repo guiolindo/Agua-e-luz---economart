@@ -126,7 +126,7 @@ def test_one_entry_becomes_many_records(client, db):
     assert all(x.value == Decimal("1200.00") and x.reference == date(2026, 9, 1) and x.unit_id is None for x in recs)
     assert all(x.due_date == date(2026, 10, 10) and x.notes == "contrato 2026" for x in recs)
     flash = client.get("/notas").text
-    assert "em 2 loja(s)" in flash and "R$ 1.200,00" in flash
+    assert "em 2 lojas" in flash and "R$ 1.200,00" in flash
     batches = {a_.details["batch"] for a_ in db.query(AuditLog).filter_by(entity="manual_record", action="create")}
     assert len(batches) == 1                                                   # auditoria agrupa o lote
 

@@ -212,7 +212,8 @@ def insights(data: dict) -> list[dict]:
     focus, prev = data["focus_label"], data["prev_label"]
 
     def names(codes):
-        return ", ".join(codes[:6]) + (f" e mais {len(codes) - 6}" if len(codes) > 6 else "")
+        n = len(codes) - 6
+        return ", ".join(codes[:6]) + (f" e outras {n}" if n > 1 else " e mais 1" if n == 1 else "")
 
     def reais(v):
         return fmt.brl(v, 0)
@@ -229,9 +230,9 @@ def insights(data: dict) -> list[dict]:
     if y and y["var"]["pct"] is not None:
         verb = "a mais" if y["var"]["pct"] > 0 else "a menos"
         tone = "bad" if y["var"]["pct"] > 5 else "good" if y["var"]["pct"] < -5 else "info"
-        out.append({"tone": tone, "text": f"Contra {y['label']} (mesmo mês do ano anterior, {y['stores']} loja(s) com dado nos dois): {fmt.pct(abs(y['var']['pct']))} {verb}."})
+        out.append({"tone": tone, "text": f"Contra {y['label']} (mesmo mês do ano anterior, {y['stores']} {'loja com dado' if y['stores'] == 1 else 'lojas com dado'} nos dois): {fmt.pct(abs(y['var']['pct']))} {verb}."})
     if k["top"]:
-        out.append({"tone": "info", "text": f"A loja que mais pesa no período é {k['top']['code']}, com {fmt.pct(k['top']['share'])} do gasto total."})
+        out.append({"tone": "info", "text": f"Maior participação no gasto do período: {k['top']['code']}, com {fmt.pct(k['top']['share'])} do total."})
     for key, word, tone in (("rise", "alta", "bad"), ("fall", "queda", "good")):
         r = k.get(key)
         if r and r["vs_last_month"]["pct"] is not None and abs(r["vs_last_month"]["pct"]) >= 5:
@@ -250,7 +251,7 @@ def insights(data: dict) -> list[dict]:
                             + ", ".join(f"{c} {fmt.pct(d, signed=True)}" for _, c, d in odd[:3]) + "."})
     over = [r["code"] for r in rows if (r.get("demand_over") or 0) > 0]
     if over:
-        out.append({"tone": "bad", "text": f"Ultrapassaram a demanda contratada em algum mês do período (cobrança de ultrapassagem): {names(over)}."})
+        out.append({"tone": "bad", "text": f"{len(over)} {'loja ultrapassou' if len(over) == 1 else 'lojas ultrapassaram'} a demanda contratada em algum mês do período (pode gerar cobrança por ultrapassagem): {names(over)}."})
     low = [r["code"] for r in rows if r.get("demand_use") is not None and r["demand_use"] < 60]
     if low:
         out.append({"tone": "info", "text": f"Usam menos de 60% da demanda contratada (pode haver contrato maior que o necessário): {names(low)}."})
@@ -260,7 +261,7 @@ def insights(data: dict) -> list[dict]:
         if dear:
             out.append({"tone": "bad", "text": f"Custo por kWh acima da média da empresa ({fmt.brl(avg, 3)}) em mais de 15%: {names(dear)}."})
     if k["pending"]:
-        out.append({"tone": "info", "text": f"Faltam {k['pending']} conta(s) ou lançamento(s) de {focus} (veja a lista de pendências no fim da página)."})
+        out.append({"tone": "info", "text": f"{'Falta' if k['pending'] == 1 else 'Faltam'} {k['pending']} {'conta ou lançamento' if k['pending'] == 1 else 'contas ou lançamentos'} de {focus} (veja a lista de pendências no fim da página)."})
     return out
 
 

@@ -193,7 +193,7 @@ def test_director_summary_in_plain_language(client, db):
     d = _user(client, "diretor7", "director")
     html = d.get("/diretoria").text
     assert "Destaques de" in html and "a empresa gastou" in html
-    assert "A loja que mais pesa no período é" in html
+    assert "Maior participação no gasto do período" in html
 
 
 def _store_with_bills(db, code, series):
@@ -235,9 +235,10 @@ def test_director_csv_export_and_copy_button(client, db):
     assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
     body = r.content.decode("utf-8")
     assert body.startswith("﻿Loja;Nome;Região;Total no período (R$)") and "\r\nA;Loja A;MG;" in body
-    assert "data-copy-insights" in d.get("/diretoria").text and "/diretoria/export.csv" in d.get("/diretoria").text
+    page = d.get("/diretoria").text
+    assert "data-copy-insights" in page and "/diretoria/export.xlsx" in page     # o botão baixa a planilha formatada
     viewer = _user(client, "consul8", "viewer")
-    assert viewer.get("/diretoria/export.csv").status_code == 403
+    assert viewer.get("/diretoria/export.csv").status_code == 403 and viewer.get("/diretoria/export.xlsx").status_code == 403
 
 
 def test_director_print_has_report_header_with_user_and_period(client, db):

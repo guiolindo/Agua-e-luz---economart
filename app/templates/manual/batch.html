@@ -12,7 +12,7 @@
   {{ csrf(csrf_token) }}
   {% if errors %}<div class="flash error" role="alert">Corrija os campos destacados.</div>{% endif %}
   {% if dups %}
-  <div class="flash warn" role="alert"><strong>{{ dups|length }} loja(s) já têm lançamento desse tipo neste mês:</strong>
+  <div class="flash warn" role="alert"><strong>{{ dups|length }} {{ 'loja já tem' if dups|length == 1 else 'lojas já têm' }} lançamento desse tipo neste mês:</strong>
     <ul class="notice-list">{% for d in dups %}<li><strong>{{ d.store.code }}</strong> · {{ d.record.value|brl }}</li>{% endfor %}</ul>
     <div class="field" style="margin:10px 0 0"><label for="dup">O que fazer com elas?</label>
       <select id="dup" name="duplicate_action" required><option value="">Escolha…</option>
@@ -78,8 +78,8 @@
     document.querySelectorAll('fieldset[data-set]').forEach((fs) => { const on = fs.dataset.set === type.value; fs.hidden = !on; fs.disabled = !on; });
     const n = boxes.filter((b) => b.checked).length, v = num(value.value);
     if (!n) total.textContent = 'Nenhuma loja marcada.';
-    else total.textContent = n + ' loja(s) marcada(s)' + (v === null ? '.' : ' × ' + brl.format(v) + ' = ' + brl.format(v * n) + ' no total.');
-    go.textContent = n ? 'Lançar em ' + n + ' loja(s)' : 'Lançar';
+    else total.textContent = n + (n === 1 ? ' loja marcada' : ' lojas marcadas') + (v === null ? '.' : ' × ' + brl.format(v) + ' = ' + brl.format(v * n) + ' no total.');
+    go.textContent = n ? 'Lançar em ' + n + (n === 1 ? ' loja' : ' lojas') : 'Lançar';
   }
   qs.addEventListener('input', () => { const q = qs.value.trim().toLowerCase(); opts.forEach((o) => { o.hidden = !!q && !o.dataset.q.includes(q); }); });
   document.getElementById('all').addEventListener('click', () => { opts.forEach((o) => { if (!o.hidden) o.querySelector('input').checked = true; }); sync(); });

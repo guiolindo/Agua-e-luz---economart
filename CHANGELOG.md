@@ -5,6 +5,9 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-10
 
+- **Planilhas em XLSX formatado:** o painel da diretoria baixa um arquivo com 5 abas (Resumo, Lojas, Mês a mês, Fornecedores, Pendências), com a identidade da marca, valores como número/moeda, mapa de calor, totais, filtros, cabeçalho congelado e configuração de impressão. A lista de Contas também ganhou XLSX. O CSV continua disponível (link "CSV" em Contas).
+- Revisão de linguagem no painel da diretoria: pluralização correta, "maior participação no gasto", "pode gerar cobrança por ultrapassagem", valor em R$ junto do percentual nos cartões de alta e queda, selo "Top 15" nos rankings; sem a linha "Conexão protegida · acesso monitorado" no login.
+
 - **Corrigido:** a produção não subia (`Can't locate revision identified by '0003'`). A revisão 0003 voltou como migração vazia; teste impede nova remoção.
 - Corrigido: excluir uma conta vinda de importação dava erro no Postgres (a importação ainda apontava para ela).
 - Despesas manuais valem só pelo mês de referência (a data de contabilização foi tentada e abandonada).

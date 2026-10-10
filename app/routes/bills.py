@@ -110,6 +110,23 @@ def _csv_cell(v) -> str:
     return "'" + t if t[:1] in ("=", "+", "-", "@", "\t", "\r") else t
 
 
+@router.get("/notas/export.xlsx")
+def notas_xlsx(store_id: int | None = None, type_id: int | None = None, start: str | None = None, end: str | None = None,
+               q: str = "", origin: str = "", user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Mesmos filtros da tela, em planilha formatada (valores como número, datas como data)."""
+    from fastapi.responses import Response
+
+    from app.services import audit_service, xlsx_service
+
+    rows, _, _ = _collect(db, store_id, type_id, start, end, q, origin)
+    filters = "filtrado" if (store_id or type_id or start or end or q or origin) else "todos os registros"
+    body = xlsx_service.bills_workbook(rows, filters)
+    audit_service.log(db, user.id, "export", "bills", None, {"rows": len(rows), "formato": "xlsx", "q": q, "store_id": store_id})
+    db.commit()
+    return Response(body, media_type=xlsx_service.EXCEL_MIME,
+                    headers={"Content-Disposition": 'attachment; filename="contas-economart.xlsx"'})
+
+
 @router.get("/notas/export.csv")
 def notas_csv(store_id: int | None = None, type_id: int | None = None, start: str | None = None, end: str | None = None,
               q: str = "", origin: str = "", user: User = Depends(current_user), db: Session = Depends(get_db)):

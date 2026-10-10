@@ -4,7 +4,7 @@
 <div class="page-head"><div>
   <h1>Contas e lançamentos</h1>
   <div class="muted">Busque, abra o PDF, imprima ou edite qualquer conta ou lançamento.</div>
-</div><a class="btn" href="/notas/export.csv?{{ request.url.query }}" title="Baixa em planilha (Excel) o que está filtrado na tela">Baixar planilha (CSV)</a></div>
+</div><a class="btn" href="/notas/export.xlsx?{{ request.url.query }}" title="Baixa em planilha (Excel) o que está filtrado na tela">Baixar planilha</a> <a class="muted small" href="/notas/export.csv?{{ request.url.query }}" title="Formato simples, para importar em outros sistemas">CSV</a></div>
 
 <form class="card" method="get" action="/notas" data-no-loading>
   <div class="row row-searchbar">

@@ -18,7 +18,7 @@ Stack: Python · FastAPI · SQLAlchemy 2 · Jinja2 · Chart.js (embutido em `sta
 - **Auditoria à prova de adulteração:** cada evento é selado em cadeia; *Auditoria → Verificar integridade* aponta qualquer alteração feita fora do sistema.
 - **Arquivo que não é conta de energia** é barrado na importação e os bytes são apagados (o Gemini classifica e o servidor confere).
 - **Disjuntor do Gemini:** depois de 5 falhas seguidas do Google, o sistema falha rápido por 30 s em vez de esperar timeouts.
-- **Contas → Baixar planilha (CSV):** exporta o que está filtrado, pronto para o Excel.
+- **Planilhas XLSX formatadas:** o painel da diretoria baixa um arquivo com abas (Resumo, Lojas, Mês a mês, Fornecedores, Pendências) e *Contas* baixa o que está filtrado, ambos com valores numéricos, totais e filtros. O CSV de Contas continua disponível.
 - **Migrações do banco (Alembic):** aplicadas ao subir; bancos antigos são adotados sem perder dados. Veja `docs/operations.md`.
 - **Central de Alertas:** cada conta nova é comparada com o histórico da própria unidade (valor, custo por kWh, demanda acima do contratado, nota fiscal repetida, itens que não fecham com o total, período de leitura estranho). Quem confere marca "Conferido" e o alerta some; fica na auditoria.
 - **Ajuda por perfil** (administrador, funcionário, diretoria, consulta).

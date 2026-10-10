@@ -2,7 +2,7 @@
 {% from "macros.html" import csrf, hero %}
 {% block title %}Painel · Economart Energia{% endblock %}
 {% block content %}
-{% call hero(greeting_now() ~ ", " ~ user.username, "Painel", today_long() ~ " · " ~ (month|month_label) ~ (": " ~ (pending|length) ~ " pendência(s)" if user.can_write and pending|length else (": tudo em dia" if user.can_write and stores else ""))) %}
+{% call hero(greeting_now() ~ ", " ~ user.username, "Painel", today_long() ~ " · " ~ (month|month_label) ~ (": " ~ (pending|length) ~ (' pendência' if pending|length == 1 else ' pendências') if user.can_write and pending|length else (": tudo em dia" if user.can_write and stores else ""))) %}
   {% if user.can_write %}<a class="btn cta" href="/import">Importar conta</a><a class="btn on-dark" href="/manual">Lançamento manual</a>{% endif %}
   <a class="btn on-dark" href="/notas">Contas</a>
   <a class="btn on-dark" href="/alertas">Alertas{% if alerts_open and alerts_open.count %} · {{ alerts_open.count }}{% endif %}</a>

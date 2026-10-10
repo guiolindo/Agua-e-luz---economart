@@ -11,7 +11,7 @@
 </header>
 {% call hero(greeting_now() ~ ", " ~ user.username, "Painel da diretoria", "Custos de energia e despesas relacionadas · " ~ (start|month_label) ~ " a " ~ (end|month_label)) %}
   <a class="btn on-dark" href="/alertas">Alertas{% if alerts_open and alerts_open.count %} · {{ alerts_open.count }}{% endif %}</a>
-  <a class="btn on-dark" href="/diretoria/export.csv?{{ request.url.query }}" title="Baixa o comparativo entre lojas em planilha">Baixar planilha</a>
+  <a class="btn on-dark" href="/diretoria/export.xlsx?{{ request.url.query }}" title="Baixa a planilha formatada: resumo, lojas, mês a mês, fornecedores e pendências">Baixar planilha</a>
   <button class="btn cta" type="button" data-print>Imprimir painel</button>
 {% endcall %}
 
@@ -25,13 +25,13 @@
 <div class="grid cols-4 kpis dir-kpis">
   <div class="kpi"><div class="label">Total no período</div><div class="value">{{ kpi.total|brl(0) }}</div><div class="sub">{% if kpi.vs_prev and kpi.vs_prev.pct is not none %}{{ delta(kpi.vs_prev) }} <span class="muted">média/mês vs. período anterior{% if kpi.comparable_stores %} ({{ kpi.comparable_stores }} lojas com histórico){% endif %}</span>{% else %}<span class="muted">{{ months|length }} meses no período</span>{% endif %}</div></div>
   <div class="kpi"><div class="label">Último mês ({{ focus_label }})</div><div class="value">{{ kpi.last_month|brl(0) }}</div><div class="sub">{{ delta(kpi.last_vs_prev) }} <span class="muted">vs. {{ prev_label or 'mês anterior' }}</span></div></div>
-  {% if kpi.yoy %}<div class="kpi"><div class="label">Contra {{ kpi.yoy.label }}</div><div class="value">{{ kpi.yoy.cur|brl(0) }}</div><div class="sub">{{ delta(kpi.yoy.var) }} <span class="muted">mesmo mês, ano anterior ({{ kpi.yoy.stores }} loja(s))</span></div></div>
+  {% if kpi.yoy %}<div class="kpi"><div class="label">Contra {{ kpi.yoy.label }}</div><div class="value">{{ kpi.yoy.cur|brl(0) }}</div><div class="sub">{{ delta(kpi.yoy.var) }} <span class="muted">mesmo mês, ano anterior ({{ plural(kpi.yoy.stores, 'loja', 'lojas') }})</span></div></div>
   {% else %}<div class="kpi"><div class="label">Média mensal</div><div class="value">{{ kpi.avg_month|brl(0) }}</div><div class="sub muted">{{ kpi.stores }} lojas com dados</div></div>{% endif %}
   <div class="kpi"><div class="label">Custo médio da energia</div><div class="value">{{ kpi.rs_kwh|brl(3) if kpi.rs_kwh else '—' }}<span class="unit">/kWh</span></div><div class="sub muted">contas de distribuidora</div></div>
   <div class="kpi"><div class="label">Maior gasto</div><div class="value sm">{{ kpi.top.code if kpi.top else '—' }}</div><div class="sub muted">{{ kpi.top.share|num(1) ~ '% do total' if kpi.top else '' }}</div></div>
-  <div class="kpi"><div class="label">Maior alta em {{ focus_label }}</div><div class="value sm">{{ kpi.rise.code if kpi.rise else '—' }}</div><div class="sub">{{ delta(kpi.rise.vs_last_month) if kpi.rise else '' }}</div></div>
-  <div class="kpi"><div class="label">Maior queda em {{ focus_label }}</div><div class="value sm">{{ kpi.fall.code if kpi.fall else '—' }}</div><div class="sub">{{ delta(kpi.fall.vs_last_month) if kpi.fall else '' }}</div></div>
-  <div class="kpi"><div class="label">Pendências de {{ focus_label }}</div><div class="value">{{ kpi.pending }}</div><div class="sub muted">contas/lançamentos faltando</div></div>
+  <div class="kpi"><div class="label">Maior alta em {{ focus_label }}</div><div class="value sm">{{ kpi.rise.code if kpi.rise else '—' }}</div><div class="sub">{% if kpi.rise %}{% if kpi.rise.abs_last_month is not none %}+{{ kpi.rise.abs_last_month|brl(0) }} · {% endif %}{{ delta(kpi.rise.vs_last_month) }}{% endif %}</div></div>
+  <div class="kpi"><div class="label">Maior queda em {{ focus_label }}</div><div class="value sm">{{ kpi.fall.code if kpi.fall else '—' }}</div><div class="sub">{% if kpi.fall %}{% if kpi.fall.abs_last_month is not none %}{{ kpi.fall.abs_last_month|brl(0) }} · {% endif %}{{ delta(kpi.fall.vs_last_month) }}{% endif %}</div></div>
+  <div class="kpi"><div class="label">Pendências de {{ focus_label }}</div><div class="value">{{ kpi.pending }}</div><div class="sub muted">{{ 'conta ou lançamento' if kpi.pending == 1 else 'contas ou lançamentos' }} do mês</div></div>
 </div>
 
 <details class="card filters-box no-print"><summary><span>Filtros <span class="muted">· {{ start|month_label }} a {{ end|month_label }}{{ ' · ' ~ region if region }}</span></span></summary>
@@ -47,12 +47,12 @@
 {% if not rows %}<div class="card"><p class="muted" style="margin:0">Sem dados no período/filtros selecionados.</p></div>{% else %}
 <div class="grid cols-main2">
   <section class="card"><div class="card-head"><h2>Gasto da empresa por mês e fornecedor</h2><span class="muted small">barras = R$ · linha = variação do total</span></div><div class="dchart"><canvas id="c-month" role="img" aria-label="Gasto mensal por fornecedor"></canvas></div></section>
-  <section class="card"><div class="card-head"><h2>Ranking de lojas</h2><span class="muted small">total no período</span></div><div class="dchart tall"><canvas id="c-rank" role="img" aria-label="Ranking de lojas por gasto"></canvas></div></section>
+  <section class="card"><div class="card-head"><h2>Ranking de lojas <span class="muted small">· Top 15</span></h2><span class="muted small">total no período</span></div><div class="dchart tall"><canvas id="c-rank" role="img" aria-label="Ranking de lojas <span class="muted small">· Top 15</span> por gasto"></canvas></div></section>
 </div>
 
 <div class="grid cols-2">
-  <section class="card"><div class="card-head"><h2>Variação em {{ focus_label }} vs. {{ prev_label }}</h2><span class="muted small">↑ gastou mais · ↓ gastou menos</span></div><div class="dchart tall"><canvas id="c-var" role="img" aria-label="Variação por loja no último mês"></canvas></div></section>
-  <section class="card"><div class="card-head"><h2>Composição do gasto por loja</h2><span class="muted small">% por fornecedor</span></div><div class="dchart tall"><canvas id="c-mix" role="img" aria-label="Composição por fornecedor"></canvas></div></section>
+  <section class="card"><div class="card-head"><h2>Variação em {{ focus_label }} vs. {{ prev_label }} <span class="muted small">· até 20 lojas</span></h2><span class="muted small">↑ gastou mais · ↓ gastou menos</span></div><div class="dchart tall"><canvas id="c-var" role="img" aria-label="Variação por loja no último mês"></canvas></div></section>
+  <section class="card"><div class="card-head"><h2>Composição do gasto por loja <span class="muted small">· Top 15</span></h2><span class="muted small">% por fornecedor</span></div><div class="dchart tall"><canvas id="c-mix" role="img" aria-label="Composição por fornecedor"></canvas></div></section>
 </div>
 
 <section class="card">
@@ -63,7 +63,7 @@
 
 <div class="grid cols-2">
   <section class="card"><div class="card-head"><h2>Custo por kWh</h2><span class="muted small">R$/kWh nas contas · linha = média da empresa</span></div><div class="dchart tall"><canvas id="c-kwh" role="img" aria-label="Custo por kWh por loja"></canvas></div></section>
-  <section class="card"><div class="card-head"><h2>Uso da demanda contratada</h2><span class="muted small">demanda medida ÷ contratada · acima de 100% paga ultrapassagem</span></div><div class="dchart tall"><canvas id="c-util" role="img" aria-label="Uso da demanda contratada"></canvas></div></section>
+  <section class="card"><div class="card-head"><h2>Uso da demanda contratada</h2><span class="muted small">demanda medida ÷ contratada · acima de 100% pode gerar cobrança por ultrapassagem</span></div><div class="dchart tall"><canvas id="c-util" role="img" aria-label="Uso da demanda contratada"></canvas></div></section>
 </div>
 
 <section class="card">

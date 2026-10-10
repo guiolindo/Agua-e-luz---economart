@@ -30,6 +30,7 @@ dos dados lançados no sistema da empresa. A folha impressa por loja mantém tod
 | [segno](https://github.com/heuer/segno) | QR code do 2FA | BSD-3 |
 | [python-multipart](https://github.com/Kludex/python-multipart) | upload de arquivos | Apache-2.0 |
 | [tzdata](https://github.com/python/tzdata) | fuso horário (Brasília) | Apache-2.0 |
+| [openpyxl](https://openpyxl.readthedocs.io/) | planilhas XLSX formatadas | MIT |
 | [Chart.js](https://www.chartjs.org/) | gráficos (embutido em `app/static/js/vendor`) | MIT |
 
 Ferramentas de desenvolvimento: pytest, httpx, ruff, pip-audit, Playwright (conferência visual).
