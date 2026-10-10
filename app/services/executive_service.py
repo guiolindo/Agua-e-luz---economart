@@ -19,6 +19,7 @@ from app.utils.timezone import local_today
 
 NO_OWN_KWH_TYPES = {"cemig-geracao"}   # compra de energia: os kWh já estão na conta da distribuição (não somar 2x)
 PARTIAL_RATIO = 0.6   # mês com menos de 60% das lojas (vs. o melhor mês) é tratado como parcial
+DEMAND_TOLERANCE = 1.05   # REN ANEEL 1.000/2021 (Grupo A): ultrapassagem só passa a contar acima de 5% da demanda contratada
 MIN_PREV_MONTHS = 3  # histórico mínimo de uma loja no período anterior para compará-la
 TYPE_COLORS = ["#1b4f8a", "#f47920", "#4f9a94", "#8a6aa3", "#b08a3e", "#7a8f5a", "#7f8b9b", "#b0605f"]
 
@@ -154,7 +155,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
             "rs_kwh": _f(e["value"] / e["kwh"]) if e and e["kwh"] else None,
             "kwh": _f(e["kwh"]) if e and e["kwh"] else None,
             "demand_use": _f(sum(u, Decimal(0)) / len(u) * 100) if u else None,
-            "demand_over": sum(1 for x in (u or []) if x > 1),
+            "demand_over": sum(1 for x in (u or []) if x > DEMAND_TOLERANCE),
             "mix": {str(t): _f(v) for t, v in mix[s.id].items()},
         })
     rows.sort(key=lambda r: r["total"], reverse=True)
@@ -322,7 +323,7 @@ def store_profile(data: dict, store_id: int) -> dict | None:
     if row.get("demand_use") is not None:
         txt = f"Usa {fmt.pct(row['demand_use'])} da demanda contratada"
         if row.get("demand_over"):
-            out.append({"tone": "bad", "text": txt + f" e ultrapassou o contratado em {row['demand_over']} mês(es) (cobrança de ultrapassagem)."})
+            out.append({"tone": "bad", "text": txt + f" e ultrapassou o contratado em {row['demand_over']} mês(es) (pode gerar cobrança de ultrapassagem)."})
         elif row["demand_use"] < 60:
             out.append({"tone": "info", "text": txt + ": o contrato pode estar maior que o necessário."})
     return {"rank": rank, "n": n, "row": row, "kwh_diff": kwh_diff, "avg_kwh": avg, "focus_label": focus, "prev_label": prev, "insights": out}

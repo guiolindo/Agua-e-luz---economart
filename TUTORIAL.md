@@ -194,7 +194,7 @@ Como ler com cuidado:
 
 - Um mês em que **poucas lojas já lançaram** aparece com **\*** e **não entra nas variações**; os indicadores usam o último mês **completo**.
 - "vs. período anterior" compara a **média por mês**, só das lojas que têm histórico.
-- A **demanda usada acima de 100%** significa conta com demanda medida maior que a contratada (cobrança de ultrapassagem).
+- A **demanda usada acima de 100%** significa conta com demanda medida maior que a contratada. A cobrança de ultrapassagem costuma valer só acima de **5%** de tolerância (REN ANEEL 1.000/2021, unidades do Grupo A); confira o item na fatura.
 
 ## B6. Imprimir
 

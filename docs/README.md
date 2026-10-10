@@ -34,6 +34,7 @@ Dentro do sistema há também a tela **Ajuda**, diferente para cada perfil.
 
 | Documento | O que cobre |
 |---|---|
+| [ROADMAP.md](ROADMAP.md) | O que vem depois da aprovação, em ordem de benefício, esforço e risco |
 | [APRESENTACAO.md](APRESENTACAO.md) | Roteiro da demonstração para a diretoria, perguntas prováveis, checklist e riscos conhecidos |
 | [`../DECISIONS.md`](../DECISIONS.md) | Decisões e o porquê (folha igual à planilha, lançamento manual por referência, migração 0003, etc.) |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | O que mudou, dia a dia |

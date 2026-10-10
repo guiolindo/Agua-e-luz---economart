@@ -145,7 +145,7 @@ def executive_workbook(data: dict, insights: list[dict], pending: list[dict], fi
         ("Total no período", k["total"], BRL0),
         (f"Último mês ({focus})", k["last_month"], BRL0),
         ("Média mensal", k["avg_month"], BRL0),
-        ("Custo médio (R$/kWh)", k["rs_kwh"], KWH),
+        ("Custo efetivo por kWh (total da conta ÷ kWh)", k["rs_kwh"], KWH),
         ("Lojas com dados", k["stores"], "0"),
         ("Maior gasto", f"{k['top']['code']} ({fmt.pct(k['top']['share'])} do total)" if k["top"] else "—", None),
         (f"Maior alta em {focus}", lead(rise), None),
@@ -190,6 +190,22 @@ def executive_workbook(data: dict, insights: list[dict], pending: list[dict], fi
         c.font = Font(size=10)
         ws.row_dimensions[r].height = 30 if len(item["text"]) > 90 else 18
         r += 1
+    r += 1
+    ws.cell(row=r, column=1, value="Como ler estes números").font = Font(bold=True, size=12, color=NAVY)
+    r += 1
+    for note in (
+        "Competência: contas e lançamentos manuais entram pelo mês de referência.",
+        "Custo efetivo por kWh: total da conta de distribuidora ÷ kWh, com demanda, impostos e multas incluídos. Não é a tarifa da energia.",
+        "Mês incompleto: marcado com * e fora das variações.",
+        "Demanda: a ultrapassagem só conta acima de 5% da contratada (REN ANEEL 1.000/2021, Grupo A).",
+        "Variações e destaques indicam onde conferir; a causa não é identificada pelo sistema.",
+    ):
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=4)
+        c = ws.cell(row=r, column=1, value=note)
+        c.font = Font(size=9, color=GREY)
+        c.alignment = Alignment(wrap_text=True, vertical="top")
+        ws.row_dimensions[r].height = 26 if len(note) > 95 else 15
+        r += 1
     _widths(ws, [30, 46, 26, 26])
     ws.sheet_view.showGridLines = False
     ws.page_setup.orientation = "portrait"
@@ -201,7 +217,7 @@ def executive_workbook(data: dict, insights: list[dict], pending: list[dict], fi
     # ---- Lojas (comparativo)
     ws = wb.create_sheet("Lojas")
     heads = ["Loja", "Nome", "Região", "Total no período", "% da empresa", "Média por mês", "Variação da média vs. período anterior",
-             f"{focus}", f"Variação vs. {prev}", "R$/kWh", "Demanda usada", "Contas acima da contratada"]
+             f"{focus}", f"Variação vs. {prev}", "Custo efetivo por kWh", "Demanda usada", "Contas acima da contratada (>5%)"]
     first = _title(ws, "Comparativo entre lojas", subtitle, len(heads))
     _header(ws, first, heads)
     row = first + 1

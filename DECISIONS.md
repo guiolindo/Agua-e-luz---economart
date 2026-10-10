@@ -140,3 +140,19 @@ gráfico e a logo; desligado em `prefers-reduced-motion` e na impressão.
 **Condição.** Só faz sentido quando o módulo de água existir (decisão 10). Antes disso, mostrar uma escolha com um módulo só
 seria um passo a mais para o usuário.
 
+## 12. Pesquisa de evolução (2026-10-10) e o que foi adotado ✅
+
+**Contexto.** Uma IA de pesquisa avaliou o sistema contra boas práticas de gestão de contas de energia (ISO 50006, ANEEL,
+IBM Envizi, EnergyCAP e outros). Conclusão: o núcleo já é de um produto profissional; o maior ganho está em explicar os
+números e controlar o fechamento, não em acrescentar gráficos.
+
+**Adotado antes da apresentação (baixo risco):**
+- "R$/kWh" passou a se chamar **custo efetivo por kWh** (total da conta ÷ kWh, com demanda, impostos e multas).
+- **Nota metodológica** no painel e na planilha: competência, mês incompleto, mercado livre, demanda e limite dos destaques.
+- **Tolerância de 5% na demanda** (REN ANEEL 1.000/2021, Grupo A). Entre 100% e 105% o alerta é de baixa gravidade e
+  não afirma cobrança; acima de 105% diz que costuma haver cobrança e manda conferir a fatura. O texto antigo ("há cobrança de
+  ultrapassagem" a partir de 100%) podia afirmar uma cobrança que não existe. O valor da multa (2× ou 3× a tarifa) não foi
+  confirmado no texto oficial e não aparece no sistema.
+
+**Roadmap depois da aprovação:** ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
+

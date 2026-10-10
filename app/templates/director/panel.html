@@ -27,7 +27,7 @@
   <div class="kpi"><div class="label">Último mês ({{ focus_label }})</div><div class="value">{{ kpi.last_month|brl(0) }}</div><div class="sub">{{ delta(kpi.last_vs_prev) }} <span class="muted">vs. {{ prev_label or 'mês anterior' }}</span></div></div>
   {% if kpi.yoy %}<div class="kpi"><div class="label">Contra {{ kpi.yoy.label }}</div><div class="value">{{ kpi.yoy.cur|brl(0) }}</div><div class="sub">{{ delta(kpi.yoy.var) }} <span class="muted">mesmo mês, ano anterior ({{ plural(kpi.yoy.stores, 'loja', 'lojas') }})</span></div></div>
   {% else %}<div class="kpi"><div class="label">Média mensal</div><div class="value">{{ kpi.avg_month|brl(0) }}</div><div class="sub muted">{{ kpi.stores }} lojas com dados</div></div>{% endif %}
-  <div class="kpi"><div class="label">Custo médio da energia</div><div class="value">{{ kpi.rs_kwh|brl(3) if kpi.rs_kwh else '—' }}<span class="unit">/kWh</span></div><div class="sub muted">contas de distribuidora</div></div>
+  <div class="kpi"><div class="label" title="Valor total das contas de distribuidora ÷ kWh consumidos. Inclui demanda, impostos e multas da fatura.">Custo efetivo por kWh</div><div class="value">{{ kpi.rs_kwh|brl(3) if kpi.rs_kwh else '—' }}<span class="unit">/kWh</span></div><div class="sub muted">total da conta ÷ kWh</div></div>
   <div class="kpi"><div class="label">Maior gasto</div><div class="value sm">{{ kpi.top.code if kpi.top else '—' }}</div><div class="sub muted">{{ kpi.top.share|num(1) ~ '% do total' if kpi.top else '' }}</div></div>
   <div class="kpi"><div class="label">Maior alta em {{ focus_label }}</div><div class="value sm">{{ kpi.rise.code if kpi.rise else '—' }}</div><div class="sub">{% if kpi.rise %}{% if kpi.rise.abs_last_month is not none %}+{{ kpi.rise.abs_last_month|brl(0) }} · {% endif %}{{ delta(kpi.rise.vs_last_month) }}{% endif %}</div></div>
   <div class="kpi"><div class="label">Maior queda em {{ focus_label }}</div><div class="value sm">{{ kpi.fall.code if kpi.fall else '—' }}</div><div class="sub">{% if kpi.fall %}{% if kpi.fall.abs_last_month is not none %}{{ kpi.fall.abs_last_month|brl(0) }} · {% endif %}{{ delta(kpi.fall.vs_last_month) }}{% endif %}</div></div>
@@ -62,8 +62,8 @@
 </section>
 
 <div class="grid cols-2">
-  <section class="card"><div class="card-head"><h2>Custo por kWh</h2><span class="muted small">R$/kWh nas contas · linha = média da empresa</span></div><div class="dchart tall"><canvas id="c-kwh" role="img" aria-label="Custo por kWh por loja"></canvas></div></section>
-  <section class="card"><div class="card-head"><h2>Uso da demanda contratada</h2><span class="muted small">demanda medida ÷ contratada · acima de 100% pode gerar cobrança por ultrapassagem</span></div><div class="dchart tall"><canvas id="c-util" role="img" aria-label="Uso da demanda contratada"></canvas></div></section>
+  <section class="card"><div class="card-head"><h2>Custo efetivo por kWh</h2><span class="muted small">total da conta ÷ kWh · linha = média da empresa</span></div><div class="dchart tall"><canvas id="c-kwh" role="img" aria-label="Custo por kWh por loja"></canvas></div></section>
+  <section class="card"><div class="card-head"><h2>Uso da demanda contratada</h2><span class="muted small">demanda medida ÷ contratada · acima de 105% costuma gerar cobrança por ultrapassagem (tolerância de 5%)</span></div><div class="dchart tall"><canvas id="c-util" role="img" aria-label="Uso da demanda contratada"></canvas></div></section>
 </div>
 
 <section class="card">
@@ -94,7 +94,7 @@
       <td class="num">{{ r.total|brl(0) }}</td><td class="num">{{ r.share|num(1) }}%</td><td class="num">{{ r.avg|brl(0) }}</td>{% if ns.prev %}<td class="num">{{ delta(r.vs_prev_period) }}</td>{% endif %}
       <td class="num">{{ r.last|brl(0) if r.last is not none else '—' }}</td><td class="num">{{ delta(r.vs_last_month) }}</td>
       <td class="num">{{ r.rs_kwh|brl(3) if r.rs_kwh else '—' }}</td>
-      <td class="num">{% if r.demand_use is not none %}{{ r.demand_use|num(0) }}%{% if r.demand_over %} <span class="badge warn" title="Contas com demanda acima da contratada">{{ r.demand_over }} acima</span>{% endif %}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+      <td class="num">{% if r.demand_use is not none %}{{ r.demand_use|num(0) }}%{% if r.demand_over %} <span class="badge warn" title="Contas com demanda acima da tolerância de 5% sobre a contratada">{{ r.demand_over }} acima</span>{% endif %}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
   </table></div>
 </section>
 
@@ -103,6 +103,14 @@
     {% for p in pending_items %}<tr><td><a href="/stores/{{ p.store.id }}">{{ p.store.code }}</a></td><td>{{ p.type.name }}{% if p.unit %} · <span class="mono">{{ p.unit.number }}</span>{% endif %}</td><td class="muted">{{ p.text }}</td></tr>{% endfor %}
   </tbody></table></div></section>{% endif %}
 {% endif %}
+<aside class="card method no-print-break" aria-label="Nota metodológica"><h2>Como ler estes números</h2>
+  <ul class="small muted">
+    <li><strong>Competência:</strong> contas e lançamentos manuais entram pelo mês de referência; a tabela "por vencimento" usa o vencimento só das contas de distribuidora.</li>
+    <li><strong>Custo efetivo por kWh:</strong> total da conta de distribuidora ÷ kWh consumidos, com demanda, impostos e multas incluídos. Não é a tarifa da energia. Unidades no mercado livre só ficam comparáveis quando somadas a LL Energia e demais cobranças do mesmo mês.</li>
+    <li><strong>Mês incompleto:</strong> aparece com * e fica fora das variações; os indicadores usam o último mês completo.</li>
+    <li><strong>Demanda:</strong> a ultrapassagem só conta acima de 5% da demanda contratada (REN ANEEL 1.000/2021, Grupo A). Unidades sem leitura de demanda não entram.</li>
+    <li><strong>Variações e destaques:</strong> indicam onde conferir. A causa não é identificada pelo sistema.</li>
+  </ul></aside>
 <script type="application/json" id="dir-data">{{ payload|tojson }}</script>
 {% endblock %}
 {% block scripts %}

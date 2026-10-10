@@ -22,6 +22,7 @@ ORDER = {"alta": 0, "media": 1, "baixa": 2}
 LABEL = {"alta": "Alta", "media": "Média", "baixa": "Baixa"}
 HIST_MAX, HIST_MIN = 6, 3
 SPIKE_MEDIUM, SPIKE_HIGH, DROP = 30.0, 50.0, -40.0     # % contra a média da unidade
+DEMAND_TOLERANCE = 105.0                                # % da demanda contratada: acima disso costuma haver cobrança de ultrapassagem
 PRICE_RISE = 20.0                                       # % no R$/kWh contra a mediana da unidade
 ITEMS_GAP = 0.03                                        # itens lidos somam >3% diferente do total
 RECENT_MONTHS = 3                                       # só contas dos últimos meses geram alerta
@@ -93,8 +94,14 @@ def _unit_alerts(unit: ConsumerUnit, bills: list[EnergyBill], cutoff: date) -> l
     measured = _measured_demand(latest)
     if latest.contracted_demand and latest.contracted_demand > 0 and measured and measured > latest.contracted_demand:
         pct = float(measured / latest.contracted_demand * 100)
-        mk("demanda", "alta" if pct >= 110 else "media", f"Demanda de {ref} acima do contratado ({pct:.0f}%)",
-           f"Medido {measured:.0f} kW contra {latest.contracted_demand:.0f} kW contratados: há cobrança de ultrapassagem.")
+        if pct > DEMAND_TOLERANCE:
+            mk("demanda", "alta" if pct >= 110 else "media", f"Demanda de {ref} acima do contratado ({pct:.0f}%)",
+               f"Medido {measured:.0f} kW contra {latest.contracted_demand:.0f} kW contratados, acima da tolerância de 5%: "
+               "costuma haver cobrança de ultrapassagem. Confira o item na fatura.")
+        else:
+            mk("demanda", "baixa", f"Demanda de {ref} no limite do contratado ({pct:.0f}%)",
+               f"Medido {measured:.0f} kW contra {latest.contracted_demand:.0f} kW contratados, dentro da tolerância de 5%: "
+               "em geral sem cobrança de ultrapassagem. Vale acompanhar.")
     # itens lidos que não fecham com o total (leitura por IA)
     items = [Decimal(str(i.get("value"))) for i in (latest.line_items or []) if isinstance(i, dict) and i.get("value") is not None]
     if latest.source == "import" and len(items) >= 2 and total > 0:

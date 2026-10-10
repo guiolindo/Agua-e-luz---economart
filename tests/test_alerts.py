@@ -142,3 +142,19 @@ def test_count_endpoint_and_entry_screens_show_the_number(client, db):
     d = client.get("/api/alertas/contagem").json()
     assert set(d) == {"count", "high"} and isinstance(d["count"], int)
     assert 'href="/alertas"' in client.get("/").text and 'href="/alertas"' in client.get("/diretoria").text
+
+
+def test_demand_within_five_percent_tolerance_is_low_and_does_not_claim_a_charge(db):
+    """REN ANEEL 1.000/2021 (Grupo A): a ultrapassagem só conta acima de 5% da demanda contratada."""
+    u, rt = _unit(db, "T")
+    _bill(db, u, rt, (2026, 8), 1000, demand_hfp=D(103), contracted_demand=D(100))          # 103%: dentro da tolerância
+    alerts = [a for a in alert_service.compute(db, TODAY) if a.kind == "demanda"]
+    assert [a.severity for a in alerts] == ["baixa"]
+    assert "em geral sem cobrança" in alerts[0].detail and "há cobrança" not in alerts[0].detail
+
+
+def test_demand_above_tolerance_says_a_charge_is_usual_not_certain(db):
+    u, rt = _unit(db, "U")
+    _bill(db, u, rt, (2026, 8), 1000, demand_hfp=D(107), contracted_demand=D(100))          # 107%: acima da tolerância
+    a = [a for a in alert_service.compute(db, TODAY) if a.kind == "demanda"][0]
+    assert a.severity == "media" and "costuma haver cobrança" in a.detail and "tolerância de 5%" in a.detail
