@@ -52,7 +52,7 @@
         <td>{% if r.unit_id %}<a href="/units/{{ r.unit_id }}" class="mono">{{ r.unit_number }}</a>{% else %}<span class="muted">—</span>{% endif %}
           <div class="muted small">{{ r.type_name }}{% if r.invoice_number %} · NF {{ r.invoice_number }}{% endif %}</div></td>
         <td class="num"><strong>{{ r.value|brl }}</strong></td>
-        <td class="nowrap">{{ r.due_date|date_br if r.due_date else '—' }}</td>
+        <td class="nowrap">{% if r.due_date %}{{ r.due_date|date_br }}{% elif r.acct_date %}{{ r.acct_date|date_br }} <span class="muted small" title="Data de contabilização">contab.</span>{% else %}—{% endif %}</td>
         <td><span class="badge{% if r.origin == 'bill' %} ok{% endif %}">{{ 'Foto/IA' if r.origin == 'bill' else 'Manual' }}</span></td>
         <td class="right nowrap">
           {% if r.doc_id %}<a class="btn sm" href="/documents/{{ r.doc_id }}" target="_blank" rel="noopener" title="Abre o PDF/foto original em uma aba nova">PDF</a>{% endif %}

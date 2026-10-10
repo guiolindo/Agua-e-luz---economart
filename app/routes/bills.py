@@ -61,7 +61,7 @@ def _collect(db: Session, store_id, type_id, start, end, q, origin):
             "unit_number": b.unit.number if b.unit else "—",
             "unit_id": b.unit_id, "bill_id": b.id, "record_id": None,
             "type_name": (types_by_id[b.record_type_id].name if b.record_type_id in types_by_id else "Conta"),
-            "value": b.total_value, "due_date": b.due_date,
+            "value": b.total_value, "due_date": b.due_date, "acct_date": None,
             "doc_id": b.document_id if (b.document and b.document.available) else None,
             "origin": "bill", "invoice_number": b.invoice_number,
         })
@@ -71,7 +71,7 @@ def _collect(db: Session, store_id, type_id, start, end, q, origin):
             "store_id": r.store_id, "unit_number": (r.unit.number if r.unit else "—"),
             "unit_id": r.unit_id, "bill_id": None, "record_id": r.id,
             "type_name": types_by_id[r.record_type_id].name if r.record_type_id in types_by_id else "Lançamento",
-            "value": r.value, "due_date": r.due_date, "doc_id": None,
+            "value": r.value, "due_date": r.due_date, "acct_date": r.accounting_date, "doc_id": None,
             "origin": "manual", "invoice_number": None,
         })
     rows.sort(key=lambda r: (r["reference"], r["store_code"], r["unit_number"]), reverse=True)
@@ -126,7 +126,7 @@ def notas_csv(store_id: int | None = None, type_id: int | None = None, start: st
     for r in rows:
         w.writerow([f"{r['reference'].month:02d}/{r['reference'].year}", _csv_cell(r["store_code"]), _csv_cell(r["unit_number"]),
                     _csv_cell(r["type_name"]), f"{r['value']:.2f}".replace(".", ",") if r["value"] is not None else "",
-                    r["due_date"].strftime("%d/%m/%Y") if r["due_date"] else "", _csv_cell(r["invoice_number"]),
+                    (r["due_date"] or r["acct_date"]).strftime("%d/%m/%Y") if (r["due_date"] or r["acct_date"]) else "", _csv_cell(r["invoice_number"]),
                     "Foto/IA" if r["origin"] == "bill" else "Manual"])
     from app.services import audit_service
 

@@ -32,7 +32,8 @@
         {{ field("reference", "Mês de referência", form, errors, type="month", required=true) }}
         {{ field("value", "Valor por loja (R$)", form, errors, required=true, placeholder="1.200,00", hint="O mesmo valor entra em cada loja marcada.") }}
       </div>
-      {{ field("due_date", "Vencimento (opcional)", form, errors, type="date", hint="Usado para agrupar pelo mês de vencimento.") }}
+      {{ field("due_date", "Vencimento (opcional)", form, errors, type="date", hint="Define o mês na tabela por vencimento.") }}
+      {{ field("accounting_date", "Data de contabilização (opcional)", form, errors, type="date", hint="Para despesas sem vencimento, como o gerador. Com as duas datas, vale o vencimento.") }}
       {% for t in types %}{% if t.fields %}
       <fieldset data-set="{{ t.id }}" hidden disabled style="border:0;padding:0;margin:0">
         <div class="row row-2">{% for f in t.fields %}
