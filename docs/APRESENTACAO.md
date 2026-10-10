@@ -39,7 +39,7 @@ Não mostre ao vivo: Energisa e CEMIG Geração e Transmissão com arquivo novo 
 
 ## 5. Lista de conferência até terça
 **Sexta a domingo**
-- [ ] Deploy no Railway com as variáveis do `docs/OPERACAO.md` e `REQUIRE_ADMIN_2FA=false` até você ativar o seu 2FA.
+- [ ] Deploy no Railway com as variáveis do `docs/operations.md` e `REQUIRE_ADMIN_2FA=false` até você ativar o seu 2FA.
 - [ ] Fazer um backup do banco antes do deploy (a primeira subida aplica as migrações).
 - [ ] Ativar o 2FA do seu usuário e guardar os códigos de recuperação.
 - [ ] Carregar a CD300 com os valores da planilha: `python -m scripts.seed_demo` (usa o `DATABASE_URL` do ambiente; marque como demonstração se for apresentar com dados de exemplo).

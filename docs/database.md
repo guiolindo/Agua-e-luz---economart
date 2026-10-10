@@ -234,7 +234,7 @@ Alembic e sem `alembic_version`. É o modo da suíte de testes (`tests/conftest.
 Para alterar o esquema: mude o modelo, rode `alembic revision --autogenerate -m "descrição"`, leia o arquivo
 gerado em `migrations/versions/`, ajuste se precisar e faça commit junto com a mudança. O teste
 `test_fresh_database_is_created_by_migrations_and_matches_the_models` falha se um modelo mudar sem migração.
-Faça backup antes de migrar em produção (ver [OPERACAO.md](OPERACAO.md)).
+Faça backup antes de migrar em produção (ver [operations.md](operations.md)).
 
 ### Adoção de banco anterior ao Alembic
 
@@ -316,7 +316,7 @@ da auditoria (`/admin/audit/export.csv`, até 20 mil eventos mais recentes) incl
 
 ## Backup
 
-O repositório não contém script de backup; o procedimento está em [OPERACAO.md](OPERACAO.md) e usa as
+O repositório não contém script de backup; o procedimento está em [operations.md](operations.md) e usa as
 ferramentas do PostgreSQL:
 
 1. Backups automáticos do banco ativados no serviço PostgreSQL do Railway.
@@ -334,5 +334,5 @@ Pontos específicos deste sistema:
 - Depois de restaurar, conferir `db_migrate.drift()` e a verificação de integridade em `/admin/audit`.
 - O prazo de retenção apaga bytes de `documents.data`: um backup antigo pode conter arquivos que o banco atual já
   removeu.
-- Não verificado: se há backup externo (fora do Railway) automatizado. O `OPERACAO.md` descreve apenas o backup
+- Não verificado: se há backup externo (fora do Railway) automatizado. O `operations.md` descreve apenas o backup
   do Railway e o manual.

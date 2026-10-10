@@ -6,6 +6,7 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 ## 2026-10-10
 
 - **Corrigido:** a produção não subia (`Can't locate revision identified by '0003'`). A revisão 0003 voltou como migração vazia; teste impede nova remoção.
+- Corrigido: excluir uma conta vinda de importação dava erro no Postgres (a importação ainda apontava para ela).
 - Despesas manuais valem só pelo mês de referência (a data de contabilização foi tentada e abandonada).
 - Painel da diretoria: botão "Alterar filtros" visível; "maior queda" só aparece quando houve queda.
 - Auditoria: filtro de evento em barra visível, com "Limpar filtro" e contagem.

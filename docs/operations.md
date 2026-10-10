@@ -2,9 +2,7 @@
 
 Este documento cobre o que acontece **depois** do código pronto: subir
 em produção (Railway), configurar variáveis, migrar o banco, fazer
-backup, trocar chaves e resolver incidentes. Incorpora o conteúdo
-útil de [OPERACAO.md](OPERACAO.md) (manual curto do administrador de
-TI).
+backup, trocar chaves e resolver incidentes. É o manual do administrador de TI.
 
 ## Regras de ouro
 

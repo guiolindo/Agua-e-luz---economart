@@ -1,5 +1,7 @@
 # Segurança
 
+> Versão resumida. O detalhamento de cada mecanismo, os endpoints e os limites conhecidos estão em [`docs/security.md`](docs/security.md).
+
 O sistema guarda dados da empresa (valores de contas, consumo, unidades, fotos de documentos). Este arquivo descreve o
 que está implementado, como configurar em produção e o que ainda é risco residual. Referência de práticas: o repositório
 `Notas-despesas` (auditoria set/2026).
@@ -19,10 +21,10 @@ que está implementado, como configurar em produção e o que ainda é risco res
 | **XSS** | CSP com **nonce por resposta** (`script-src 'self' 'nonce-…'`, sem `unsafe-inline` em script, `object-src 'none'`, `frame-ancestors 'self'`), sem handlers inline, Jinja com autoescape, Chart.js servido localmente (sem CDN). |
 | **Cabeçalhos** | `nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, COOP/CORP, HSTS em produção, `Cache-Control: no-store` em tudo que não é estático (nada de dados da empresa no cache do navegador). |
 | **Uploads** | Extensão **e** conteúdo real (magic bytes), limite de tamanho (corte antes do parse multipart), PDF ≤ 10 páginas, nome sanitizado; imagens servidas com CSP `sandbox` e `nosniff`. |
-| **Dados em repouso** | Fotos/PDFs **criptografados** no banco (Fernet) com `DOCUMENT_ENCRYPTION_KEY` (rotação por várias chaves) e **apagados após 6 meses**. |
-| **Auditoria / LGPD** | `/admin/audit`: logins, falhas, bloqueios, trocas de senha, alterações de dados. O IP de origem é gravado em claro (uso em máquinas corporativas); o usuário digitado em login falho continua **pseudonimizado** (HMAC). |
+| **Dados em repouso** | Fotos/PDFs **criptografados** no banco (Fernet) com `DOCUMENT_ENCRYPTION_KEY` (rotação por várias chaves) e **apagados após 183 dias** (`DOCUMENT_RETENTION_DAYS`). |
+| **Auditoria / LGPD** | `/admin/audit`: logins, falhas, bloqueios, trocas de senha, alterações de dados. Nos eventos de segurança (login, falha, bloqueio, logout, troca da própria senha, 2FA próprio) o IP de origem é gravado em claro (uso em máquinas corporativas); ações do administrador e eventos de dados não levam IP. O usuário digitado em login falho continua **pseudonimizado** (HMAC). |
 | **Auditoria à prova de adulteração** | Cada evento leva um selo HMAC encadeado ao anterior (`prev_hash`/`row_hash`, chave derivada de `SECRET_KEY`/`PSEUDONYM_KEY`). Editar, apagar no meio ou inserir evento direto no banco quebra a cadeia; *Verificar integridade* em `/admin/audit` aponta o primeiro evento adulterado. Eventos anteriores à atualização ficam como "não verificáveis". Não troque `SECRET_KEY` sem exportar a auditoria antes: a chave nova não valida os selos antigos. Limite: apagar só os últimos eventos não quebra elo; anote o *selo final* mostrado na verificação. |
-| **Segredos** | Chave do Gemini só em variável de ambiente e redigida de qualquer log. Em produção o servidor **se recusa a iniciar** com `SECRET_KEY` fraca, sem `DOCUMENT_ENCRYPTION_KEY`, com SQLite ou com `ADMIN_PASSWORD` fraca. |
+| **Segredos** | Chave do Gemini só em variável de ambiente e redigida de qualquer log. Em produção o servidor **se recusa a iniciar** com `SECRET_KEY` fraca, sem `DOCUMENT_ENCRYPTION_KEY`, ou com SQLite. A senha do primeiro administrador (`ADMIN_PASSWORD`) é validada quando ainda não existe nenhum usuário no banco; depois disso a variável é ignorada. |
 | **Rede** | Limite de requisições (login, upload, documentos, API, mutações), limite de corpo, IP real lido do **fim** do `X-Forwarded-For` (`TRUSTED_PROXY_COUNT`), docs/OpenAPI desativados, erros 500 sem detalhes. |
 
 ## Configuração obrigatória em produção (Railway)

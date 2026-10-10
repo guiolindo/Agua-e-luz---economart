@@ -3,7 +3,7 @@
 Este documento descreve os mecanismos de segurança que existem no código hoje, o motivo de cada decisão e os
 limites conhecidos. Cada afirmação foi conferida no código em `app/`; o que não pôde ser verificado está marcado
 como tal. O resumo para quem opera o sistema está em [`../SECURITY.md`](../SECURITY.md) e em
-[`OPERACAO.md`](OPERACAO.md); este arquivo é a versão técnica.
+[`operations.md`](operations.md); este arquivo é a versão técnica.
 
 O sistema guarda dados da empresa: valores de contas de energia, consumo, unidades consumidoras e as fotos/PDFs
 das contas. Os usuários são poucos e internos, em quatro perfis (`admin`, `operator`, `director`, `viewer`).

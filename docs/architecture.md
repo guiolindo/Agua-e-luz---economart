@@ -11,11 +11,6 @@ Visão geral da arquitetura do controle de contas de energia. Para detalhes por 
 - [testing.md](testing.md) — suíte de testes
 - [faq.md](faq.md) — perguntas frequentes
 
-Nota: `security.md`, `api-reference.md`, `frontend.md`, `operations.md`, `testing.md` e `faq.md` ainda não
-existem em `docs/`; os links acima são os destinos previstos. Hoje, além dos três documentos desta série
-(`architecture.md`, `domain-model.md`, `database.md`), a pasta tem [OPERACAO.md](OPERACAO.md) (manual de
-operação) e `APRESENTACAO.md`.
-
 ## Visão geral
 
 O sistema recebe a foto ou o PDF de uma conta de energia, extrai os dados com o Gemini, mostra uma tela de
