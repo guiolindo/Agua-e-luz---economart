@@ -108,6 +108,7 @@ padrão são os do código.
 | `SESSION_MAX_HOURS` | `12` | Duração máxima da sessão (também é o `max_age` do cookie) |
 | `MIN_PASSWORD_LENGTH` | `8` | Tamanho mínimo da senha pessoal |
 | `REQUIRE_ADMIN_2FA` | `false` | `true` obriga todo administrador a configurar o 2FA antes de usar o sistema |
+| `PRESENTATION_UNTIL` | `2026-10-16T17:00:00-03:00` | Até quando o botão *Apresentação do sistema* (`/apresentacao`) aparece. ISO 8601; sem fuso = Brasília; vazio ou inválido = desligada |
 | `RATE_LIMIT_ENABLED` | `true` | Liga o limite de requisições em memória |
 | `CSRF_ALLOWED_ORIGINS` | vazio | Origens extras aceitas em POST (CSV). Normalmente vazio |
 

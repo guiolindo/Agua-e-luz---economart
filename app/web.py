@@ -18,7 +18,7 @@ def _asset_version() -> str:
     qualquer um deles mudar. Templates incluem ?v={{ ASSET_VERSION }} nos links.
     Vendor fixo (chart.umd.min.js) fica de fora — nunca muda."""
     h = hashlib.sha1()
-    for rel in ("static/css/app.css", "static/js/app.js", "static/js/chart_panel.js", "static/js/director.js"):
+    for rel in ("static/css/app.css", "static/js/app.js", "static/js/chart_panel.js", "static/js/director.js", "static/js/presentation.js", "static/css/presentation.css"):
         p = BASE_DIR / rel
         if p.exists():
             h.update(p.read_bytes())
@@ -47,6 +47,9 @@ def today_long() -> str:
     return f"{dias[d.weekday()]}, {d.day} de {meses[d.month - 1]} de {d.year}"
 
 
+from app.utils.presentation import presentation_open  # noqa: E402
+
+templates.env.globals["presentation_open"] = presentation_open   # chamada a cada render: o botão some sozinho no prazo
 templates.env.globals["greeting_now"] = greeting_now
 templates.env.globals["plural"] = plural
 templates.env.globals["today_long"] = today_long

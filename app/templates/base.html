@@ -76,6 +76,7 @@
         <span>Usuários</span></a>{% endif %}
     </nav>{% endif %}
     <div class="side-foot">
+      {% if presentation_open() and not user.must_change_password %}<a class="present-btn" href="/apresentacao"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="m10.5 8.5 4 2-4 2z" fill="currentColor"/></svg>Apresentação do sistema</a>{% endif %}
       <div class="whoami"><strong>{{ user.username }}</strong><span>{{ {'admin': 'administrador', 'operator': 'funcionário', 'director': 'diretoria', 'viewer': 'consulta', 'user': 'funcionário'}.get(user.role, user.role) }}</span></div>
       <div class="side-actions">
         {% if not user.must_change_password %}<a href="/account/password">Alterar senha</a>{% endif %}

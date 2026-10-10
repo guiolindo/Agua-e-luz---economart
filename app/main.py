@@ -33,6 +33,7 @@ from app.routes import (
     director,
     documents,
     help,
+    presentation,
     imports,
     manual,
     manual_batch,
@@ -89,7 +90,7 @@ def create_app() -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
     app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-    for module in (auth, account, alerts, dashboard, director, stores, bills, types, imports, manual, manual_batch, points, charts, documents, help, admin):
+    for module in (auth, account, alerts, dashboard, director, stores, bills, types, imports, manual, manual_batch, points, charts, documents, help, presentation, admin):
         app.include_router(module.router)
 
     @app.get("/favicon.ico", include_in_schema=False)

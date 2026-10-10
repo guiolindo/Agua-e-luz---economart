@@ -140,6 +140,10 @@ mês e a contagem de pendências, e os botões são "Importar conta", "Lançamen
 
 ---
 
+## Apresentação do sistema (`/apresentacao`)
+
+Página própria (não usa `base.html`): `templates/presentation.html` + `static/css/presentation.css` + `static/js/presentation.js`. Cada slide é uma `<section class="slide s-…" data-chapter="…">`; a navegação (setas, teclado, pontos, capítulos, toque, tela cheia, zoom) é toda do JS, sem script inline (CSP). As telas são `.webp` em `static/img/apresentacao/`, capturadas com dados de demonstração (Playwright, uma sessão por perfil: funcionário, diretoria, consulta; o admin não é mostrado). O botão no rodapé do menu e a rota dependem de `presentation_open()` (`app/utils/presentation.py`), que compara a hora de Brasília com `PRESENTATION_UNTIL`; passado o prazo o botão some e a rota devolve 404. Para refazer as telas, suba o app com um banco de demonstração (`scripts.seed_demo` + `scripts.seed_demo_company`), entre com cada perfil e recapture.
+
 ## CSS
 
 ### Tokens (`:root`)

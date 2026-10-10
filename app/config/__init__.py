@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = True
     csrf_allowed_origins: str = ""      # origens extras permitidas em POST (CSV); normalmente vazio
 
+    # Apresentação do sistema (slides em /apresentacao): o botão some e a página responde 404 depois deste instante.
+    # ISO 8601; sem fuso = horário de Brasília. Vazio = apresentação desligada.
+    presentation_until: str = "2026-10-16T17:00:00-03:00"
+
     # O envio inline ao Gemini vai em base64 (+33%) e o limite da requisição é ~20 MB: 12 MB brutos deixam folga.
     max_upload_mb: int = 12
     gemini_max_concurrency: int = 2  # a cota gratuita (~15 pedidos/min) estoura com rajadas

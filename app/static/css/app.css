@@ -42,6 +42,10 @@ h3 { font-size: 13px; margin: 0 0 8px; font-weight: 600; color: var(--muted); te
 .side-foot .side-actions { display: flex; align-items: center; gap: 14px; font-size: 12px; }
 .side-foot a { color: rgba(255,255,255,.9); } .side-foot a:hover { color: #fff; text-decoration: underline; }
 .side-foot form { margin: 0; }
+.side-foot .present-btn { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.28); border-radius: var(--radius); font-size: 12.5px; font-weight: 600; color: #fff; background: rgba(255,255,255,.06); }
+.side-foot .present-btn:hover { background: var(--orange); border-color: var(--orange); text-decoration: none; }
+.side-foot .present-btn svg { flex-shrink: 0; }
+@media print { .present-btn { display: none !important; } }
 .side-foot button { background: none; border: 0; color: rgba(255,255,255,.9); padding: 0; cursor: pointer; font: inherit; }
 .side-foot button:hover { color: #fff; text-decoration: underline; }
 .main { padding: 22px 28px 40px; min-width: 0; }
