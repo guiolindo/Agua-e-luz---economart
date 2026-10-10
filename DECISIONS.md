@@ -95,7 +95,7 @@ O mesmo vale para as frases de destaque do painel.
 verde/âmbar/vermelho só para estado). Animações discretas: abertura do login com a logo nascendo do gráfico, splash curto
 após o login, despedida no logout; tudo desligado na impressão. Nada de frases genéricas como "resumo em poucas palavras".
 
-## 9. Fora do escopo por enquanto
+## 9. Fora do escopo por enquanto (itens 10 e 11 abaixo são ideias futuras)
 
 - Importar o relatório TXT do ERP e conciliar com as faturas.
 - Integração direta com o banco Oracle do ERP.
@@ -103,3 +103,40 @@ após o login, despedida no logout; tudo desligado na impressão. Nada de frases
 
 Foram discutidos e deixados para depois de a diretoria decidir se o projeto continua. O foco é o fluxo principal:
 foto → conferência → salvar → folha impressa.
+
+## 10. Módulo de água (futuro, só se a diretoria aprovar) 📝 REGISTRADO
+
+**Contexto.** O repositório se chama `Agua-e-luz---economart` porque a expectativa é que, se o projeto for aprovado,
+o sistema passe a atender também as contas de água. Hoje ele é só de energia. A Economart tem cerca de 20 lojas em MG e BA
+(mais 3 a 4 em implantação), 3 centros de distribuição e escritórios em Ribeirão das Neves, Belo Horizonte e Salvador.
+
+**O que já serve para água sem mudança:** lojas, unidades, lançamento manual, documentos e importação, auditoria, 2FA,
+usuários e perfis, relatórios por mês, CSV, impressão, ranking, variação e composição.
+
+**O que é específico de energia e precisaria evoluir:**
+- Fornecedores (CEMIG, COELBA, Energisa etc.): entrariam as concessionárias de água.
+- Campos técnicos da conta: consumo e demanda em ponta e fora de ponta, demanda contratada, R$/kWh. Em água importam m³,
+  hidrômetro e faixa tarifária.
+- A leitura por IA e a rejeição de arquivos (`is_energy_bill`) precisam de uma versão para conta de água.
+- Alertas: no lugar de "demanda acima da contratada" e "R$/kWh fora do padrão", viriam consumo acima do padrão e
+  suspeita de vazamento.
+- Textos de ajuda, títulos, folha impressa e nomes internos (`energy_bills`, `consumption_hfp`, `demand_hfp`).
+
+**Caminho sugerido.**
+1. Módulo de água simples: valor, vencimento e consumo em m³ por hidrômetro, usando o lançamento manual e a
+   importação atuais. Cabe em dias.
+2. Se houver demanda, extração completa da conta de água, alertas próprios e painel adaptado. É um projeto maior,
+   e aí vale generalizar `energy_bills` para uma tabela de contas de serviço com tipo (luz, água).
+
+## 11. Escolha de módulo (Luz ou Água) depois do login 📝 IDEIA
+
+**Ideia.** Depois do login, uma tela pergunta qual módulo a pessoa quer abrir: **Luz** ou **Água**. Ao escolher, todo o
+sistema passa a mostrar só aquele módulo (painel, contas, lojas, alertas, ajuda). Há uma opção para voltar à escolha de módulos.
+
+**Identidade visual (login).** Manter o gráfico subindo como elemento principal e, ao fundo, de forma bem discreta,
+chuva escorrendo de um lado e faíscas de raio do outro, para representar água e luz juntas. Sem chamar mais atenção do que o
+gráfico e a logo; desligado em `prefers-reduced-motion` e na impressão.
+
+**Condição.** Só faz sentido quando o módulo de água existir (decisão 10). Antes disso, mostrar uma escolha com um módulo só
+seria um passo a mais para o usuário.
+
