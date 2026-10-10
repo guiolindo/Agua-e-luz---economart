@@ -66,6 +66,7 @@ def test_no_admin_screens_in_the_slides_and_every_image_exists(client, until):
     assert len(files) >= 15
     for f in files:
         assert (Path("app/static/img/apresentacao") / f).is_file(), f
+    assert {"cel-painel.webp", "cel-importar.webp", "cel-loja.webp"} <= set(files)                    # versão para celular
     assert "antes.webp" in files and "folha-impressa.webp" in files                    # comparativo antes × depois da folha
     for font in ("bricolage-grotesque", "inter"):
         assert (Path("app/static/fonts") / f"{font}-latin-wght-normal.woff2").is_file()

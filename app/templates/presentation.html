@@ -63,7 +63,7 @@
         <h1 class="mega"><span class="ln"><span style="--i:1">Controle</span></span><span class="ln"><span style="--i:2">de <em>Energia</em></span></span></h1>
         <p class="lead rv" style="--i:4">Da conta de luz ao painel da diretoria. Sem digitar.</p>
         <div class="chips rv" style="--i:5"><span>Funcionário</span><span>Diretoria</span><span>Consulta</span></div>
-        <p class="hint rv" style="--i:6">Use <kbd>←</kbd> <kbd>→</kbd> para navegar · <kbd>P</kbd> passa sozinho · <kbd>F</kbd> tela cheia</p>
+        <p class="hint rv" style="--i:6">Use <kbd>←</kbd> <kbd>→</kbd> para navegar · <kbd>P</kbd> passa sozinho (cerca de 4 minutos) · <kbd>F</kbd> tela cheia</p>
       </div>
     </section>
 
@@ -112,6 +112,19 @@
           <div class="stat rv" style="--i:4"><b data-count="2">2</b><span>formatos de impressão do painel: A4 e A3</span></div>
           <div class="stat rv" style="--i:5"><b data-count="5">5</b><span>abas na planilha de exportação</span></div>
           <div class="stat rv" style="--i:6"><b data-count="1">1</b><span>conferência antes de qualquer conta ser salva</span></div>
+        </div>
+      </div>
+    </section>
+
+    {# ============================ CELULAR ============================ #}
+    <section class="slide s-mobile" data-chapter="intro" aria-label="No celular">
+      <div class="mrow">
+        <div class="copy"><p class="eyebrow rv" style="--i:0">Em qualquer tela</p>{{ lines(['No computador', 'e no <em>celular</em>']) }}
+          <ul class="rv" style="--i:2"><li>O layout se adapta ao tamanho da tela, sem instalar nada.</li><li>No celular, menu na parte de baixo com o botão de importar sempre à mão.</li><li>Envie a foto da conta direto do aparelho.</li><li>Vale para todos os perfis.</li></ul></div>
+        <div class="phones">
+          {% for f, alt in [('cel-painel','Painel do funcionário no celular'),('cel-importar','Tela de importar conta no celular'),('cel-loja','Ficha da loja no celular')] %}
+          <figure class="phone rv" style="--i:{{ loop.index + 1 }}"><div class="notch" aria-hidden="true"></div><img src="/static/img/apresentacao/{{ f }}.webp" alt="{{ alt }}" loading="lazy" decoding="async" tabindex="0" role="button" data-zoom></figure>
+          {% endfor %}
         </div>
       </div>
     </section>

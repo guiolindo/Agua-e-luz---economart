@@ -140,7 +140,7 @@ h2 em, h1 em { background: linear-gradient(100deg, #ffb15c 0%, #ff7a1a 55%, #ff5
 .s-split { grid-template-columns: minmax(250px, 3.7fr) minmax(0, 8.3fr); gap: clamp(20px, 3vw, 52px); max-width: 1760px; margin: 0 auto; width: 100%; }
 .s-split.rev { grid-template-columns: minmax(0, 8.3fr) minmax(250px, 3.7fr); }
 .s-split.rev .copy { order: 2; }
-.s-split h2 { font-size: clamp(30px, 3.9vw, 60px); }
+.s-split h2, .s-mobile h2 { font-size: clamp(30px, 3.9vw, 60px); }
 .copy ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 13px; }
 .copy li { position: relative; padding-left: 26px; font-size: clamp(15px, 1.3vw, 18.5px); line-height: 1.5; color: var(--ink-2); }
 .copy li::before { content: ""; position: absolute; left: 0; top: .5em; width: 12px; height: 12px; border-radius: 4px; background: linear-gradient(135deg, var(--orange), var(--amber)); transform: rotate(45deg) scale(.7); }
@@ -149,6 +149,16 @@ h2 em, h1 em { background: linear-gradient(100deg, #ffb15c 0%, #ff7a1a 55%, #ff5
 .s-hero .copy h2 { margin-bottom: 4px; font-size: clamp(30px, 3.8vw, 56px); }
 .s-hero .lead { margin-top: 6px; font-size: clamp(14px, 1.2vw, 17px); }
 .s-hero .dev { justify-self: center; }
+
+/* ---------- celular ---------- */
+.s-mobile { align-content: center; }
+.mrow { display: grid; grid-template-columns: minmax(250px, 4fr) minmax(0, 8fr); gap: clamp(20px, 3vw, 52px); align-items: center; max-width: 1500px; margin: 0 auto; width: 100%; }
+.phones { display: flex; justify-content: center; align-items: center; gap: clamp(14px, 2.4vw, 40px); }
+.phone { --w: min(22vw, calc((100dvh - var(--bar-h) - var(--nav-h) - 80px) * .47)); width: var(--w); margin: 0; padding: 22px 8px 8px; border-radius: calc(var(--w) * .13); background: linear-gradient(160deg, #1d2d46, #0a1424); position: relative;
+  box-shadow: 0 40px 70px -26px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.18), inset 0 1px 0 rgba(255,255,255,.22); }
+.phone:nth-child(2) { margin-top: -34px; } .phone:nth-child(1), .phone:nth-child(3) { margin-bottom: -34px; }
+.phone img { display: block; width: 100%; height: auto; border-radius: calc(var(--w) * .1); background: #fff; cursor: zoom-in; }
+.phone .notch { position: absolute; top: 7px; left: 50%; width: 26%; height: 10px; margin-left: -13%; border-radius: 99px; background: #0a1424; z-index: 2; }
 
 /* ---------- moldura da tela ---------- */
 .dev { --ar: 1.56; width: min(100%, calc((100dvh - var(--bar-h) - var(--nav-h) - 60px) * var(--ar))); justify-self: center; align-self: center; perspective: 1800px; position: relative; }
@@ -209,6 +219,8 @@ h2 em, h1 em { background: linear-gradient(100deg, #ffb15c 0%, #ff7a1a 55%, #ff5
   .cmp { width: 100%; }
   .energy { opacity: .5; width: 70vw; height: 55%; }
   .hot em { display: none; }
+  .mrow { grid-template-columns: minmax(0, 1fr); align-content: start; }
+  .phone { --w: min(28vw, 220px); }
 }
 @media (max-width: 640px) {
   :root { --bar-h: 54px; --nav-h: 60px; }
