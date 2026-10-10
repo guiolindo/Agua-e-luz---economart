@@ -445,8 +445,10 @@ details { border-top: 1px solid var(--line-soft); padding: 8px 0; } details summ
 
 .flash-body { flex: 1; min-width: 0; line-height: 1.45; } .flash-body > :first-child { margin-top: 0; } .flash-body > :last-child { margin-bottom: 0; }
 .filters-box { margin-bottom: 16px; padding: 0; } .filters-box > summary { cursor: pointer; padding: 12px 16px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
-.filters-box > summary::-webkit-details-marker { display: none; } .filters-box > summary .muted { font-weight: 400; } .filters-box > summary::after { content: 'Alterar ▾'; color: var(--accent); font-weight: 600; font-size: .9em; white-space: nowrap; }
-.filters-box[open] > summary::after { content: 'Fechar ▴'; } .filters-box .filters { padding: 4px 16px 16px; border-top: 1px solid var(--line-soft); }
+.filters-box > summary::-webkit-details-marker { display: none; } .filters-box > summary .muted { font-weight: 400; } .filters-box > summary::after { content: 'Alterar filtros ▾'; color: var(--accent); background: var(--accent-soft); border: 1.5px solid var(--accent); border-radius: 8px; padding: 7px 14px; font-weight: 600; font-size: .9em; white-space: nowrap; transition: background .15s ease, color .15s ease; }
+.filters-box > summary:hover::after { background: var(--accent); color: var(--accent-ink); }
+.filters-box[open] > summary::after { content: 'Fechar ▴'; }
+.filters-box { border-left: 4px solid var(--accent); } .filters-box .filters { padding: 4px 16px 16px; border-top: 1px solid var(--line-soft); }
 .row-searchbar { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
 .more-filters { margin-top: 8px; } .more-filters > summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--accent); padding: 4px 0; list-style: none; } .more-filters > summary::-webkit-details-marker { display: none; }
 .more-filters > summary::after { content: ' ▾'; } .more-filters[open] > summary::after { content: ' ▴'; } .more-filters .row { margin-top: 10px; }

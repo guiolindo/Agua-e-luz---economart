@@ -169,8 +169,8 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
     like_prev = sum((Decimal(str(r["avg_prev"])) for r in rows if r["avg_prev"] is not None), Decimal(0))
     comparable_stores = sum(1 for r in rows if r["avg_prev"] is not None)
     movers = [r for r in rows if r["vs_last_month"]["pct"] is not None]
-    rise = max(movers, key=lambda r: r["vs_last_month"]["pct"], default=None)
-    fall = min(movers, key=lambda r: r["vs_last_month"]["pct"], default=None)
+    rise = max((r for r in movers if r["vs_last_month"]["pct"] > 0), key=lambda r: r["vs_last_month"]["pct"], default=None)
+    fall = min((r for r in movers if r["vs_last_month"]["pct"] < 0), key=lambda r: r["vs_last_month"]["pct"], default=None)
     pend_month = months[focus] if months else end
     pending = dashboard_service.pending_items(db, pend_month, add_months(pend_month, -1)) if stores else []
     pending = [p for p in pending if p["store"].id in store_ids]

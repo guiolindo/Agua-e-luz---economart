@@ -286,3 +286,16 @@ def test_store_profile_does_not_claim_demand_status_without_readings(client, db)
     sid = db.query(Store).filter_by(code="SEMDEM").one().id
     html = _user(client, "diretor12", "director").get(f"/stores/{sid}?start=2026-01&end=2026-02").text
     assert "sem leitura de demanda" in html and "dentro do contratado" not in html
+
+
+def test_no_fall_is_reported_when_every_store_rose(db):
+    """Se todas subiram, não existe 'maior queda': a menor alta não pode aparecer com esse rótulo."""
+    w = _world(db)
+    s, u, rt = w["B"]
+    bill = db.query(EnergyBill).filter_by(unit_id=u.id, reference=date(2026, 2, 1)).one()
+    bill.total_value = D(2400)                                       # B: 2000 -> 2400 (+20%), também em alta
+    cbill = db.query(EnergyBill).filter_by(unit_id=w["C"][1].id, reference=date(2026, 2, 1)).one()
+    cbill.total_value = D(600)                                       # C: 500 -> 600
+    db.commit()
+    k = executive_service.build(db, date(2026, 1, 1), date(2026, 2, 1))["kpi"]
+    assert k["rise"]["code"] == "A" and k["fall"] is None
