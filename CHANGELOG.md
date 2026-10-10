@@ -5,6 +5,10 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-10
 
+- **Pentest interno:** 1 achado alto, 3 médios, 4 baixos, todos corrigidos (bloqueio de conta por condição de corrida,
+  limite de envio sem Content-Length, documentos visíveis além da conta, confirmação de senha para ações de admin,
+  entre outros). Ver `DECISIONS.md` §13.
+
 - **Planilhas em XLSX formatado:** o painel da diretoria baixa um arquivo com 5 abas (Resumo, Lojas, Mês a mês, Fornecedores, Pendências), com a identidade da marca, valores como número/moeda, mapa de calor, totais, filtros, cabeçalho congelado e configuração de impressão. A lista de Contas também ganhou XLSX. O CSV continua disponível (link "CSV" em Contas).
 - Revisão de linguagem no painel da diretoria: pluralização correta, "maior participação no gasto", "pode gerar cobrança por ultrapassagem", valor em R$ junto do percentual nos cartões de alta e queda, selo "Top 15" nos rankings; sem a linha "Conexão protegida · acesso monitorado" no login.
 

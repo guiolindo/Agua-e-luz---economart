@@ -67,21 +67,51 @@ def _deny(msg: str, status: int = 403, headers: dict | None = None):
 
 
 # ------------------------------------------------------------ tamanho do corpo
-class BodySizeLimitMiddleware(BaseHTTPMiddleware):
-    """Corta requisições gigantes ANTES do parse multipart (evita gastar CPU/memória com flood)."""
+class _BodyTooLarge(Exception):
+    pass
 
-    async def dispatch(self, request: Request, call_next):
-        if request.method.upper() in MUTATIONS:
-            try:
-                size = int(request.headers.get("content-length", "0"))
-            except ValueError:
-                size = 0
-            s = get_settings()
-            upload = request.method == "POST" and request.url.path == "/import"
-            limit = s.max_upload_bytes + 1024 * 1024 if upload else 1024 * 1024
-            if size > limit:
-                return _deny(f"Requisição excede o limite de {limit // (1024 * 1024)} MB.", 413)
-        return await call_next(request)
+
+class BodySizeLimitMiddleware:
+    """Corta requisições gigantes ANTES do parse multipart (evita gastar CPU/memória com flood).
+
+    ASGI puro (não BaseHTTPMiddleware): conta os bytes à medida que chegam, em vez de confiar só no
+    cabeçalho Content-Length — que um cliente sem autenticação pode omitir (chunked) ou mentir, e nesse
+    caso a checagem antiga nunca disparava (size ficava 0)."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope["method"].upper() not in MUTATIONS:
+            return await self.app(scope, receive, send)
+        s = get_settings()
+        upload = scope["method"] == "POST" and scope["path"] == "/import"
+        limit = s.max_upload_bytes + 1024 * 1024 if upload else 1024 * 1024
+        headers = dict(scope.get("headers") or [])
+        try:
+            declared = int(headers.get(b"content-length", b"0") or b"0")
+        except ValueError:
+            declared = 0
+        if declared > limit:
+            resp = _deny(f"Requisição excede o limite de {limit // (1024 * 1024)} MB.", 413)
+            return await resp(scope, receive, send)
+
+        seen = 0
+
+        async def limited_receive():
+            nonlocal seen
+            message = await receive()
+            if message["type"] == "http.request":
+                seen += len(message.get("body") or b"")
+                if seen > limit:
+                    raise _BodyTooLarge
+            return message
+
+        try:
+            await self.app(scope, limited_receive, send)
+        except _BodyTooLarge:
+            resp = _deny(f"Requisição excede o limite de {limit // (1024 * 1024)} MB.", 413)
+            await resp(scope, receive, send)
 
 
 # ------------------------------------------------------------ limite de requisições (por processo)

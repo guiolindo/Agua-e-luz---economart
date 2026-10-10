@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import security
@@ -45,16 +45,20 @@ def users_page(request: Request, user: User = Depends(admin_required), db: Sessi
 
 @router.post("/admin/users", dependencies=[Depends(verify_csrf)])
 def user_create(request: Request, username: str = Form(..., max_length=80), role: str = Form("operator"),
-                user: User = Depends(admin_required), db: Session = Depends(get_db)):
+                confirm_password: str = Form(""), user: User = Depends(admin_required), db: Session = Depends(get_db)):
     username = username.strip()
+    role = role if role in ROLES else "operator"
     if not username or len(username) < 3:
         flash(request, "Informe um nome de usuário com pelo menos 3 caracteres.", "error")
-    elif db.scalar(select(User).where(User.username == username)):
+    elif db.scalar(select(User).where(func.lower(User.username) == username.lower())):
         flash(request, "Esse usuário já existe.", "error")
+    elif role == "admin" and not security.verify_password(confirm_password, user.password_hash):
+        # criar outro administrador exige a sua senha: evita que uma sessão sequestrada vire um admin novo sozinha
+        flash(request, "Senha incorreta: a criação de um administrador precisa da confirmação da sua senha.", "error")
     else:
         temp = security.generate_temp_password()
         new = User(username=username, password_hash=security.hash_password(temp),
-                   role=role if role in ROLES else "operator", must_change_password=True,
+                   role=role, must_change_password=True,
                    temp_expires_at=utcnow() + timedelta(hours=get_settings().temp_password_hours))
         db.add(new)
         db.flush()
@@ -93,12 +97,15 @@ def user_unlock(request: Request, user_id: int, user: User = Depends(admin_requi
 
 
 @router.post("/admin/users/{user_id}/role", dependencies=[Depends(verify_csrf)])
-def user_role(request: Request, user_id: int, role: str = Form(...), user: User = Depends(admin_required),
-              db: Session = Depends(get_db)):
+def user_role(request: Request, user_id: int, role: str = Form(...), confirm_password: str = Form(""),
+              user: User = Depends(admin_required), db: Session = Depends(get_db)):
     target = db.get(User, user_id)
     if target and role in ROLES:
         if target.role == "admin" and role != "admin" and _active_admins(db) <= 1:
             flash(request, "É preciso manter pelo menos um administrador ativo.", "error")
+        elif role == "admin" and target.role != "admin" and not security.verify_password(confirm_password, user.password_hash):
+            # promover alguém a admin exige a sua senha, pelo mesmo motivo
+            flash(request, "Senha incorreta: promover a administrador precisa da confirmação da sua senha.", "error")
         else:
             target.role = role
             auth_service.revoke_sessions(target)
@@ -116,6 +123,8 @@ def user_toggle(request: Request, user_id: int, user: User = Depends(admin_requi
             flash(request, "É preciso manter pelo menos um administrador ativo.", "error")
         else:
             target.active = not target.active
+            if target.active:
+                target.failed_attempts, target.blocked_until = 0, None   # reativação não herda bloqueio acumulado enquanto estava inativa
             auth_service.revoke_sessions(target)  # desativar derruba as sessões abertas na hora
             audit_service.log(db, user.id, "activate" if target.active else "deactivate", "user", target.id)
             db.commit()
@@ -123,11 +132,15 @@ def user_toggle(request: Request, user_id: int, user: User = Depends(admin_requi
 
 
 @router.post("/admin/users/{user_id}/reset-2fa", dependencies=[Depends(verify_csrf)])
-def user_reset_2fa(request: Request, user_id: int, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+def user_reset_2fa(request: Request, user_id: int, confirm_password: str = Form(""),
+                   user: User = Depends(admin_required), db: Session = Depends(get_db)):
     """Outro administrador perdeu o celular: remove o 2FA dele (ele configura de novo no próximo acesso)."""
     target = db.get(User, user_id)
     if target is None or target.id == user.id or not target.has_2fa:
         flash(request, "Este usuário não tem 2FA ativo.", "info")
+    elif target.role == "admin" and not security.verify_password(confirm_password, user.password_hash):
+        # tirar o 2FA de outro admin exige a sua senha: senão uma sessão sequestrada derruba a proteção de todos os admins
+        flash(request, "Senha incorreta: remover o 2FA de outro administrador precisa da confirmação da sua senha.", "error")
     else:
         totp_service.disable(target)       # também encerra as sessões dele
         audit_service.log(db, user.id, "2fa_reset", "user", target.id, {"by_admin": True})

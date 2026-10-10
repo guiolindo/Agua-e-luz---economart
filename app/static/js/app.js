@@ -6,8 +6,17 @@ document.addEventListener('click', (e) => {
   if (c && !window.confirm(c.dataset.confirm)) e.preventDefault();
 });
 document.addEventListener('submit', (e) => {
-  const msg = e.target.dataset && e.target.dataset.confirm;
-  if (msg && !window.confirm(msg)) e.preventDefault();
+  const f = e.target;
+  const msg = f.dataset && f.dataset.confirm;
+  if (msg && !window.confirm(msg)) { e.preventDefault(); return; }
+  const pwMsg = f.dataset && f.dataset.confirmPassword;   // ação sensível (ex.: tirar o 2FA de outro admin): confirma com a SUA senha
+  if (pwMsg) {
+    const pw = window.prompt(pwMsg);
+    if (!pw) { e.preventDefault(); return; }
+    let h = f.querySelector('input[name=confirm_password]');
+    if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = 'confirm_password'; f.appendChild(h); }
+    h.value = pw;
+  }
 });
 document.addEventListener('change', (e) => {
   const t = e.target;
@@ -15,7 +24,19 @@ document.addEventListener('change', (e) => {
     const u = new URL(location.href); if (t.checked) u.searchParams.set('doc', '1'); else u.searchParams.delete('doc');
     u.hash = t.checked ? 'original' : ''; location.href = u.toString(); return;
   }
-  if (t.matches('[data-autosubmit]') && t.form) t.form.submit();
+  if (t.id === 'new-role') {   // criar usuário como admin: mostra o campo de confirmação de senha
+    const f = document.getElementById('new-role-confirm'); if (f) f.hidden = t.value !== 'admin';
+  }
+  if (t.matches('[data-autosubmit]') && t.form) {
+    if (t.name === 'role' && t.value === 'admin') {   // promover alguém a admin: confirma com a SUA senha antes de enviar
+      const pw = window.prompt('Confirme sua senha de administrador para promover ' + (t.getAttribute('aria-label') || 'este usuário') + ':');
+      if (!pw) return;                                 // cancelou: não envia (a tela volta ao estado real no próximo load)
+      let h = t.form.querySelector('input[name=confirm_password]');
+      if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = 'confirm_password'; t.form.appendChild(h); }
+      h.value = pw;
+    }
+    t.form.submit();
+  }
   if (t.matches('select[data-bill-switch]')) {
     const doc = document.getElementById('doc');
     location.href = '/bills/' + t.value + '/print' + (doc && doc.checked ? '?doc=1' : '');

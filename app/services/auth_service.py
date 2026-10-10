@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 from fastapi import Request
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app import security
@@ -44,9 +44,14 @@ def _throttle_unknown(db: Session, request: Request, username: str, now) -> Logi
         return LoginResult(None, False, locked=True, minutes=_minutes_left(until, now))
     if thr is None:
         db.execute(delete(LoginThrottle).where(LoginThrottle.updated_at < now - timedelta(days=1)))   # faxina
-        thr = LoginThrottle(key=key, failures=0)
+        thr = LoginThrottle(key=key, failures=1)   # 1ª falha: linha nova, sem concorrente possível antes dela existir
         db.add(thr)
-    thr.failures = (thr.failures or 0) + 1
+    else:
+        db.execute(update(LoginThrottle).where(LoginThrottle.id == thr.id)
+                  .values(failures=func.coalesce(LoginThrottle.failures, 0) + 1))
+        db.flush()
+        db.refresh(thr)   # valor pós-UPDATE: em produção (Postgres) o UPDATE serializa tentativas concorrentes
+                          # pela trava de linha, sem "lost update"
     locked = thr.failures >= s.max_login_attempts
     if locked:
         thr.blocked_until, thr.failures = now + timedelta(minutes=s.login_block_minutes), 0
@@ -86,15 +91,20 @@ def attempt_login(db: Session, request: Request, username: str, password: str) -
         security_event(db, request, "login_temp_expired", user.id)
         db.commit()
         return LoginResult(None, False)               # mesma mensagem genérica; o admin precisa redefinir
-    if not user.active or not security.verify_password(password, user.password_hash):
+    # conta inativa: gasta o mesmo tempo (verify_dummy) e conta como falha igual a uma senha errada, para a
+    # mensagem, o tempo de resposta e o "bloqueado após N tentativas" não denunciarem que a conta foi desativada
+    password_ok = security.verify_password(password, user.password_hash) if user.active else (security.verify_dummy(password) or False)
+    if not user.active or not password_ok:
         just_locked = False
-        if user.active:
-            user.failed_attempts = (user.failed_attempts or 0) + 1
-            if user.failed_attempts >= limit:
-                user.blocked_until = now + timedelta(minutes=s.login_block_minutes)
-                user.failed_attempts = 0
-                just_locked = True
-                security_event(db, request, "account_locked", user.id, minutes=s.login_block_minutes)
+        db.execute(update(User).where(User.id == user.id)
+                  .values(failed_attempts=func.coalesce(User.failed_attempts, 0) + 1))
+        db.flush()
+        db.refresh(user)
+        if user.failed_attempts >= limit:
+            user.blocked_until = now + timedelta(minutes=s.login_block_minutes)
+            user.failed_attempts = 0
+            just_locked = True
+            security_event(db, request, "account_locked", user.id, minutes=s.login_block_minutes)
         security_event(db, request, "login_failed", user.id)
         db.commit()
         return LoginResult(None, False, locked=just_locked, minutes=s.login_block_minutes if just_locked else 0)
@@ -152,7 +162,10 @@ def verify_second_factor(db: Session, request: Request, user: User, code: str) -
     if not ok and totp_service.use_recovery_code(user, code):
         ok = used_recovery = True
     if not ok:
-        user.failed_attempts = (user.failed_attempts or 0) + 1
+        db.execute(update(User).where(User.id == user.id)
+                  .values(failed_attempts=func.coalesce(User.failed_attempts, 0) + 1))
+        db.flush()
+        db.refresh(user)
         just_locked = user.failed_attempts >= s.max_login_attempts
         if just_locked:
             user.blocked_until, user.failed_attempts = now + timedelta(minutes=s.login_block_minutes), 0

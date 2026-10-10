@@ -89,12 +89,30 @@ def test_exif_rotation_is_applied():
     assert Image.open(io.BytesIO(out)).size == (200, 400)
 
 
+def _pdf(pages: int) -> bytes:
+    """PDF de verdade (não só bytes com a palavra /Page), para o pypdfium2 conseguir abrir."""
+    im = Image.new("RGB", (40, 40), "white")
+    buf = io.BytesIO()
+    im.save(buf, "PDF", save_all=True, append_images=[im] * (pages - 1))
+    return buf.getvalue()
+
+
 def test_pdf_with_too_many_pages_rejected():
-    pdf = b"%PDF-1.4\n" + b"<< /Type /Page >>\n" * 40 + b"<< /Type /Pages >>"
     with pytest.raises(UploadError, match="páginas"):
-        validate_upload("contas.pdf", pdf, 10_000_000)
-    ok = b"%PDF-1.4\n" + b"<< /Type /Page >>\n" * 2 + b"<< /Type /Pages >>"
-    assert validate_upload("conta.pdf", ok, 10_000_000)[1] == "application/pdf"
+        validate_upload("contas.pdf", _pdf(40), 10_000_000)
+    assert validate_upload("conta.pdf", _pdf(2), 10_000_000)[1] == "application/pdf"
+
+
+def test_huge_image_dimensions_are_rejected_before_decoding():
+    """PNG pequeno em bytes, mas com dimensões absurdas (bomba de descompressão): barrado pelo cabeçalho,
+    sem precisar decodificar os pixels."""
+    huge = Image.new("1", (20000, 20000))          # 1 bit por pixel: poucos KB comprimidos, 400 milhões de pixels
+    buf = io.BytesIO()
+    huge.save(buf, "PNG")
+    data = buf.getvalue()
+    assert len(data) < 200_000                      # confirma que o tamanho em bytes não denunciaria o problema
+    with pytest.raises(UploadError, match="grande demais"):
+        validate_upload("foto.png", data, 10_000_000)
 
 
 # ---------- travamentos / limites ----------

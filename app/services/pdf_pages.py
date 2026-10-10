@@ -11,11 +11,20 @@ _lock = threading.Lock()   # o pdfium não é thread-safe e o FastAPI roda rotas
 
 def page_count(data: bytes) -> int:
     """Quantas páginas serão impressas (0 se o PDF não puder ser lido)."""
+    return min(true_page_count(data), MAX_PAGES)
+
+
+def true_page_count(data: bytes) -> int:
+    """Número real de páginas, sem o corte de MAX_PAGES (0 se o PDF não puder ser lido).
+
+    Usado também na validação do upload: contar com o mesmo leitor que vai abrir o arquivo depois evita que um PDF
+    com páginas em object streams comprimidos (invisíveis para quem só procura "/Type /Page" nos bytes crus) escape
+    do limite de páginas."""
     try:
         with _lock:
             pdf = pdfium.PdfDocument(data)
             try:
-                return min(len(pdf), MAX_PAGES)
+                return len(pdf)
             finally:
                 pdf.close()
     except Exception:

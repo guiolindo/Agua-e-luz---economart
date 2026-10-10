@@ -23,8 +23,10 @@ def _new_client() -> Client:
 
 
 def _create_user(admin: Client, username: str, role: str) -> str:
-    r = admin.post("/admin/users", {"username": username, "role": role})
-    assert r.status_code == 200
+    # confirm_password: só é exigida/checada quando role="admin" (promover/criar outro admin); nos demais papéis
+    # o campo é ignorado pelo servidor. "admin-pass-123" é a senha do admin semeado em todo teste (conftest.py).
+    r = admin.post("/admin/users", {"username": username, "role": role, "confirm_password": "admin-pass-123"})
+    assert r.status_code == 200, r.text
     return re.search(r"<code[^>]*>(.*?)</code>", r.text).group(1)
 
 

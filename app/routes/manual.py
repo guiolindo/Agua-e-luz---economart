@@ -7,13 +7,14 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
-from app.models import ConsumerUnit, EnergyBill, ManualRecord, RecordType, User
+from app.models import ConsumerUnit, Document, EnergyBill, ManualRecord, RecordType, User
 from app.models.import_job import Import
 from app.repositories.stores import list_record_types, list_stores
 from app.schemas.forms import bill_to_form, parse_bill_form
 from app.security import current_user, verify_csrf, writer_required
 from app.services import audit_service
 from app.services.duplicate_service import find_bill_duplicates, find_manual_duplicates
+from app.models.mixins import utcnow
 from app.services.import_service import save_bill
 from app.utils.parsing import clean_str, parse_date, parse_decimal, parse_reference
 from app.web import flash, render
@@ -149,11 +150,15 @@ def bill_delete(request: Request, bill_id: int, user: User = Depends(writer_requ
     bill = db.get(EnergyBill, bill_id)
     if not bill:
         raise HTTPException(404, "Conta não encontrada.")
-    unit_id = bill.unit_id
+    unit_id, doc_id = bill.unit_id, bill.document_id
     audit_service.log(db, user.id, "delete", "energy_bill", bill.id,
                       {"reference": bill.reference.isoformat(), "total_value": str(bill.total_value)})
     db.execute(update(Import).where(Import.bill_id == bill.id).values(bill_id=None))   # importação deixa de apontar para a conta (FK no Postgres)
     db.delete(bill)
+    db.flush()
+    if doc_id and db.scalar(select(EnergyBill.id).where(EnergyBill.document_id == doc_id)) is None:
+        # nenhuma outra conta aponta mais para esta foto/PDF: apaga o arquivo (os dados lidos continuam salvos)
+        db.execute(update(Document).where(Document.id == doc_id).values(data=None, purged_at=utcnow()))
     db.commit()
     flash(request, "Conta excluída.", "info")
     return RedirectResponse(f"/units/{unit_id}", status_code=303)

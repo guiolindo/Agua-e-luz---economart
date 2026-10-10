@@ -11,6 +11,7 @@
   Chart.defaults.font.family = 'Inter, "Segoe UI", system-ui, sans-serif'; Chart.defaults.color = INK;
   const arrow = (p) => p == null ? '—' : (p > 0 ? '↑ ' : p < 0 ? '↓ ' : '→ ') + nfN.format(Math.abs(p)) + '%';
   const $ = (id) => document.getElementById(id);
+  const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const refLine = (value, color, label) => ({ id: 'ref' + label, afterDatasetsDraw(c) {
     const x = c.scales.x.getPixelForValue(value); if (!isFinite(x)) return;
     const { top, bottom } = c.chartArea, g = c.ctx; g.save(); g.strokeStyle = color; g.setLineDash([5, 4]); g.lineWidth = 1.5;
@@ -57,7 +58,7 @@
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (i) => i.dataset.label + ': ' + nfBRL0.format(i.raw) } } } } });
   const pick = $('storepick');
   rows.forEach((r, i) => { const l = document.createElement('label'); l.className = 'chk';
-    l.innerHTML = '<input type="checkbox"' + (i < 5 ? ' checked' : '') + '><span class="dot" style="background:' + PALETTE[i % PALETTE.length] + '"></span>' + r.code;
+    l.innerHTML = '<input type="checkbox"' + (i < 5 ? ' checked' : '') + '><span class="dot" style="background:' + PALETTE[i % PALETTE.length] + '"></span>' + esc(r.code);
     l.querySelector('input').addEventListener('change', (e) => { lineChart.setDatasetVisibility(i, e.target.checked); lineChart.update('none'); }); pick.appendChild(l); });
 
   // 6) R$/kWh e 7) uso da demanda
@@ -86,8 +87,8 @@
     const pct = a.values.map((v, i) => (v == null || !b.values[i]) ? null : ((v - b.values[i]) / b.values[i]) * 100);
     const th = D.labels.map((l) => '<th class="num">' + l + '</th>').join('');
     $('pair-table').innerHTML = '<thead><tr><th><span class="sr">Loja</span></th>' + th + '<th class="num">Total</th></tr></thead><tbody>' +
-      '<tr><td><strong>' + a.code + '</strong></td>' + a.values.map(cell).join('') + '<td class="num"><strong>' + nfBRL0.format(a.total) + '</strong></td></tr>' +
-      '<tr><td><strong>' + b.code + '</strong></td>' + b.values.map(cell).join('') + '<td class="num"><strong>' + nfBRL0.format(b.total) + '</strong></td></tr>' +
+      '<tr><td><strong>' + esc(a.code) + '</strong></td>' + a.values.map(cell).join('') + '<td class="num"><strong>' + nfBRL0.format(a.total) + '</strong></td></tr>' +
+      '<tr><td><strong>' + esc(b.code) + '</strong></td>' + b.values.map(cell).join('') + '<td class="num"><strong>' + nfBRL0.format(b.total) + '</strong></td></tr>' +
       '<tr class="sub"><td>Diferença (R$)</td>' + diff.map(cell).join('') + '<td class="num">' + nfBRL0.format(a.total - b.total) + '</td></tr>' +
       '<tr class="sub"><td>Diferença (%)</td>' + pct.map((p) => '<td class="num">' + (p == null ? '' : arrow(p)) + '</td>').join('') + '<td class="num">' + (b.total ? arrow(((a.total - b.total) / b.total) * 100) : '') + '</td></tr></tbody>';
   }

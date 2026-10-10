@@ -148,7 +148,7 @@ def test_another_admin_can_reset_2fa(client, db):
     c2.post("/account/password", {"current_password": pin, "new_password": "Segunda-senha-9", "confirm": "Segunda-senha-9"})
     c2.refresh()
     target = _admin(db).id
-    assert c2.post(f"/admin/users/{target}/reset-2fa").status_code == 303
+    assert c2.post(f"/admin/users/{target}/reset-2fa", {"confirm_password": "Segunda-senha-9"}).status_code == 303
     db.expire_all()
     assert not _admin(db).has_2fa
     assert db.query(AuditLog).filter_by(action="2fa_reset").count() == 1
