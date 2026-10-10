@@ -3,6 +3,7 @@
 {% macro delta(v) %}{% if v and v.pct is not none %}<span class="var var-{{ v.direction }}">{{ v.text }}</span>{% else %}<span class="muted">—</span>{% endif %}{% endmacro %}
 {% block title %}Painel da diretoria · Economart Energia{% endblock %}
 {% block content %}
+<div class="dirpanel">
 <style>@page { size: A4 landscape; margin: 8mm; }</style>
 <header class="print-head" aria-hidden="true">
   <img src="/static/img/logo.png" alt="" width="445" height="113">
@@ -45,28 +46,28 @@
 </form>
 </details>
 {% if not rows %}<div class="card"><p class="muted" style="margin:0">Sem dados no período/filtros selecionados.</p></div>{% else %}
-<div class="grid cols-main2">
+<div class="grid cols-main2 pp-1">
   <section class="card"><div class="card-head"><h2>Gasto da empresa por mês e fornecedor</h2><span class="muted small">barras = R$ · linha = variação do total</span></div><div class="dchart"><canvas id="c-month" role="img" aria-label="Gasto mensal por fornecedor"></canvas></div></section>
   <section class="card"><div class="card-head"><h2>Ranking de lojas <span class="muted small">· Top 15</span></h2><span class="muted small">total no período</span></div><div class="dchart tall"><canvas id="c-rank" role="img" aria-label="Ranking de lojas <span class="muted small">· Top 15</span> por gasto"></canvas></div></section>
 </div>
 
-<div class="grid cols-2">
+<div class="grid cols-2 pp-2 pp-break">
   <section class="card"><div class="card-head"><h2>Variação em {{ focus_label }} vs. {{ prev_label }} <span class="muted small">· até 20 lojas</span></h2><span class="muted small">↑ gastou mais · ↓ gastou menos</span></div><div class="dchart tall"><canvas id="c-var" role="img" aria-label="Variação por loja no último mês"></canvas></div></section>
   <section class="card"><div class="card-head"><h2>Composição do gasto por loja <span class="muted small">· Top 15</span></h2><span class="muted small">% por fornecedor</span></div><div class="dchart tall"><canvas id="c-mix" role="img" aria-label="Composição por fornecedor"></canvas></div></section>
 </div>
 
-<section class="card">
+<section class="card pp-evol">
   <div class="card-head"><h2>Evolução das lojas</h2><span class="muted small">marque as lojas que quer comparar</span></div>
   <div class="storepick no-print" id="storepick"></div>
   <div class="dchart"><canvas id="c-line" role="img" aria-label="Evolução mensal por loja"></canvas></div>
 </section>
 
-<div class="grid cols-2">
+<div class="grid cols-2 pp-3 pp-break">
   <section class="card"><div class="card-head"><h2>Custo efetivo por kWh</h2><span class="muted small">total da conta ÷ kWh · linha = média da empresa</span></div><div class="dchart tall"><canvas id="c-kwh" role="img" aria-label="Custo por kWh por loja"></canvas></div></section>
   <section class="card"><div class="card-head"><h2>Uso da demanda contratada</h2><span class="muted small">demanda medida ÷ contratada · acima de 105% costuma gerar cobrança por ultrapassagem (tolerância de 5%)</span></div><div class="dchart tall"><canvas id="c-util" role="img" aria-label="Uso da demanda contratada"></canvas></div></section>
 </div>
 
-<section class="card">
+<section class="card no-print">
   <div class="card-head"><h2>Comparar duas lojas</h2>
     <div class="actions no-print pair-actions"><select id="pair-a" aria-label="Loja A"></select><span class="muted">×</span><select id="pair-b" aria-label="Loja B"></select></div></div>
   <div class="dchart"><canvas id="c-pair" role="img" aria-label="Comparação entre duas lojas"></canvas></div>
@@ -85,7 +86,7 @@
   </table></div>
 </section>
 
-<section class="card flush">
+<section class="card flush pp-break">
   <div style="padding:14px 18px 0"><h2>Comparativo entre lojas</h2></div>
   {% set ns = namespace(prev=false) %}{% for r in rows %}{% if r.vs_prev_period and r.vs_prev_period.pct is not none %}{% set ns.prev = true %}{% endif %}{% endfor %}
   <div class="tablewrap"><table>
@@ -112,6 +113,7 @@
     <li><strong>Variações e destaques:</strong> indicam onde conferir. A causa não é identificada pelo sistema.</li>
   </ul></aside>
 <script type="application/json" id="dir-data">{{ payload|tojson }}</script>
+</div>
 {% endblock %}
 {% block scripts %}
 {% if rows %}<script src="/static/js/vendor/chart.umd.min.js"></script><script src="/static/js/director.js?v={{ ASSET_VERSION }}"></script>{% endif %}

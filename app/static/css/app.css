@@ -583,3 +583,20 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
 .method h2 { font-size: 14px; margin: 0 0 6px; }
 .method ul { margin: 0; padding-left: 18px; line-height: 1.5; }
 @media print { .method { break-inside: avoid; } }
+
+/* Impressão do painel da diretoria: relatório de 4 páginas A4 paisagem, uma ideia por página
+   (1 resumo · 2 desempenho · 3 custos e demanda · 4 detalhe), sem cortar gráfico no meio. */
+@media print {
+  .grid.cols-main2.pp-1 { grid-template-columns: 3fr 2fr !important; } .grid.cols-main2.pp-1 > :first-child { grid-column: auto !important; }
+  .pp-1 .dchart, .pp-1 .dchart.tall { height: 235px !important; }
+  .pp-break { break-before: page; page-break-before: always; }
+  .pp-2 .dchart, .pp-2 .dchart.tall { height: 270px !important; } .pp-3 .dchart, .pp-3 .dchart.tall { height: 245px !important; }
+  .pp-evol .dchart { height: 255px !important; }
+  .dirpanel .card.flush { break-inside: auto; }               /* tabelas longas podem passar para a página seguinte... */
+  .dirpanel table tr { break-inside: avoid; } .dirpanel thead { display: table-header-group; }    /* ...sem cortar uma linha e repetindo o cabeçalho */
+  .dirpanel .heat td, .dirpanel .heat th { padding-top: 3px; padding-bottom: 3px; }
+}
+@media print {
+  .dirpanel .card.flush table td, .dirpanel .card.flush table th { padding-top: 5px; padding-bottom: 5px; }     /* tabelas mais compactas no papel */
+  .method { margin-top: 8px; padding: 8px 12px; } .method h2 { font-size: 11px; margin-bottom: 3px; } .method ul { font-size: 9px; line-height: 1.3; }
+}

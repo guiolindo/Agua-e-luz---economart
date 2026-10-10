@@ -300,3 +300,15 @@ def test_no_fall_is_reported_when_every_store_rose(db):
     db.commit()
     k = executive_service.build(db, date(2026, 1, 1), date(2026, 2, 1))["kpi"]
     assert k["rise"]["code"] == "A" and k["fall"] is None
+
+
+def test_director_print_layout_has_one_theme_per_page(db):
+    """Impressão: relatório A4 paisagem de 4 páginas (resumo, desempenho, custos, detalhe). As marcas de quebra
+    ficam no template; sem elas o painel sai em pedaços soltos (já aconteceu: 6 páginas, a última só com a nota)."""
+    from pathlib import Path
+
+    html = Path("app/templates/director/panel.html").read_text(encoding="utf-8")
+    assert html.count("pp-break") == 3 and 'class="dirpanel"' in html          # variação, custos/demanda, comparativo
+    assert "pp-1" in html and "pp-evol" in html and 'class="card no-print"' in html   # "comparar duas lojas" não imprime
+    css = Path("app/static/css/app.css").read_text(encoding="utf-8")
+    assert ".pp-break { break-before: page;" in css and ".dirpanel table tr { break-inside: avoid; }" in css
