@@ -9,7 +9,7 @@
     <label for="s" style="margin:0">De</label><input id="s" type="month" name="start" value="{{ start.strftime('%Y-%m') }}" style="width:auto">
     <label for="e" style="margin:0">Até</label><input id="e" type="month" name="end" value="{{ end.strftime('%Y-%m') }}" style="width:auto">
     <label for="by" style="margin:0">Agrupar por</label>
-    <select id="by" name="by" style="width:auto"><option value="reference" {{ 'selected' if by == 'reference' }}>Mês de referência</option><option value="due" {{ 'selected' if by == 'due' }}>Mês de vencimento</option></select>
+    <select id="by" name="by" style="width:auto"><option value="sheet" {{ 'selected' if by == 'sheet' }}>Como na planilha</option><option value="reference" {{ 'selected' if by == 'reference' }}>Mês de referência</option><option value="due" {{ 'selected' if by == 'due' }}>Mês de vencimento</option></select>
     <label for="t" style="margin:0">Imóvel / fornecedor</label>
     <select id="t" name="type_id" style="width:auto">{% for t in available %}<option value="{{ t.id }}" {{ 'selected' if type_id == t.id }}>{{ t.name }}</option>{% endfor %}</select>
     <label style="margin:0;font-weight:400"><input type="checkbox" name="all" value="1" {{ 'checked' if all_types }}> um por folha (todos)</label>
@@ -23,13 +23,13 @@
       <h1><span class="code">{{ store.code }}</span>{% if store.name %}<span class="sname">{{ store.name }}</span>{% endif %}</h1></div>
     <div class="report-meta"><div><span class="muted">LOJA:</span> <strong>{{ store.code }}</strong>{% if store.region %} · {{ store.region }}{% endif %}</div>
       <div><span class="muted">Período:</span> <strong>{{ start|month_label }} a {{ end|month_label }}</strong></div>
-      <div><span class="muted">Agrupado por</span> {{ 'mês de vencimento' if by == 'due' else 'mês de referência' }}</div></div>
+      <div><span class="muted">Agrupado por</span> {% if by == 'sheet' %}resumo por mês de vencimento · gráfico por mês de referência{% else %}{{ 'mês de vencimento' if by == 'due' else 'mês de referência' }}{% endif %}</div></div>
   </header>
 
   <section class="rblock">
     <h2>RESUMO MENSAL — TOTAL GERAL DA LOJA (R$)</h2>
     {% if summary.rows %}<table class="rtable">
-      <thead><tr><th>Fornecedor</th>{% for m in months %}<th class="num {{ 'lastcol' if loop.index0 == last_idx }}">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
+      <thead><tr><th>Fornecedor</th>{% for m in sum_months %}<th class="num {{ 'lastcol' if loop.index0 == last_idx }}">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
       <tbody>{% for r in summary.rows %}<tr><td>{{ r.type.name }}</td>{% for v in r['values'] %}<td class="num {{ 'lastcol' if loop.index0 == last_idx }}">{{ v|num(2) if v is not none else '' }}</td>{% endfor %}<td class="num">{{ r.total|num(2) }}</td></tr>{% endfor %}</tbody>
       <tfoot><tr><td>Total geral</td>{% for t in summary.totals %}<td class="num">{{ t|num(2) if t is not none else '' }}</td>{% endfor %}<td class="num">{{ summary.grand_total|num(2) }}</td></tr></tfoot>
     </table>{% else %}<p class="muted">Sem registros no período.</p>{% endif %}
@@ -48,9 +48,9 @@
       {% if l.contracted_demand is not none %}<span><em>Contratada</em> <b>{{ l.contracted_demand|num(0) }} kW</b></span>{% endif %}
       {% if l.days is not none %}<span><em>Dias</em> <b>{{ l.days }}</b></span>{% endif %}
     </div>{% endif %}
-    <div class="rchart"><canvas data-chart='{{ dict(b.chart, last=last_idx)|tojson }}' aria-label="Gráfico {{ b.type.name }}" role="img"></canvas></div>
+    <div class="rchart"><canvas data-chart='{{ dict(b.chart, last=b.last_idx)|tojson }}' aria-label="Gráfico {{ b.type.name }}" role="img"></canvas></div>
     <table class="rtable">
-      <thead><tr><th><span class="sr">Indicador</span></th>{% for m in months %}<th class="num">{{ m|month_label }}</th>{% endfor %}</tr></thead>
+      <thead><tr><th><span class="sr">Indicador</span></th>{% for m in b.months %}<th class="num">{{ m|month_label }}</th>{% endfor %}</tr></thead>
       <tbody>
         {% for r in b.rows %}<tr class="sub"><td>{{ r.label }}</td>{% for v in r['values'] %}<td class="num">{{ v|brl if v is not none else '' }}</td>{% endfor %}</tr>{% endfor %}
         <tr><td><strong>Valor da fatura</strong></td>{% for v in b.totals %}<td class="num">{{ v|brl if v is not none else '' }}</td>{% endfor %}</tr>

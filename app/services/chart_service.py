@@ -279,7 +279,14 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
                 by: str = "reference", type_id: int | None = None, all_types: bool = False) -> dict:
     """Folha de impressão: resumo de todos os fornecedores + UM fornecedor (gráfico, variação, tabela e dados da conta).
     `all_types=True` devolve um bloco por fornecedor (várias folhas)."""
+    # "sheet" = como na planilha impressa da Economart: o RESUMO soma pelo mês de VENCIMENTO e o gráfico/tabela do imóvel
+    # mostra o mês de REFERÊNCIA da conta. "due" e "reference" aplicam a mesma regra aos dois.
+    by_sum = "due" if by in ("due", "sheet") else "reference"
+    by = "due" if by == "due" else "reference"          # regra do gráfico/tabela do imóvel
+    explicit_end = end is not None
     start, end = default_range(db, store.id, start, end)
+    if by_sum == "due" and not explicit_end:
+        end = add_months(end, 1)          # o vencimento da última conta cai no mês seguinte (colunas vazias são cortadas abaixo)
     months = month_range(start, end)
     idx = {m: i for i, m in enumerate(months)}
     types = {t.id: t for t in list_record_types(db, only_active=False)}
@@ -329,23 +336,33 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
     for tid, blk in sorted(blocks.items(), key=lambda kv: types[kv[0]].sort_order):
         if not all_types and tid != selected:
             continue
-        totals = blk["totals"]
+        nz = [i for i, t in enumerate(blk["totals"]) if t is not None]
+        lo, hi = (nz[0], nz[-1]) if nz else (0, n - 1)           # a folha do imóvel não mostra meses vazios nas pontas
+        cut = slice(lo, hi + 1)
+        bm, totals = months[cut], blk["totals"][cut]
         vars_ = [variation(totals[i - 1] if i else None, t) for i, t in enumerate(totals)]
-        rows = [{"label": units[k].number if k in units else "Total lançado", "values": v}
+        rows = [{"label": units[k].number if k in units else "Total lançado", "values": v[cut]}
                 for k, v in sorted(blk["rows"].items(), key=lambda kv: (kv[0] is None, units[kv[0]].number if kv[0] in units else ""))]
+        cons, dem, days = blk["cons"][cut], blk["dem"][cut], blk["days"][cut]
         out.append({
             "type": blk["type"], "rows": rows if len(rows) > 1 else [], "totals": totals, "variations": vars_,
-            "latest": blk.get("latest"),
-            "cons": blk["cons"] if any(v is not None for v in blk["cons"]) else None,
-            "dem": blk["dem"] if any(v is not None for v in blk["dem"]) else None,
-            "kpis": _sheet_kpis(months, totals, vars_),
-            "days": None if blk["days_conflict"] or not any(d is not None for d in blk["days"]) else blk["days"],
-            "chart": {"labels": [fmt.month_short(m) for m in months], "values": [float(t) if t is not None else None for t in totals],
+            "latest": blk.get("latest"), "months": bm, "last_idx": len(bm) - 1,
+            "cons": cons if any(v is not None for v in cons) else None,
+            "dem": dem if any(v is not None for v in dem) else None,
+            "kpis": _sheet_kpis(bm, totals, vars_),
+            "days": None if blk["days_conflict"] or not any(d is not None for d in days) else days,
+            "chart": {"labels": [fmt.month_short(m) for m in bm], "values": [float(t) if t is not None else None for t in totals],
                       "variation": [float(v.pct) if v.pct is not None else None for v in vars_]},
         })
-    summ = store_summary(db, store, start, end, by)
-    last_idx = max((i for i, t in enumerate(summ["totals"]) if t), default=len(months) - 1)   # último mês COM dados
-    return {"months": months, "start": start, "end": end, "blocks": out, "by": by, "last_idx": last_idx, "type_id": selected, "available": available, "all_types": all_types,
+    summ = store_summary(db, store, start, end, by_sum)
+    nz = [i for i, t in enumerate(summ["totals"]) if t is not None]
+    slo, shi = (nz[0], nz[-1]) if nz else (0, len(months) - 1)
+    scut = slice(slo, shi + 1)
+    summ = {**summ, "months": months[scut], "totals": summ["totals"][scut], "variations": summ["variations"][scut],
+            "rows": [{**r, "values": r["values"][scut]} for r in summ["rows"]]}
+    sum_months = summ["months"]
+    last_idx = max((i for i, t in enumerate(summ["totals"]) if t), default=len(sum_months) - 1)   # último mês COM dados
+    return {"months": months, "sum_months": sum_months, "start": start, "end": end, "blocks": out, "by": by, "by_sum": by_sum, "last_idx": last_idx, "type_id": selected, "available": available, "all_types": all_types,
             "summary": summ}
 
 

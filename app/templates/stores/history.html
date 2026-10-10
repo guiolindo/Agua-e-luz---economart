@@ -4,7 +4,7 @@
 {% block content %}
 {% call hero("Loja" ~ (" · " ~ store.region if store.region else ""), store.code ~ (" — " ~ store.name if store.name else ""), (store.location or "Histórico de custos e contas"), "/stores", "Lojas") %}
   {% if user.can_write %}<a class="btn cta" href="/import?store_id={{ store.id }}">Importar conta</a>{% endif %}
-  <a class="btn on-dark" id="print-link" href="/stores/{{ store.id }}/report?start={{ start.strftime('%Y-%m') }}&end={{ end.strftime('%Y-%m') }}">Imprimir relatório</a>
+  <a class="btn on-dark" id="print-link" href="/stores/{{ store.id }}/report">Imprimir relatório</a>
   {% if user.can_write %}<a class="btn on-dark" href="/manual?store_id={{ store.id }}">Lançamento manual</a>
   <a class="btn on-dark" href="/stores/{{ store.id }}/settings">Cadastro</a>{% endif %}
 {% endcall %}
@@ -53,8 +53,12 @@
 </section>
 {% endblock %}
 {% block scripts %}<script nonce="{{ csp_nonce }}">
-document.getElementById('print-link').addEventListener('click', (e) => {
+// O relatório usa o período padrão (como na planilha); só repassa o período se a pessoa o mudou na tela.
+(function () {
   const s = document.querySelector('[name="start"]'), t = document.querySelector('[name="end"]');
-  if (s && t && s.value && t.value) e.currentTarget.href = '/stores/{{ store.id }}/report?start=' + s.value + '&end=' + t.value;
-});
+  const s0 = s && s.value, t0 = t && t.value;
+  document.getElementById('print-link').addEventListener('click', (e) => {
+    if (s && t && s.value && t.value && (s.value !== s0 || t.value !== t0)) e.currentTarget.href = '/stores/{{ store.id }}/report?start=' + s.value + '&end=' + t.value;
+  });
+})();
 </script>{% endblock %}
