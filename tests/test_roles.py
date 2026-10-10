@@ -103,3 +103,22 @@ def test_help_is_tailored_to_each_role(client, db):
     viewer = _user(client, "con9", "viewer").get("/ajuda").text
     assert "O que a consulta faz" in viewer and "Achar, abrir e imprimir uma conta" in viewer
     assert "Enviar uma conta" not in viewer and "Como ler o Painel da diretoria" not in viewer and "Dúvidas comuns" in viewer
+
+
+def test_deleting_a_bill_that_came_from_an_import_releases_the_import(client, db):
+    """Excluir uma conta vinda de importação não pode deixar a importação apontando para ela (violaria a FK no Postgres)."""
+    from app.models import Document
+    from app.models.import_job import Import
+
+    store_id = _make_store(client)
+    bill = _seed_bill(client, db, store_id)
+    doc = Document(filename="a.pdf", content_type="application/pdf", size=1, sha256="x" * 64, data=b"x")
+    db.add(doc)
+    db.flush()
+    imp = Import(document_id=doc.id, status="confirmed", bill_id=bill.id)
+    db.add(imp)
+    db.commit()
+    imp_id = imp.id
+    assert client.post(f"/manual/bills/{bill.id}/delete", {}).status_code == 303
+    db.expire_all()
+    assert db.query(EnergyBill).count() == 0 and db.get(Import, imp_id).bill_id is None

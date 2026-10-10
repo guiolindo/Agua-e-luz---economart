@@ -3,11 +3,12 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.models import ConsumerUnit, EnergyBill, ManualRecord, RecordType, User
+from app.models.import_job import Import
 from app.repositories.stores import list_record_types, list_stores
 from app.schemas.forms import bill_to_form, parse_bill_form
 from app.security import current_user, verify_csrf, writer_required
@@ -151,6 +152,7 @@ def bill_delete(request: Request, bill_id: int, user: User = Depends(writer_requ
     unit_id = bill.unit_id
     audit_service.log(db, user.id, "delete", "energy_bill", bill.id,
                       {"reference": bill.reference.isoformat(), "total_value": str(bill.total_value)})
+    db.execute(update(Import).where(Import.bill_id == bill.id).values(bill_id=None))   # importação deixa de apontar para a conta (FK no Postgres)
     db.delete(bill)
     db.commit()
     flash(request, "Conta excluída.", "info")
