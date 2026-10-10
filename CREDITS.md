@@ -11,6 +11,15 @@ O sistema nasceu para substituir a planilha de Excel "ENERGIA — GRÁFICO POR L
 dos dados lançados no sistema da empresa. A folha impressa por loja mantém todas as informações dessa planilha
 (os totais batem ao centavo; ver `tests/test_report_sheet.py`).
 
+## Fontes (apresentação do sistema)
+
+| Fonte | Uso | Licença |
+|---|---|---|
+| [Bricolage Grotesque](https://github.com/ateliertriay/bricolage) (variável) | títulos da apresentação | SIL OFL 1.1 |
+| [Inter](https://rsms.me/inter/) (variável) | texto da apresentação | SIL OFL 1.1 |
+
+Os arquivos `.woff2` estão em `app/static/fonts/` (servidos pelo próprio sistema, sem CDN).
+
 ## Bibliotecas de código aberto usadas em execução
 
 | Biblioteca | Uso | Licença |

@@ -22,7 +22,7 @@ def test_every_role_sees_the_button_and_the_slides(client, until):
         c = _user(client, name, role)
         assert 'href="/apresentacao"' in c.get("/").text or role == "director"        # diretoria abre direto no painel dela
         r = c.get("/apresentacao")
-        assert r.status_code == 200 and "Controle de Energia" in r.text and 'data-chapter="dir"' in r.text
+        assert r.status_code == 200 and "Antes. <em>Depois.</em>" in r.text and 'data-chapter="dir"' in r.text
     assert 'href="/apresentacao"' in client.get("/stores").text                       # administrador também
 
 
@@ -30,7 +30,7 @@ def test_presentation_requires_login(client):
     from tests.test_security import _new_client
 
     r = _new_client().get("/apresentacao")
-    assert "/login" in str(r.url) and "Controle de Energia" not in r.text.split("<title>")[0]      # segue o redirecionamento ao login
+    assert "/login" in str(r.url)                                               # segue o redirecionamento ao login
     assert "data-chapter" not in r.text
 
 
@@ -63,13 +63,25 @@ def test_no_admin_screens_in_the_slides_and_every_image_exists(client, until):
     html = client.get("/apresentacao").text
     assert "/admin" not in html and "admin-" not in html                               # a tela de administrador não é mostrada
     files = re.findall(r"/static/img/apresentacao/([\w.-]+)", html)
-    assert len(files) >= 18
+    assert len(files) >= 15
     for f in files:
         assert (Path("app/static/img/apresentacao") / f).is_file(), f
-    assert "planilha-original.webp" in files and "folha-impressa.webp" in files        # a "capinha" que originou o sistema
+    assert "antes.webp" in files and "folha-impressa.webp" in files                    # comparativo antes × depois da folha
+    for font in ("bricolage-grotesque", "inter"):
+        assert (Path("app/static/fonts") / f"{font}-latin-wght-normal.woff2").is_file()
 
 
 def test_presentation_page_is_allowed_by_the_csp(client, until):
     until("2999-01-01T00:00:00-03:00")
     r = client.get("/apresentacao")
     assert "<script nonce" not in r.text and "onclick=" not in r.text                  # só script externo (CSP sem unsafe-inline)
+
+
+def test_presentation_uses_only_fictional_names(client, until):
+    """Telas e textos da apresentação são de demonstração: nada de unidade, cliente ou loja reais."""
+    until("2999-01-01T00:00:00-03:00")
+    html = client.get("/apresentacao").text
+    for real in ("MULTICOM", "12.060.073", "CD300", "Ribeirão das Neves"):
+        assert real not in html
+    css = open("app/static/css/presentation.css", encoding="utf-8").read()
+    assert "http" not in css.replace("http://www.w3.org/2000/svg", "")                  # sem fontes/recursos externos (CSP)

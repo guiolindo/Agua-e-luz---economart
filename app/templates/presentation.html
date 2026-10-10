@@ -5,17 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Apresentação · Economart Energia</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
-  <meta name="theme-color" content="#10243f">
+  <meta name="theme-color" content="#050f1f">
+  <link rel="preload" href="/static/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/css/presentation.css?v={{ ASSET_VERSION }}">
   <script src="/static/js/presentation.js?v={{ ASSET_VERSION }}" defer></script>
 </head>
 <body>
-{% macro shot(file, alt, title) -%}
-<figure class="shot">
-  <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>{{ title }}</span></div>
-  <img src="/static/img/apresentacao/{{ file }}.webp" alt="{{ alt }}" loading="lazy" decoding="async" tabindex="0" role="button" data-zoom>
-</figure>
+{# Tela com moldura de navegador. hots: pontos numerados sobre a imagem (x, y em % da imagem). #}
+{% macro dev(file, alt, title, hots=[], cls='') -%}
+<div class="dev rv {{ cls }}" style="--i:2">
+  <div class="tilt">
+    <figure class="shot">
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>{{ title }}</span></div>
+      <div class="frame">
+        <img src="/static/img/apresentacao/{{ file }}.webp" alt="{{ alt }}" loading="lazy" decoding="async" tabindex="0" role="button" data-zoom>
+        {% for h in hots %}<span class="hot {{ h.side|default('r') }}" style="left:{{ h.x }}%;top:{{ h.y }}%;--h:{{ loop.index }}"><b>{{ loop.index }}</b><em>{{ h.t }}</em></span>{% endfor %}
+      </div>
+    </figure>
+  </div>
+</div>
 {%- endmacro %}
+{% macro lines(items, tag='h2') -%}
+<{{ tag }}>{% for t in items %}<span class="ln"><span style="--i:{{ loop.index0 }}">{{ t|safe }}</span></span>{% endfor %}</{{ tag }}>
+{%- endmacro %}
+
+<div class="stage" aria-hidden="true">
+  <i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i><i class="grid"></i><i class="grain"></i>
+</div>
+<div class="wipe" id="wipe" aria-hidden="true"></div>
 
 <div class="deck" id="deck" aria-roledescription="apresentação" aria-label="Apresentação do sistema">
   <header class="bar">
@@ -28,215 +46,217 @@
       <button type="button" data-chapter="seg">Segurança</button>
     </nav>
     <div class="tools">
-      <span class="counter" id="counter" aria-live="polite">1 / 1</span>
-      <button type="button" class="ibtn" id="fs" title="Tela cheia (F)" aria-label="Tela cheia"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
-      <a class="ibtn close" href="/" title="Sair da apresentação (Esc)" aria-label="Sair da apresentação"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a>
+      <button type="button" class="ibtn" id="play" title="Passar sozinho (P)" aria-label="Passar os slides sozinho" aria-pressed="false"><svg class="i-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg><svg class="i-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></button>
+      <button type="button" class="ibtn" id="fs" title="Tela cheia (F)" aria-label="Tela cheia"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+      <a class="ibtn close" href="/" title="Sair da apresentação (Esc)" aria-label="Sair da apresentação"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a>
     </div>
     <div class="progress" aria-hidden="true"><i id="progress"></i></div>
   </header>
 
   <main class="slides" id="slides">
 
-    {# ============ O SISTEMA ============ #}
-    <section class="slide s-title" data-chapter="intro" aria-label="Capa">
-      <div class="title-in">
-        <p class="eyebrow">Economart Atacadista</p>
-        <h1>Controle de Energia</h1>
-        <p class="lead">Da planilha ao sistema: a conta de luz vira dado, gráfico e alerta, sem digitar.</p>
-        <div class="chips"><span>Funcionário</span><span>Diretoria</span><span>Consulta</span></div>
-        <p class="hint">Use <kbd>←</kbd> <kbd>→</kbd> para navegar · <kbd>F</kbd> tela cheia · <kbd>Esc</kbd> sai</p>
+    {# ============================ CAPA ============================ #}
+    <section class="slide s-cover" data-chapter="intro" aria-label="Capa">
+      <div class="energy" aria-hidden="true">{% for h in [34,52,41,66,48,78,60,92,70,100,84,118] %}<i style="--h:{{ h }}%;--k:{{ loop.index0 }}"></i>{% endfor %}</div>
+      <div class="cover-in">
+        <p class="eyebrow rv" style="--i:0">Economart Atacadista</p>
+        <h1 class="mega"><span class="ln"><span style="--i:1">Controle</span></span><span class="ln"><span style="--i:2">de <em>Energia</em></span></span></h1>
+        <p class="lead rv" style="--i:4">Da conta de luz ao painel da diretoria. Sem digitar.</p>
+        <div class="chips rv" style="--i:5"><span>Funcionário</span><span>Diretoria</span><span>Consulta</span></div>
+        <p class="hint rv" style="--i:6">Use <kbd>←</kbd> <kbd>→</kbd> para navegar · <kbd>P</kbd> passa sozinho · <kbd>F</kbd> tela cheia</p>
       </div>
     </section>
 
-    <section class="slide s-text" data-chapter="intro" aria-label="O problema">
-      <div class="text-in">
-        <p class="eyebrow">Por que existe</p>
-        <h2>Antes: uma planilha e muita digitação</h2>
-        <ul class="big">
-          <li>Cada conta de água e luz era digitada à mão: valor, datas, consumo, demanda.</li>
-          <li>A tabela e o gráfico de cada loja eram montados um a um.</li>
-          <li>Um problema só aparecia quando alguém lembrava de olhar.</li>
-          <li>Conta duplicada ou digitada errada passava sem ninguém ver.</li>
-        </ul>
+    {# ============================ ANTES × DEPOIS ============================ #}
+    <section class="slide s-compare" data-chapter="intro" data-enter="cmp" aria-label="Antes e depois">
+      <div class="head">
+        <p class="eyebrow rv" style="--i:0">A folha de cada loja</p>
+        {{ lines(['Antes. <em>Depois.</em>'], 'h2') }}
+        <p class="lead rv" style="--i:2">A mesma folha, agora gerada sozinha. E com o que a planilha não trazia: média por mês, % de cada fornecedor e custo por kWh.</p>
+      </div>
+      <div class="cmpwrap rv" style="--i:3">
+        <div class="cmp" id="cmp" role="slider" tabindex="0" aria-label="Comparar antes e depois" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+          <img class="c-after" src="/static/img/apresentacao/folha-impressa.webp" alt="Folha da loja gerada pelo sistema, com resumo, indicadores e gráfico" decoding="async">
+          <img class="c-before" src="/static/img/apresentacao/antes.webp" alt="Planilha montada à mão: tabela mensal por fornecedor e gráfico de barras" decoding="async">
+          <span class="tag tb">Antes · planilha montada à mão <small>(ilustração)</small></span>
+          <span class="tag ta">Depois · gerado pelo sistema</span>
+          <span class="handle" aria-hidden="true"><i></i><b><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 7-5 5 5 5M15 7l5 5-5 5"/></svg></b></span>
+        </div>
+        <p class="drag">Arraste para comparar</p>
       </div>
     </section>
 
-    <section class="slide s-compare" data-chapter="intro" aria-label="Onde tudo começou">
-      <div class="copy"><p class="eyebrow">Onde tudo começou</p><h2>O sistema nasceu para imprimir esta folha</h2>
-        <p class="lead">A “capinha” de cada loja: tabela mensal por fornecedor no alto e o gráfico de valor, dias e variação embaixo. O objetivo inicial era gerá-la sem montar nada à mão.</p></div>
-      <div class="pair">
-        {{ shot('planilha-original', 'Foto da folha impressa da planilha original, Energia: gráfico por loja', 'Antes · a planilha impressa') }}
-        {{ shot('folha-impressa', 'Folha da loja impressa pelo sistema', 'Agora · impresso pelo sistema') }}
-      </div>
-    </section>
-
+    {# ============================ 4 PASSOS ============================ #}
     <section class="slide s-steps" data-chapter="intro" aria-label="Como funciona">
-      <div class="text-in wide">
-        <p class="eyebrow">Como funciona</p>
-        <h2>Da foto da conta ao painel, em 4 passos</h2>
+      <div class="wide">
+        <p class="eyebrow rv" style="--i:0">Como funciona</p>
+        {{ lines(['Da foto ao painel', 'em <em>quatro passos</em>']) }}
         <ol class="steps">
-          <li><b>1</b><strong>Foto ou PDF</strong><span>O funcionário envia a conta, do celular ou do computador.</span></li>
-          <li><b>2</b><strong>O sistema lê</strong><span>Valor, vencimento, consumo e demanda são preenchidos sozinhos.</span></li>
-          <li><b>3</b><strong>Conferência</strong><span>Os dados aparecem ao lado da imagem. Nada é salvo sem conferir.</span></li>
-          <li><b>4</b><strong>Tudo pronto</strong><span>Gráficos, relatório impresso, painel da diretoria e alertas se atualizam.</span></li>
+          <li class="rv" style="--i:2"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span><b>01</b><strong>Foto ou PDF</strong><span>O funcionário envia a conta, do celular ou do computador.</span></li>
+          <li class="rv" style="--i:3"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4M5 17v4M3 19h4"/></svg></span><b>02</b><strong>O sistema lê</strong><span>Valor, vencimento, consumo e demanda aparecem preenchidos.</span></li>
+          <li class="rv" style="--i:4"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></svg></span><b>03</b><strong>Conferência</strong><span>Os dados ficam ao lado da imagem. Nada é salvo sem conferir.</span></li>
+          <li class="rv" style="--i:5"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-6 3 4 5-8"/></svg></span><b>04</b><strong>Tudo pronto</strong><span>Gráficos, folha impressa, painel da diretoria e alertas se atualizam.</span></li>
         </ol>
-        <p class="note">Fornecedores cobertos: CEMIG, CEMIG Geração e Transmissão, COELBA, Energisa, LL Energia (lote), CCEE, combustível e manutenção de gerador.</p>
+        <p class="note rv" style="--i:6">CEMIG, CEMIG Geração e Transmissão, COELBA, Energisa, LL Energia, CCEE, combustível e manutenção de gerador.</p>
       </div>
     </section>
 
-    <section class="slide s-cards" data-chapter="intro" aria-label="Perfis de acesso">
-      <div class="text-in wide">
-        <p class="eyebrow">Quem usa</p>
-        <h2>Cada pessoa vê só o que precisa</h2>
-        <div class="cards">
-          <article><h3>Funcionário</h3><p>Importa e confere contas, faz lançamentos manuais, imprime relatórios das lojas e acompanha alertas.</p></article>
-          <article><h3>Diretoria</h3><p>Painel executivo com todas as lojas: gastos, comparações, variações, impressão e planilha.</p></article>
-          <article><h3>Consulta</h3><p>Só visualiza. Não importa, não lança e não altera nada.</p></article>
-          <article class="quiet"><h3>Administrador</h3><p>Cuida dos acessos e da auditoria. Não faz parte desta apresentação.</p></article>
+    {# ============================ NÚMEROS ============================ #}
+    <section class="slide s-numbers" data-chapter="intro" data-enter="count" aria-label="O sistema em números">
+      <div class="wide">
+        <p class="eyebrow rv" style="--i:0">Em resumo</p>
+        {{ lines(['O sistema em <em>números</em>']) }}
+        <div class="stats">
+          <div class="stat rv" style="--i:2"><b data-count="8">8</b><span>tipos de conta e de lançamento</span></div>
+          <div class="stat rv" style="--i:3"><b data-count="4">4</b><span>perfis de acesso</span></div>
+          <div class="stat rv" style="--i:4"><b data-count="2">2</b><span>formatos de impressão do painel: A4 e A3</span></div>
+          <div class="stat rv" style="--i:5"><b data-count="5">5</b><span>abas na planilha de exportação</span></div>
+          <div class="stat rv" style="--i:6"><b data-count="1">1</b><span>conferência antes de qualquer conta ser salva</span></div>
         </div>
       </div>
     </section>
 
-    {# ============ FUNCIONÁRIO ============ #}
+    {# ============================ FUNCIONÁRIO ============================ #}
+    <section class="slide s-divider" data-chapter="func" aria-label="Capítulo: funcionário">
+      <span class="numeral" aria-hidden="true">01</span>
+      <div class="div-in">
+        <p class="eyebrow rv" style="--i:0">Capítulo 01</p>
+        {{ lines(['Quem <em>lança</em>', 'as contas'], 'h2') }}
+        <p class="lead rv" style="--i:3">Importar, conferir, salvar. O resto o sistema faz.</p>
+      </div>
+    </section>
+
     <section class="slide s-split" data-chapter="func" aria-label="Painel do funcionário">
-      <div class="copy"><p class="eyebrow">Funcionário · 1</p><h2>O painel do dia a dia</h2>
-        <ul><li>Quantas lojas e unidades, e o que ainda falta lançar no mês.</li><li>Lista de pendências com botão <b>Importar</b> direto na linha.</li><li>Atalhos para importar, lançar manualmente e ver as contas.</li></ul></div>
-      {{ shot('func-painel', 'Painel do funcionário com pendências do mês e lista de lojas', 'Painel') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · painel</p>{{ lines(['O dia a dia', 'num <em>painel</em>']) }}
+        <ul class="rv" style="--i:2"><li>O que ainda falta lançar no mês, loja por loja.</li><li>Botão <b>Importar</b> direto na linha da pendência.</li><li>Atalhos para importar, lançar e ver as contas.</li></ul></div>
+      {{ dev('func-painel', 'Painel do funcionário com pendências do mês e lista de lojas', 'Painel', [{'x':63,'y':51,'t':'Importa direto da pendência','side':'l'}]) }}
     </section>
 
     <section class="slide s-split rev" data-chapter="func" aria-label="Importar conta">
-      <div class="copy"><p class="eyebrow">Funcionário · 2</p><h2>Importar: é só enviar a foto</h2>
-        <ul><li>Arraste a foto ou o PDF da conta, ou clique para escolher.</li><li>Aceita JPG, PNG, WEBP e PDF, até 12 MB.</li><li>A loja é identificada pela unidade consumidora da própria conta.</li></ul></div>
-      {{ shot('func-importar', 'Tela de importar conta com a imagem da conta escolhida', 'Importar conta') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · importar</p>{{ lines(['É só enviar', 'a <em>foto</em>']) }}
+        <ul class="rv" style="--i:2"><li>Arraste a foto ou o PDF da conta, ou clique para escolher.</li><li>JPG, PNG, WEBP ou PDF, até 12 MB.</li><li>A loja é reconhecida pelo número da unidade na própria conta.</li></ul></div>
+      {{ dev('func-importar', 'Tela de importar conta com a imagem da conta escolhida', 'Importar conta') }}
     </section>
 
     <section class="slide s-split" data-chapter="func" aria-label="Conferência">
-      <div class="copy"><p class="eyebrow">Funcionário · 3</p><h2>Conferir antes de salvar</h2>
-        <ul><li>Os dados lidos aparecem ao lado da imagem original.</li><li>Se a conta já existe para o período, o sistema avisa e pergunta o que fazer.</li><li>Só depois de confirmar a conta é salva.</li></ul></div>
-      {{ shot('func-conferencia', 'Tela de conferência com os dados lidos ao lado da imagem da conta', 'Conferir conta identificada') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · conferência</p>{{ lines(['Conferir antes', 'de <em>salvar</em>']) }}
+        <ul class="rv" style="--i:2"><li>Os dados lidos ficam ao lado da imagem original.</li><li>Se a conta já existe para o período, o sistema avisa.</li><li>Só depois de confirmar a conta é salva.</li></ul></div>
+      {{ dev('func-conferencia', 'Tela de conferência com os dados lidos ao lado da imagem da conta', 'Conferir conta identificada', [{'x':58,'y':37,'t':'Unidade reconhecida pelo número','side':'l'},{'x':40,'y':84,'t':'Campos editáveis','side':'l'},{'x':80,'y':34,'t':'Imagem original ao lado','side':'l'}]) }}
     </section>
 
-    <section class="slide s-split rev" data-chapter="func" aria-label="Dados da conta">
-      <div class="copy"><p class="eyebrow">Funcionário · 4</p><h2>Cada campo, à vista</h2>
-        <ul><li>Mês de referência, valor, vencimento, consumo e demanda.</li><li>Dá para corrigir qualquer campo antes de salvar.</li><li>O arquivo original fica guardado por 6 meses; os dados permanecem.</li></ul></div>
-      {{ shot('func-conferencia-dados', 'Campos da conta para conferência', 'Dados da conta') }}
+    <section class="slide s-split rev" data-chapter="func" aria-label="Conta salva">
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · salvar</p>{{ lines(['Salvou.', 'O gráfico <em>já mudou</em>']) }}
+        <ul class="rv" style="--i:2"><li>A conta entra na ficha da loja na hora.</li><li>A barra em azul-escuro é a conta recém-importada.</li><li>Vencimentos próximos avisam pelo sino.</li></ul></div>
+      {{ dev('func-salvo', 'Loja com a mensagem de conta salva e o gráfico atualizado', 'Loja', [{'x':56,'y':7,'t':'Conta salva','side':'r'}]) }}
     </section>
 
-    <section class="slide s-split" data-chapter="func" aria-label="Conta salva">
-      <div class="copy"><p class="eyebrow">Funcionário · 5</p><h2>Salvou, o gráfico já mudou</h2>
-        <ul><li>A conta entra na ficha da loja na hora.</li><li>A barra em azul-escuro mostra a conta recém-importada.</li><li>Vencimentos próximos avisam pelo sino.</li></ul></div>
-      {{ shot('func-salvo', 'Loja com a mensagem de conta salva e o gráfico atualizado', 'Loja') }}
+    <section class="slide s-split" data-chapter="func" aria-label="Ficha da loja">
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · loja</p>{{ lines(['A ficha de', 'cada <em>loja</em>']) }}
+        <ul class="rv" style="--i:2"><li>Resumo mensal por fornecedor, com total e variação.</li><li>Unidades consumidoras e vencimentos.</li><li>Gráfico por unidade ou pelo total da loja.</li></ul></div>
+      {{ dev('func-loja', 'Resumo mensal da loja por fornecedor', 'Loja · resumo mensal') }}
     </section>
 
-    <section class="slide s-split rev" data-chapter="func" aria-label="Ficha da loja">
-      <div class="copy"><p class="eyebrow">Funcionário · 6</p><h2>A ficha de cada loja</h2>
-        <ul><li>Resumo mensal por fornecedor, com o total e a variação mês a mês.</li><li>Unidades consumidoras da loja e seus vencimentos.</li><li>Gráfico por unidade ou pelo total da loja.</li></ul></div>
-      {{ shot('func-loja', 'Resumo mensal da loja por fornecedor', 'Loja · resumo mensal') }}
-    </section>
-
-    <section class="slide s-split" data-chapter="func" aria-label="Folha impressa">
-      <div class="copy"><p class="eyebrow">Funcionário · 7</p><h2>A folha de sempre, impressa pelo sistema</h2>
-        <ul><li>É o motivo de o sistema existir: a mesma folha da planilha (tabela no alto e gráfico embaixo), com os totais conferidos.</li><li>Resumo por vencimento e gráfico por referência, como a loja já conhecia.</li><li>E mais: média por mês, % de cada fornecedor e custo por kWh.</li><li>Botão <b>Imprimir relatório</b> na ficha da loja.</li></ul></div>
-      {{ shot('folha-impressa', 'Folha impressa do relatório da loja', 'Imprimir relatório') }}
+    <section class="slide s-hero" data-chapter="func" aria-label="Folha impressa">
+      <div class="copy wide-copy"><p class="eyebrow rv" style="--i:0">Funcionário · impressão</p>{{ lines(['A folha da loja, pronta para <em>imprimir</em>']) }}
+        <p class="lead rv" style="--i:2">Tabela mensal por fornecedor no alto, gráfico de valor, dias e variação embaixo. Um clique em <b>Imprimir relatório</b>.</p></div>
+      {{ dev('folha-impressa', 'Folha da loja impressa pelo sistema', 'Imprimir relatório', [], 'paper') }}
     </section>
 
     <section class="slide s-split rev" data-chapter="func" aria-label="Lançamento manual">
-      <div class="copy"><p class="eyebrow">Funcionário · 8</p><h2>Lançamento manual</h2>
-        <ul><li>Para o que não vem em foto: LL Energia, CCEE, combustível e manutenção de gerador.</li><li>Também serve se a leitura da foto não estiver disponível.</li><li>Lançamento em lote para várias lojas de uma vez.</li></ul></div>
-      {{ shot('func-manual', 'Tela de lançamento manual', 'Lançamento manual') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · manual</p>{{ lines(['O que não vem', 'em <em>foto</em>']) }}
+        <ul class="rv" style="--i:2"><li>LL Energia, CCEE, combustível e manutenção de gerador.</li><li>Lançamento em lote para várias lojas de uma vez.</li><li>Serve também se a leitura da foto não estiver disponível.</li></ul></div>
+      {{ dev('func-manual', 'Tela de lançamento manual', 'Lançamento manual') }}
     </section>
 
     <section class="slide s-split" data-chapter="func" aria-label="Contas e busca">
-      <div class="copy"><p class="eyebrow">Funcionário · 9</p><h2>Todas as contas, com busca</h2>
-        <ul><li>Procure por loja, unidade, nota ou mês.</li><li>Abra, imprima ou edite qualquer conta ou lançamento.</li><li>Baixe a lista em planilha.</li></ul></div>
-      {{ shot('func-contas', 'Lista de contas e lançamentos com campo de busca', 'Contas e lançamentos') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · contas</p>{{ lines(['Todas as contas,', 'com <em>busca</em>']) }}
+        <ul class="rv" style="--i:2"><li>Procure por loja, unidade, nota ou mês.</li><li>Abra, imprima ou edite qualquer conta.</li><li>Baixe a lista em planilha.</li></ul></div>
+      {{ dev('func-contas', 'Lista de contas e lançamentos com campo de busca', 'Contas e lançamentos') }}
     </section>
 
     <section class="slide s-split rev" data-chapter="func" aria-label="Alertas">
-      <div class="copy"><p class="eyebrow">Funcionário · 10</p><h2>Alertas automáticos</h2>
-        <ul><li>Conta fora do padrão da unidade, comparada com o histórico.</li><li>Demanda acima da contratada, com tolerância de 5%.</li><li>Nota repetida e vencimentos do dia.</li><li>Cada alerta é um aviso para conferir, não um veredito.</li></ul></div>
-      {{ shot('func-alertas', 'Lista de alertas com prioridade', 'Alertas') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · alertas</p>{{ lines(['O sistema', 'avisa <em>antes</em>']) }}
+        <ul class="rv" style="--i:2"><li>Conta fora do padrão da própria unidade.</li><li>Demanda acima da contratada, com tolerância de 5%.</li><li>Nota repetida e vencimentos do dia.</li><li>É um aviso para conferir, não um veredito.</li></ul></div>
+      {{ dev('func-alertas', 'Lista de alertas com prioridade', 'Alertas') }}
     </section>
 
-    {# ============ DIRETORIA ============ #}
+    {# ============================ DIRETORIA ============================ #}
+    <section class="slide s-divider" data-chapter="dir" aria-label="Capítulo: diretoria">
+      <span class="numeral" aria-hidden="true">02</span>
+      <div class="div-in">
+        <p class="eyebrow rv" style="--i:0">Capítulo 02</p>
+        {{ lines(['Quem <em>decide</em>'], 'h2') }}
+        <p class="lead rv" style="--i:2">A empresa inteira numa tela. E no papel.</p>
+      </div>
+    </section>
+
     <section class="slide s-split" data-chapter="dir" aria-label="Painel da diretoria">
-      <div class="copy"><p class="eyebrow">Diretoria · 1</p><h2>A empresa inteira numa tela</h2>
-        <ul><li>Destaques em frases: o que subiu, o que caiu, quem foge do padrão.</li><li>Total do período, último mês, custo por kWh e pendências.</li><li>Filtro por período e por região.</li></ul></div>
-      {{ shot('dir-painel', 'Painel da diretoria com destaques e indicadores', 'Painel da diretoria') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · painel</p>{{ lines(['Tudo o que importa,', 'em <em>frases</em>']) }}
+        <ul class="rv" style="--i:2"><li>O que subiu, o que caiu e quem foge do padrão.</li><li>Total do período, último mês, custo por kWh e pendências.</li><li>Filtro por período e por região.</li></ul></div>
+      {{ dev('dir-painel', 'Painel da diretoria com destaques e indicadores', 'Painel da diretoria', [{'x':52,'y':30,'t':'Resumo em frases','side':'l'},{'x':30,'y':74,'t':'Indicadores do mês','side':'r'},{'x':91,'y':21,'t':'Imprime em A4 ou A3','side':'l'}]) }}
     </section>
 
     <section class="slide s-split rev" data-chapter="dir" aria-label="Gráficos">
-      <div class="copy"><p class="eyebrow">Diretoria · 2</p><h2>Gráficos para comparar</h2>
-        <ul><li>Gasto por mês e por fornecedor.</li><li>Ranking de lojas e variação contra o mês anterior.</li><li>Composição do gasto de cada loja.</li><li>Cada barra traz o código e o nome da loja.</li></ul></div>
-      {{ shot('dir-graficos', 'Gráficos de gasto por mês, ranking e variação', 'Painel da diretoria · gráficos') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · gráficos</p>{{ lines(['Comparar lojas', 'num <em>relance</em>']) }}
+        <ul class="rv" style="--i:2"><li>Gasto por mês e por fornecedor.</li><li>Ranking de lojas e variação contra o mês anterior.</li><li>Composição do gasto de cada loja.</li><li>Cada barra traz o código e o nome da loja.</li></ul></div>
+      {{ dev('dir-graficos', 'Gráficos de gasto por mês, ranking e variação', 'Painel da diretoria · gráficos') }}
     </section>
 
     <section class="slide s-split" data-chapter="dir" aria-label="Evolução e comparação">
-      <div class="copy"><p class="eyebrow">Diretoria · 3</p><h2>Evolução, custo por kWh e demanda</h2>
-        <ul><li>Marque as lojas que quer ver na linha do tempo.</li><li>Custo efetivo por kWh de cada loja, contra a média da empresa.</li><li>Uso da demanda contratada, loja a loja.</li><li>Mapa de calor e comparação entre duas lojas.</li></ul></div>
-      {{ shot('dir-graficos-2', 'Evolução das lojas e outros gráficos do painel', 'Painel da diretoria · evolução') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · evolução</p>{{ lines(['Evolução', 'e <em>demanda</em>']) }}
+        <ul class="rv" style="--i:2"><li>Marque as lojas que quer ver na linha do tempo.</li><li>Custo efetivo por kWh contra a média da empresa.</li><li>Uso da demanda contratada, loja a loja.</li><li>Mapa de calor e comparação entre duas lojas.</li></ul></div>
+      {{ dev('dir-graficos-2', 'Evolução das lojas e outros gráficos do painel', 'Painel da diretoria · evolução') }}
     </section>
 
     <section class="slide s-split rev" data-chapter="dir" aria-label="Impressão">
-      <div class="copy"><p class="eyebrow">Diretoria · 4</p><h2>Imprimir: A4 ou A3</h2>
-        <ul><li>No botão <b>Imprimir painel</b>, escolha o papel.</li><li><b>A4:</b> várias páginas, cada uma com um bloco do painel.</li><li><b>A3:</b> o painel inteiro numa folha só, na horizontal.</li></ul></div>
-      {{ shot('dir-imprimir', 'Menu de impressão do painel com as opções A4 e A3', 'Imprimir painel') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · impressão</p>{{ lines(['A4 ou A3,', 'você <em>escolhe</em>']) }}
+        <ul class="rv" style="--i:2"><li>No botão <b>Imprimir painel</b>, escolha o papel.</li><li><b>A4:</b> várias páginas, uma ideia por página.</li><li><b>A3:</b> o painel inteiro numa folha, na horizontal.</li></ul></div>
+      {{ dev('dir-imprimir', 'Menu de impressão do painel com as opções A4 e A3', 'Imprimir painel') }}
     </section>
 
-    <section class="slide s-full" data-chapter="dir" aria-label="Painel em A3">
-      <div class="copy"><p class="eyebrow">Diretoria · 5</p><h2>O painel em uma folha A3</h2></div>
-      {{ shot('dir-a3', 'Painel da diretoria impresso em uma folha A3', 'Impressão A3 · horizontal') }}
+    <section class="slide s-hero" data-chapter="dir" aria-label="Painel em A3">
+      <div class="copy wide-copy"><p class="eyebrow rv" style="--i:0">Diretoria · A3</p>{{ lines(['O painel inteiro em <em>uma folha</em>']) }}</div>
+      {{ dev('dir-a3', 'Painel da diretoria impresso em uma folha A3', 'Impressão A3 · horizontal', [], 'paper') }}
     </section>
 
     <section class="slide s-split" data-chapter="dir" aria-label="Planilha">
-      <div class="copy"><p class="eyebrow">Diretoria · 6</p><h2>Planilha profissional (XLSX)</h2>
-        <ul><li>Botão <b>Baixar planilha</b> no painel.</li><li>Cinco abas: Resumo, Lojas, Mês a mês, Fornecedores e Pendências.</li><li>Já formatada para abrir no Excel e imprimir.</li></ul></div>
-      {{ shot('dir-xlsx', 'Aba Lojas da planilha exportada', 'Planilha · aba Lojas') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · planilha</p>{{ lines(['Planilha pronta', 'para o <em>Excel</em>']) }}
+        <ul class="rv" style="--i:2"><li>Botão <b>Baixar planilha</b> no painel.</li><li>Cinco abas: Resumo, Lojas, Mês a mês, Fornecedores e Pendências.</li><li>Já formatada para abrir e imprimir.</li></ul></div>
+      {{ dev('dir-xlsx', 'Aba Lojas da planilha exportada', 'Planilha · aba Lojas') }}
     </section>
 
-    <section class="slide s-split rev" data-chapter="dir" aria-label="Alertas da diretoria">
-      <div class="copy"><p class="eyebrow">Diretoria · 7</p><h2>Alertas e vencimentos</h2>
-        <ul><li>A diretoria acompanha os mesmos alertas que o funcionário vê.</li><li>Cada alerta mostra a loja, a unidade e o motivo, por prioridade.</li><li>Os botões <b>Ver unidade</b> e <b>Ver conta</b> levam à origem do aviso.</li></ul></div>
-      {{ shot('dir-alertas', 'Alertas na visão da diretoria', 'Alertas') }}
+    {# ============================ CONSULTA ============================ #}
+    <section class="slide s-split rev" data-chapter="cons" aria-label="Perfil de consulta">
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Capítulo 03 · Consulta</p>{{ lines(['Para quem só', 'precisa <em>ver</em>']) }}
+        <ul class="rv" style="--i:2"><li>Painel, lojas, contas e alertas, em leitura.</li><li>Sem botões de importar nem de lançar.</li><li>Nada que a pessoa faça aqui altera um dado.</li></ul></div>
+      {{ dev('cons-painel', 'Painel do perfil de consulta, sem botão de importar', 'Painel · consulta') }}
     </section>
 
-    {# ============ CONSULTA ============ #}
-    <section class="slide s-split" data-chapter="cons" aria-label="Perfil de consulta">
-      <div class="copy"><p class="eyebrow">Consulta · 1</p><h2>Para quem só precisa ver</h2>
-        <ul><li>Painel, lojas, contas e alertas, em leitura.</li><li>Sem botões de importar nem de lançar.</li><li>Nada que a pessoa faça aqui altera um dado.</li></ul></div>
-      {{ shot('cons-painel', 'Painel do perfil de consulta, sem botão de importar', 'Painel · consulta') }}
-    </section>
-
-    <section class="slide s-split rev" data-chapter="cons" aria-label="Consulta de contas">
-      <div class="copy"><p class="eyebrow">Consulta · 2</p><h2>Contas e lojas, só leitura</h2>
-        <ul><li>Busca por loja, unidade, nota ou mês.</li><li>Ficha de cada loja com o histórico e o resumo.</li><li>Ideal para quem acompanha sem lançar.</li></ul></div>
-      {{ shot('cons-contas', 'Lista de contas no perfil de consulta', 'Contas · consulta') }}
-    </section>
-
-    {# ============ SEGURANÇA ============ #}
+    {# ============================ SEGURANÇA ============================ #}
     <section class="slide s-cards" data-chapter="seg" aria-label="Segurança">
-      <div class="text-in wide">
-        <p class="eyebrow">Segurança</p>
-        <h2>Pensado para dados da empresa</h2>
-        <div class="cards three">
-          <article><h3>Acesso por perfil</h3><p>Cada pessoa vê e faz só o que o seu perfil permite.</p></article>
-          <article><h3>Login protegido</h3><p>Bloqueio após tentativas erradas e sessão que expira por inatividade.</p></article>
-          <article><h3>Arquivos cifrados</h3><p>As imagens das contas ficam cifradas e saem do banco após 6 meses; os dados lidos permanecem.</p></article>
-          <article><h3>Histórico de quem fez o quê</h3><p>Trilha de auditoria com selo contra adulteração.</p></article>
-          <article><h3>Duas etapas</h3><p>Administradores usam verificação em duas etapas.</p></article>
-          <article><h3>Conferência humana</h3><p>A leitura automática nunca salva sozinha: o funcionário confere.</p></article>
+      <div class="wide">
+        <p class="eyebrow rv" style="--i:0">Segurança</p>
+        {{ lines(['Pensado para os dados', 'da <em>empresa</em>']) }}
+        <div class="cards">
+          <article class="rv" style="--i:2"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 11l2 2 3-4"/></svg></span><h3>Acesso por perfil</h3><p>Cada pessoa vê e faz só o que o seu perfil permite.</p></article>
+          <article class="rv" style="--i:3"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><h3>Login protegido</h3><p>Bloqueio após tentativas erradas e sessão que expira por inatividade.</p></article>
+          <article class="rv" style="--i:4"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span><h3>Arquivos cifrados</h3><p>As imagens das contas ficam cifradas e saem do banco após 6 meses; os dados lidos permanecem.</p></article>
+          <article class="rv" style="--i:5"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></span><h3>Histórico de tudo</h3><p>Trilha de auditoria de quem fez o quê, com selo contra adulteração.</p></article>
+          <article class="rv" style="--i:6"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span><h3>Duas etapas</h3><p>Administradores usam verificação em duas etapas.</p></article>
+          <article class="rv" style="--i:7"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><h3>Conferência humana</h3><p>A leitura automática nunca salva sozinha: o funcionário confere.</p></article>
         </div>
       </div>
     </section>
 
-    {# ============ FIM ============ #}
-    <section class="slide s-title end" data-chapter="seg" aria-label="Encerramento">
-      <div class="title-in">
-        <p class="eyebrow">Obrigado</p>
-        <h1>Dúvidas?</h1>
-        <p class="lead">Do envio da foto ao painel da diretoria, tudo em um só lugar.</p>
-        <div class="actions"><a class="btn go" href="/">Voltar ao sistema</a><button type="button" class="btn ghost" id="restart">Ver de novo</button></div>
-        <p class="hint">As telas desta apresentação usam dados de demonstração.{% if until %} Disponível até {{ until }}.{% endif %}</p>
+    {# ============================ FIM ============================ #}
+    <section class="slide s-cover end" data-chapter="seg" aria-label="Encerramento">
+      <div class="energy" aria-hidden="true">{% for h in [118,84,100,70,92,60,78,48,66,41,52,34] %}<i style="--h:{{ h }}%;--k:{{ loop.index0 }}"></i>{% endfor %}</div>
+      <div class="cover-in">
+        <p class="eyebrow rv" style="--i:0">Obrigado</p>
+        <h1 class="mega"><span class="ln"><span style="--i:1">Dúvidas<em>?</em></span></span></h1>
+        <p class="lead rv" style="--i:3">Do envio da foto ao painel da diretoria, tudo em um só lugar.</p>
+        <div class="actions rv" style="--i:4"><a class="btn go" href="/">Voltar ao sistema</a><button type="button" class="btn ghost" id="restart">Ver de novo</button></div>
+        <p class="hint rv" style="--i:5">As telas desta apresentação usam dados de demonstração.{% if until %} Disponível até {{ until }}.{% endif %}</p>
       </div>
     </section>
   </main>
@@ -244,11 +264,12 @@
   <footer class="nav">
     <button type="button" class="arrow" id="prev" aria-label="Slide anterior"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
     <div class="dots" id="dots" role="tablist" aria-label="Slides"></div>
+    <span class="counter" id="counter" aria-live="polite">01 / 01</span>
     <button type="button" class="arrow" id="next" aria-label="Próximo slide"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
   </footer>
 </div>
 
 <div class="zoom" id="zoom" hidden role="dialog" aria-modal="true" aria-label="Imagem ampliada"><img alt=""><button type="button" class="ibtn" aria-label="Fechar imagem">×</button></div>
-<noscript><p style="position:fixed;inset:auto 0 0;background:#fff;padding:10px;text-align:center">Ative o JavaScript para navegar pelos slides.</p></noscript>
+<noscript><p style="position:fixed;inset:auto 0 0;background:#fff;color:#000;padding:10px;text-align:center">Ative o JavaScript para navegar pelos slides.</p></noscript>
 </body>
 </html>
