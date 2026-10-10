@@ -220,7 +220,7 @@ def store_summary(db: Session, store: Store, start: date | None = None, end: dat
             c = per_type[b.record_type_id]
             c[idx[m]] = (c[idx[m]] or Decimal(0)) + b.total_value
     for r in repo.manual_for_store(db, store.id, qs, qe):
-        m = month_of(r.reference, r.group_date, by)
+        m = month_of(r.reference, r.due_date, by)
         if m in idx:
             c = per_type[r.record_type_id]
             c[idx[m]] = (c[idx[m]] or Decimal(0)) + r.value
@@ -319,7 +319,7 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
             blk["days_conflict"] |= blk["days"][i] not in (None, b.days)
             blk["days"][i] = b.days
     for r in repo.manual_for_store(db, store.id, qs, qe):
-        m = month_of(r.reference, r.group_date, by)
+        m = month_of(r.reference, r.due_date, by)
         if m not in idx:
             continue
         blk = block(r.record_type_id)

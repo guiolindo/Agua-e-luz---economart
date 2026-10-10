@@ -64,9 +64,6 @@ async def batch_save(request: Request, user: User = Depends(writer_required), db
     due_date = parse_date(posted.get("due_date"))
     if clean_str(posted.get("due_date")) and due_date is None:
         errors["due_date"] = "Data inválida."
-    accounting_date = parse_date(posted.get("accounting_date"))
-    if clean_str(posted.get("accounting_date")) and accounting_date is None:
-        errors["accounting_date"] = "Data inválida."
     data: dict = {}
     for f in (rtype.fields if rtype else []):
         txt = posted.get(f"f_{f['key']}")
@@ -108,7 +105,6 @@ async def batch_save(request: Request, user: User = Depends(writer_required), db
         if not found:
             db.add(rec)
         rec.unit_id, rec.reference, rec.value, rec.data, rec.due_date = None, reference, value, dict(data), due_date
-        rec.accounting_date = accounting_date
         rec.notes, rec.updated_by = notes, user.id
         db.flush()
         audit_service.log(db, user.id, "update" if found else "create", "manual_record", rec.id,

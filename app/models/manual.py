@@ -21,7 +21,6 @@ class ManualRecord(TimestampMixin, Base):
     record_type_id: Mapped[int] = mapped_column(ForeignKey("record_types.id"), index=True)
     reference: Mapped[date] = mapped_column(Date, index=True)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)  # opcional: agrupar por mês de vencimento
-    accounting_date: Mapped[date | None] = mapped_column(Date, nullable=True)  # data de contabilização (despesas sem vencimento)
     value: Mapped[Decimal] = mapped_column(Numeric(14, 2))
     data: Mapped[dict] = mapped_column(JSON, default=dict)
     notes: Mapped[str | None] = mapped_column(String(2000), nullable=True)
@@ -31,8 +30,3 @@ class ManualRecord(TimestampMixin, Base):
     store: Mapped[Store] = relationship()
     unit: Mapped[ConsumerUnit | None] = relationship()
     record_type: Mapped[RecordType] = relationship()
-
-    @property
-    def group_date(self) -> date | None:
-        """Data que posiciona o lançamento na tabela 'por vencimento': vencimento, senão contabilização, senão (None) a referência."""
-        return self.due_date or self.accounting_date
