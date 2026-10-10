@@ -103,6 +103,14 @@ def test_pdf_with_too_many_pages_rejected():
     assert validate_upload("conta.pdf", _pdf(2), 10_000_000)[1] == "application/pdf"
 
 
+def test_phone_photos_of_48_and_108_megapixels_are_accepted():
+    """Câmera de celular em modo máximo (48/50/108 MP) é foto de verdade: o limite de pixels não pode barrá-la."""
+    for size in ((8000, 6000), (12000, 9000)):                         # 48 MP e 108 MP
+        buf = io.BytesIO()
+        Image.new("L", size, 128).save(buf, "JPEG", quality=30)
+        assert validate_upload("foto.jpg", buf.getvalue(), 30_000_000)[1] == "image/jpeg", size
+
+
 def test_huge_image_dimensions_are_rejected_before_decoding():
     """PNG pequeno em bytes, mas com dimensões absurdas (bomba de descompressão): barrado pelo cabeçalho,
     sem precisar decodificar os pixels."""

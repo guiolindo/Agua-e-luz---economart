@@ -10,8 +10,9 @@ ALLOWED = {
 
 
 MAX_PDF_PAGES = 10  # uma conta tem 1–2 páginas; PDFs enormes travam/estouram o tempo do modelo
-MAX_IMAGE_PIXELS = 40_000_000  # ~6300×6300: bem acima de qualquer foto de celular, barra "bomba de descompressão"
-                                # (PNG pequeno em bytes, mas gigante decodificado — ex.: 10000×10000 em poucos KB)
+MAX_IMAGE_PIXELS = 40_000_000       # PNG/WEBP (~6300×6300): barra "bomba de descompressão" (poucos KB em bytes, gigante
+                                     # decodificado — ex.: 10000×10000)
+MAX_JPEG_PIXELS = 120_000_000       # JPEG é o formato das fotos de celular: cobre câmeras de 48, 50 e 108 MP (12000×9000)
 
 
 class UploadError(ValueError):
@@ -51,7 +52,7 @@ def validate_upload(filename: str, data: bytes, max_bytes: int) -> tuple[str, st
             raise UploadError(f"O PDF tem {pages} páginas. Envie apenas a(s) página(s) da conta (até {MAX_PDF_PAGES}).")
     else:
         w, h = _image_size(data)
-        if w and h and w * h > MAX_IMAGE_PIXELS:
+        if w and h and w * h > (MAX_JPEG_PIXELS if real == "image/jpeg" else MAX_IMAGE_PIXELS):
             raise UploadError("A imagem é grande demais para processar. Envie uma foto comum (sem redimensionar artificialmente).")
     safe = "".join(c for c in filename.replace("\\", "/").rsplit("/", 1)[-1] if c.isalnum() or c in "._- ")[:120]
     return safe or f"conta.{ext}", real
@@ -71,7 +72,7 @@ def _image_size(data: bytes) -> tuple[int, int] | tuple[None, None]:
     """Dimensões sem decodificar os pixels (leitura do cabeçalho: barata mesmo para um arquivo hostil).
 
     Uma imagem absurdamente grande faz o próprio Pillow recusar já no Image.open (DecompressionBombError, bem
-    acima do nosso MAX_IMAGE_PIXELS): trata isso como "maior que o limite", em vez de engolir a exceção e deixar
+    acima dos nossos limites): trata isso como "maior que o limite", em vez de engolir a exceção e deixar
     passar sem checar o tamanho."""
     import io
 
@@ -81,7 +82,7 @@ def _image_size(data: bytes) -> tuple[int, int] | tuple[None, None]:
         with Image.open(io.BytesIO(data)) as img:
             return img.size
     except Image.DecompressionBombError:
-        return MAX_IMAGE_PIXELS + 1, 1
+        return MAX_JPEG_PIXELS + 1, 1
     except Exception:
         return None, None
 

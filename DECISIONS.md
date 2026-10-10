@@ -195,7 +195,7 @@ tentativas **não tem teste de concorrência real** — só confirma que o bloqu
 5. **[Baixa] Bomba de descompressão de imagem e contagem de páginas de PDF por regex.** Uma imagem pequena em bytes mas
    com dimensões absurdas (ex.: 20000×20000) decodificava centenas de MB de memória antes de qualquer checagem; um PDF
    com páginas em formato comprimido escapava da busca por `/Type /Page` nos bytes crus. Corrigido: dimensões lidas do
-   cabeçalho (sem decodificar) e rejeitadas acima de 40 milhões de pixels; páginas contadas pelo mesmo leitor (pypdfium2)
+   cabeçalho (sem decodificar) e rejeitadas acima de 120 milhões de pixels (JPEG, o formato das fotos de celular, cobre 108 MP) ou 40 milhões (PNG/WEBP); páginas contadas pelo mesmo leitor (pypdfium2)
    que abre o arquivo depois.
 6. **[Baixa] HTML injection armazenada no painel da diretoria** via `innerHTML` com o código da loja (ex.: criar uma loja
    com código contendo uma tag `<a>`). A CSP já impedia executar script, mas um link ou conteúdo forjado aparecia na

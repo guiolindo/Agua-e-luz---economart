@@ -588,7 +588,7 @@ Itens abaixo são verificáveis no código, a menos que marcados como "não veri
 - **A imagem da conta sai para a API do Google.** Confirme que o plano e os termos usados atendem à política da
   empresa: planos pagos e Vertex AI têm termos de retenção diferentes da cota gratuita. Nada neste repositório
   controla isso.
-- Corrigido em 2026-10-10: imagem com dimensões acima de 40 milhões de pixels é recusada no upload, lendo só o
+- Corrigido em 2026-10-10: imagem com dimensões acima do limite (JPEG 120 milhões de pixels, PNG/WEBP 40 milhões) é recusada no upload, lendo só o
   cabeçalho (sem decodificar), antes de o Pillow decodificar em `prepare_for_model`.
 
 **Dados**
