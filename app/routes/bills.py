@@ -126,7 +126,7 @@ def notas_csv(store_id: int | None = None, type_id: int | None = None, start: st
     for r in rows:
         w.writerow([f"{r['reference'].month:02d}/{r['reference'].year}", _csv_cell(r["store_code"]), _csv_cell(r["unit_number"]),
                     _csv_cell(r["type_name"]), f"{r['value']:.2f}".replace(".", ",") if r["value"] is not None else "",
-                    (r["due_date"] or r["acct_date"]).strftime("%d/%m/%Y") if (r["due_date"] or r["acct_date"]) else "", _csv_cell(r["invoice_number"]),
+                    (r["acct_date"] or r["due_date"]).strftime("%d/%m/%Y") if (r["acct_date"] or r["due_date"]) else "", _csv_cell(r["invoice_number"]),
                     "Foto/IA" if r["origin"] == "bill" else "Manual"])
     from app.services import audit_service
 
