@@ -554,3 +554,15 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
 .main td.mono, .main td .mono, .main td a.mono { white-space: nowrap; }
 
 .hero-back { display: inline-block; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.78); } .hero-back:hover { color: #fff; text-decoration: none; transform: translateX(-2px); }
+
+/* ---------- Central de alertas ---------- */
+.navcount { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: rgba(255,255,255,.22); color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; } .navcount[hidden] { display: none; } .navcount.hot { background: var(--orange); }
+.sevfilter { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; } .sevchip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 999px; border: 1px solid var(--line-strong); background: #fff; color: var(--ink-2); font-weight: 600; font-size: 13px; }
+.sevchip b { font-weight: 700; color: var(--muted); } .sevchip:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); } .sevchip.on { background: var(--accent); border-color: var(--accent); color: #fff; } .sevchip.on b { color: rgba(255,255,255,.85); }
+.alist { display: grid; gap: 10px; }
+.acard { display: grid; grid-template-columns: 5px 1fr auto; gap: 16px; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; padding: 0 16px 0 0; transition: box-shadow .18s ease, transform .18s ease; }
+.acard:hover { box-shadow: 0 10px 22px -16px rgba(16,36,63,.5); transform: translateY(-1px); } .abar { align-self: stretch; background: var(--muted); } .acard.sev-alta .abar { background: var(--bad); } .acard.sev-media .abar { background: var(--orange); } .acard.sev-baixa .abar { background: var(--accent); }
+.abody { padding: 14px 0; } .abody h2 { margin: 6px 0 4px; font-size: 15px; } .abody p { margin: 0; font-size: 13px; line-height: 1.45; } .atop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sevb-alta { background: var(--bad-soft); color: var(--bad); border: 1px solid var(--bad-line); } .sevb-media { background: var(--orange-soft); color: var(--orange-dark); border: 1px solid var(--orange-line); } .sevb-baixa { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--info-line); }
+.aact { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; } .aact form { margin: 0; }
+@media (max-width: 760px) { .acard { grid-template-columns: 5px 1fr; padding-right: 12px; } .aact { grid-column: 2; justify-content: flex-start; padding-bottom: 12px; } }

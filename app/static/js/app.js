@@ -356,3 +356,13 @@ document.querySelectorAll('[data-copy-insights]').forEach((btn) => btn.addEventL
   requestAnimationFrame(tick);
   addEventListener('beforeprint', () => items.forEach((it) => { it.node.textContent = it.final; }));
 })();
+
+// Selo de alertas abertos no menu (busca leve; falha em silêncio).
+(function () {
+  const el = document.getElementById('alert-count'); if (!el) return;
+  fetch('/api/alertas/contagem', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+    .then((r) => (r.ok ? r.json() : null)).then((d) => {
+      if (!d || !d.count) return;
+      el.textContent = d.count > 99 ? '99+' : String(d.count); el.hidden = false; el.classList.toggle('hot', d.high > 0);
+    }).catch(() => {});
+})();

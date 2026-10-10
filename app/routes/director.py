@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.security import director_required
-from app.services import executive_service
+from app.services import alert_service, executive_service
 from app.utils.parsing import parse_reference
 from app.web import render
 
@@ -19,7 +19,7 @@ def executive_panel(request: Request, start: str | None = None, end: str | None 
                                    types or None, region or None)
     from app.models.mixins import utcnow
 
-    return render(request, "director/panel.html", user=user, payload=executive_service.client_payload(data), printed_at=utcnow(),
+    return render(request, "director/panel.html", user=user, payload=executive_service.client_payload(data), printed_at=utcnow(), alerts_open=alert_service.counts(db),
                   insights=executive_service.insights(data), **data)
 
 

@@ -110,6 +110,12 @@
   {% endif %}
 
   {# ======================= TODOS ======================= #}
+  <section class="card" id="alertas"><h2>Alertas</h2>
+    <p>Menu <strong>Alertas</strong>. O sistema compara cada conta nova com as últimas contas <strong>da mesma unidade</strong> e avisa quando algo foge do padrão: valor muito acima ou abaixo da média, custo por kWh que subiu, demanda acima do contratado, nota fiscal repetida ou itens que não fecham com o total.</p>
+    <ul><li><strong>Alta</strong>, <strong>Média</strong> e <strong>Baixa</strong> indicam o quanto vale conferir logo.</li>
+      <li>Um alerta é um <strong>aviso para conferir</strong>, não um erro confirmado: pode ser tarifa nova, multa, leitura estimada ou engano na leitura da foto.</li>
+      {% if user.can_write or user.can_see_executive %}<li>Depois de verificar, clique em <strong>Conferido</strong> e o alerta sai da lista.</li>{% endif %}</ul></section>
+
   <section class="card" id="achar"><h2>Achar, abrir e imprimir uma conta</h2>
     <ol class="steps-help">
       <li>Clique em <strong>Contas</strong> no menu. Ali ficam <strong>todas</strong> as contas e lançamentos.</li>

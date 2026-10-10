@@ -8,6 +8,14 @@ def _engine(tmp_path, name="m.db"):
     return database.make_engine(f"sqlite:///{tmp_path}/{name}")
 
 
+def _head() -> str:
+    from alembic.script import ScriptDirectory
+
+    from app.db_migrate import _config
+
+    return ScriptDirectory.from_config(_config(None)).get_current_head()
+
+
 def _version(eng) -> str:
     with eng.connect() as c:
         return c.execute(text("SELECT version_num FROM alembic_version")).scalar()
@@ -43,5 +51,16 @@ def test_pre_alembic_database_is_adopted_without_losing_data(tmp_path):
     assert "totp_secret" in cols and "row_hash" in {c["name"] for c in inspect(eng).get_columns("audit_log")}
     with eng.connect() as c:
         assert c.execute(text("SELECT username FROM users")).scalar() == "maria"          # dados intactos
-    assert _version(eng) == db_migrate.BASELINE
+    assert _version(eng) == _head()                      # carimbou 0001 e aplicou as migrações seguintes
+    assert "alert_acks" in inspect(eng).get_table_names()
+    assert db_migrate.drift(eng) == []
+
+
+def test_pre_alembic_database_missing_a_newer_table_is_completed_too(tmp_path):
+    eng = _engine(tmp_path, "older.db")
+    database.Base.metadata.create_all(eng)
+    with eng.begin() as c:
+        c.execute(text("DROP TABLE alert_acks"))                 # banco de antes dos alertas
+    db_migrate.upgrade(eng)
+    assert "alert_acks" in inspect(eng).get_table_names() and _version(eng) == _head()
     assert db_migrate.drift(eng) == []

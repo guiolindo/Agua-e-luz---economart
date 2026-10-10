@@ -18,6 +18,7 @@ Stack: Python · FastAPI · SQLAlchemy 2 · Jinja2 · Chart.js (embutido em `sta
 - **Disjuntor do Gemini:** se o Google cair, o sistema falha rápido em vez de esperar timeouts.
 - **Contas → Baixar planilha (CSV):** exporta o que está filtrado, pronto para o Excel.
 - **Migrações do banco (Alembic):** aplicadas ao subir; bancos antigos são adotados sem perder dados. Veja `docs/OPERACAO.md`.
+- **Central de Alertas:** cada conta nova é comparada com o histórico da própria unidade (valor, custo por kWh, demanda acima do contratado, nota fiscal repetida, itens que não fecham com o total, período de leitura estranho). Quem confere marca "Conferido" e o alerta some; fica na auditoria.
 - **Ajuda por perfil** (administrador, funcionário, diretoria, consulta).
 
 ## Fluxo principal

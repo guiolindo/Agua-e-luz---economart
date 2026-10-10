@@ -10,6 +10,7 @@
   <div class="ph-meta">Impresso por {{ user.username }}<br>{{ printed_at|dt_br }}</div>
 </header>
 {% call hero(greeting_now() ~ ", " ~ user.username, "Painel da diretoria", "Custos de energia e despesas relacionadas · " ~ (start|month_label) ~ " a " ~ (end|month_label)) %}
+  <a class="btn on-dark" href="/alertas">Alertas{% if alerts_open and alerts_open.count %} · {{ alerts_open.count }}{% endif %}</a>
   <a class="btn on-dark" href="/diretoria/export.csv?{{ request.url.query }}" title="Baixa o comparativo entre lojas em planilha">Baixar planilha</a>
   <button class="btn cta" type="button" data-print>Imprimir painel</button>
 {% endcall %}

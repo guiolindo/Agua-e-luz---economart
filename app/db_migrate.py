@@ -33,18 +33,25 @@ def upgrade(engine=None) -> None:
         tables = set(inspect(conn).get_table_names())
         cfg = _config(conn)
         if "alembic_version" not in tables and "users" in tables:
-            log.warning("Banco anterior ao Alembic: completando colunas e carimbando a revisão %s.", BASELINE)
+            # Banco criado antes do Alembic (create_all + ensure_columns). Traz-o ao esquema atual sem tocar nos dados;
+            # se ficar idêntico aos modelos, carimba o fim da fila; senão carimba a base e deixa as migrações fecharem.
+            log.warning("Banco anterior ao Alembic: completando tabelas/colunas e carimbando a revisão.")
+            database.Base.metadata.create_all(conn)
             database.ensure_columns(conn)
-            command.stamp(cfg, BASELINE)
+            command.stamp(cfg, "head" if not _drift(conn) else BASELINE)
         command.upgrade(cfg, "head")
+
+
+def _drift(conn) -> list:
+    from alembic.autogenerate import compare_metadata
+    from alembic.migration import MigrationContext
+
+    ctx = MigrationContext.configure(conn, opts={"compare_type": True, "render_as_batch": conn.dialect.name == "sqlite"})
+    return compare_metadata(ctx, database.Base.metadata)
 
 
 def drift(engine=None) -> list:
     """Diferenças entre os modelos e o banco real (lista vazia = em dia). Útil no CI e após restaurar backup."""
-    from alembic.autogenerate import compare_metadata
-    from alembic.migration import MigrationContext
-
     engine = engine or database.engine
     with engine.connect() as conn:
-        ctx = MigrationContext.configure(conn, opts={"compare_type": True, "render_as_batch": conn.dialect.name == "sqlite"})
-        return compare_metadata(ctx, database.Base.metadata)
+        return _drift(conn)

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, hero %}
+{% block title %}Alertas · Economart Energia{% endblock %}
+{% block content %}
+{% call hero("Atenção", "Alertas", "Cada conta nova é comparada com o histórico da própria unidade. Alerta é um aviso para conferir, não um veredito.") %}
+  <a class="btn on-dark" href="/notas">Ver contas</a>
+{% endcall %}
+
+<nav class="sevfilter no-print" aria-label="Filtrar por gravidade">
+  <a class="sevchip {{ 'on' if not sev }}" href="/alertas">Todos <b>{{ total }}</b></a>
+  {% for k, lbl in labels.items() %}<a class="sevchip sev-{{ k }} {{ 'on' if sev == k }}" href="/alertas?sev={{ k }}">{{ lbl }} <b>{{ counts[k] }}</b></a>{% endfor %}
+</nav>
+
+{% if alerts %}
+<div class="alist">
+  {% for a in alerts %}
+  <article class="acard sev-{{ a.severity }}">
+    <div class="abar" aria-hidden="true"></div>
+    <div class="abody">
+      <div class="atop"><span class="badge sevb-{{ a.severity }}">{{ a.severity_label }}</span><span class="small muted">{{ a.store_code }} · <span class="mono">{{ a.unit_number }}</span> · {{ a.reference|month_label }}</span></div>
+      <h2>{{ a.title }}</h2>
+      <p class="muted">{{ a.detail }}</p>
+    </div>
+    <div class="aact no-print">
+      <a class="btn sm" href="/units/{{ a.unit_id }}">Ver unidade</a>
+      <a class="btn sm" href="/bills/{{ a.bill_id }}/print" target="_blank" rel="noopener">Ver conta</a>
+      {% if can_ack %}<form method="post" action="/alertas/conferido">{{ csrf(csrf_token) }}<input type="hidden" name="key" value="{{ a.key }}"><button class="btn sm primary">Conferido</button></form>{% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty"><strong>Nenhum alerta aberto</strong>{{ 'Nada com essa gravidade.' if sev else 'As contas recentes estão dentro do padrão de cada unidade.' }}</div></div>
+{% endif %}
+{% endblock %}

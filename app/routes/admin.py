@@ -147,11 +147,11 @@ ACTION_LABELS = {
     "export": "Planilha exportada", "extract": "Conta lida pela IA", "import_rejected": "Arquivo barrado (não é conta)",
     "import": "Conta importada", "cancel": "Importação descartada", "purge": "Arquivos antigos apagados",
     "role_change": "Perfil alterado", "activate": "Usuário reativado", "deactivate": "Usuário desativado",
-    "due_ack": "Marcada como paga", "replace": "Conta substituída", "create": "Criação", "update": "Alteração", "delete": "Exclusão",
+    "due_ack": "Marcada como paga", "alert_ack": "Alerta conferido", "replace": "Conta substituída", "create": "Criação", "update": "Alteração", "delete": "Exclusão",
 }
 ENTITY_LABELS = {"store": "loja", "consumer_unit": "unidade", "energy_bill": "conta", "manual_record": "lançamento",
                  "record_type": "tipo de registro", "user": "usuário", "import": "importação", "document": "documento",
-                 "bills": "contas", "audit": "auditoria", "auth": ""}
+                 "bills": "contas", "audit": "auditoria", "auth": "", "alert": "alerta"}
 BAD_ACTIONS = {"login_failed", "login_2fa_failed", "2fa_disable_failed", "2fa_setup_failed", "login_blocked", "account_locked",
                "password_change_failed", "import_rejected", "login_temp_expired", "delete", "deactivate"}
 OK_ACTIONS = {"login", "login_2fa", "password_changed", "account_unlocked", "2fa_enabled"}

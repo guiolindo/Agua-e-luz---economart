@@ -1,3 +1,4 @@
+from app.models.alert_ack import AlertAck
 from app.models.audit import AuditLog
 from app.models.bill import EnergyBill
 from app.models.document import Document
@@ -10,5 +11,5 @@ from app.models.user import User
 
 __all__ = [
     "AuditLog", "EnergyBill", "Document", "Import", "ManualRecord",
-    "RecordType", "ConsumerUnit", "Store", "User", "LoginThrottle",
+    "RecordType", "ConsumerUnit", "Store", "User", "LoginThrottle", "AlertAck",
 ]
