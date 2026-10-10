@@ -34,5 +34,5 @@ class ManualRecord(TimestampMixin, Base):
 
     @property
     def group_date(self) -> date | None:
-        """Data que posiciona o lançamento na tabela 'por vencimento': contabilização (quando foi lançada no sistema), senão vencimento, senão (None) a referência."""
-        return self.accounting_date or self.due_date
+        """Data que posiciona o lançamento na tabela 'por vencimento': vencimento, senão contabilização, senão (None) a referência."""
+        return self.due_date or self.accounting_date

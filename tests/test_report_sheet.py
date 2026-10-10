@@ -79,8 +79,8 @@ def _manual(db, store_id, type_id, ref, value, due=None, acct=None):
     db.commit()
 
 
-def test_manual_expense_month_follows_accounting_then_due_then_reference(client):
-    """Gerador: na tabela 'por vencimento' vale a contabilização; sem ela, o vencimento; sem as duas, a referência."""
+def test_manual_expense_month_follows_due_then_accounting_then_reference(client):
+    """Gerador: na tabela 'por vencimento' vale o vencimento; sem ele, a data de contabilização; sem as duas, a referência."""
     from datetime import date
 
     from app import database
@@ -95,12 +95,12 @@ def test_manual_expense_month_follows_accounting_then_due_then_reference(client)
         ger = db.query(RecordType).filter_by(code="manutencao-gerador").one() if db.query(RecordType).filter_by(code="manutencao-gerador").count() \
             else db.query(RecordType).filter(RecordType.kind == "manual").first()
         _manual(db, s.id, ger.id, date(2026, 3, 1), "100", acct=date(2026, 5, 20))                       # só contabilização -> maio
-        _manual(db, s.id, ger.id, date(2026, 3, 1), "200", due=date(2026, 6, 10), acct=date(2026, 5, 20))  # as duas -> vale a contabilização (maio)
+        _manual(db, s.id, ger.id, date(2026, 3, 1), "200", due=date(2026, 6, 10), acct=date(2026, 5, 20))  # as duas -> vale o vencimento (junho)
         _manual(db, s.id, ger.id, date(2026, 3, 1), "400")                                                # nenhuma -> referência (março)
         due = chart_service.report_data(db, s, date(2026, 3, 1), date(2026, 7, 1), "due", ger.id)
         ref = chart_service.report_data(db, s, date(2026, 3, 1), date(2026, 7, 1), "reference", ger.id)
     by_month = {m.month: t for m, t in zip(due["sum_months"], due["summary"]["totals"]) if t is not None}
-    assert by_month == {3: 400, 5: 300}
+    assert by_month == {3: 400, 5: 100, 6: 200}
     assert {m.month: t for m, t in zip(ref["sum_months"], ref["summary"]["totals"]) if t is not None} == {3: 700}
 
 
@@ -115,7 +115,7 @@ def test_manual_form_saves_and_shows_the_accounting_date(client, db):
     ger = db.query(RecordType).filter(RecordType.kind == "manual", RecordType.code != "ll-energia").first()
     db.commit()
     page = client.get("/manual?modo=loja").text
-    assert "Data de contabilização (opcional)" in page and "Quando a despesa entrou no sistema" in page
+    assert "Data de contabilização (opcional)" in page and "Para despesas sem vencimento" in page
     r = client.post("/manual", {"store_id": s.id, "type_id": ger.id, "reference": "2026-03", "value": "1500,00", "accounting_date": "2026-05-20"})
     assert r.status_code in (303, 200)
     rec = db.query(ManualRecord).filter_by(store_id=s.id).one()
