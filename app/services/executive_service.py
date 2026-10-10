@@ -150,7 +150,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
             "avg": _f(stotal / max(1, len([v for v in vals if v]))),
             "prev_total": _f(prev_total.get(s.id)) if prev_total.get(s.id) else None,
             "vs_prev_period": _var(avg_prev, avg_cur) if comparable else _var(None, None),
-            "last": _f(last), "before": _f(before), "vs_last_month": _var(before, last),
+            "last": _f(last), "before": _f(before), "vs_last_month": _var(before, last), "abs_last_month": _f(last - before) if last is not None and before is not None else None,
             "rs_kwh": _f(e["value"] / e["kwh"]) if e and e["kwh"] else None,
             "kwh": _f(e["kwh"]) if e and e["kwh"] else None,
             "demand_use": _f(sum(u, Decimal(0)) / len(u) * 100) if u else None,

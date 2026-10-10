@@ -34,6 +34,10 @@ def greeting_now() -> str:
     return "Bom dia" if h < 12 else "Boa tarde" if h < 18 else "Boa noite"
 
 
+def plural(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
+
+
 def today_long() -> str:
     from app.utils.timezone import local_today
 
@@ -44,6 +48,7 @@ def today_long() -> str:
 
 
 templates.env.globals["greeting_now"] = greeting_now
+templates.env.globals["plural"] = plural
 templates.env.globals["today_long"] = today_long
 templates.env.globals["login_max_attempts"] = get_settings().max_login_attempts
 templates.env.globals["login_block_minutes"] = get_settings().login_block_minutes
