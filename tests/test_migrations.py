@@ -64,3 +64,13 @@ def test_pre_alembic_database_missing_a_newer_table_is_completed_too(tmp_path):
     db_migrate.upgrade(eng)
     assert "alert_acks" in inspect(eng).get_table_names() and _version(eng) == _head()
     assert db_migrate.drift(eng) == []
+
+
+def test_revisions_already_applied_in_production_stay_in_the_chain():
+    """Um banco carimbado em 0003 (aplicada em produção) precisa continuar reconhecido; remover a revisão impede o start."""
+    from alembic.script import ScriptDirectory
+
+    from app.db_migrate import _config
+
+    ids = {s.revision for s in ScriptDirectory.from_config(_config(None)).walk_revisions()}
+    assert {"0001", "0002", "0003"} <= ids
