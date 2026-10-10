@@ -5,7 +5,7 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-10
 
-- **Pentest interno:** 1 achado alto, 3 médios, 4 baixos, todos corrigidos (bloqueio de conta por condição de corrida,
+- **Pentest interno:** 1 achado alto, 3 médios, 4 baixos, corrigidos ou mitigados (bloqueio de conta por condição de corrida,
   limite de envio sem Content-Length, documentos visíveis além da conta, confirmação de senha para ações de admin,
   entre outros). Ver `DECISIONS.md` §13.
 

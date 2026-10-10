@@ -39,7 +39,9 @@ Depois do primeiro acesso: troque a senha do admin, crie os usuários reais (per
 ## Revisão de segurança interna (2026-10-10)
 
 Revisão própria (leitura do código + testes de ataque contra uma cópia local, nunca a produção): 1 achado alto, 3 médios,
-4 baixos, hoje todos corrigidos e cobertos por teste (`tests/test_security_hardening.py`). Os principais:
+4 baixos. Corrigidos, com teste (`tests/test_security_hardening.py`), com duas ressalvas: o bloqueio de conta abusado
+por terceiros continua possível (mitigado pelo script de desbloqueio) e a confirmação de senha cobre só criar admin,
+promover a admin e tirar o 2FA de outro admin (não cobre redefinir a senha de outro admin). Os principais:
 - **Bloqueio de conta contornável por condição de corrida:** o contador de tentativas erradas usava "ler, somar 1 em
   Python, gravar", e duas tentativas ao mesmo tempo podiam "perder" uma delas — na senha provisória de 4 dígitos
   (bloqueia na 3ª tentativa) isso reduzia bastante a proteção real. Agora o incremento é uma operação atômica no banco.

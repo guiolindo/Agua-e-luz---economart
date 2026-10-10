@@ -236,3 +236,39 @@ def test_document_filename_with_accents_does_not_crash_the_download(client, db, 
     r = client.get(f"/documents/{doc.id}")
     assert r.status_code == 200
     assert "filename*=UTF-8''" in r.headers["content-disposition"]
+
+
+def test_chunked_oversize_body_is_rejected_by_the_full_app(client):
+    """Fim a fim (pilha de middlewares completa): corpo em pedaços, sem Content-Length, acima do limite -> 413,
+    e não 500 nem o corpo inteiro sendo lido."""
+    def body():
+        for _ in range(4):
+            yield b"x" * (512 * 1024)                 # 2 MB no total, sem declarar tamanho
+
+    r = client.tc.post("/login", content=body(), headers={"content-type": "application/x-www-form-urlencoded"})
+    assert r.status_code == 413, (r.status_code, r.text[:200])
+
+
+def test_a_normal_large_upload_still_passes_the_body_counter(client, png):
+    """O contador de bytes não pode barrar upload legítimo grande (foto de ~4 MB, dentro do limite de 12 MB)."""
+    import io
+    import os
+
+    from PIL import Image
+
+    _make_store(client)
+    im = Image.frombytes("RGB", (1200, 1200), os.urandom(1200 * 1200 * 3))     # ruído: PNG de ~4 MB
+    buf = io.BytesIO()
+    im.save(buf, "PNG")
+    assert len(buf.getvalue()) > 3_000_000
+    r = client.post("/import", {"store_id": ""}, files={"file": ("conta.png", buf.getvalue(), "image/png")})
+    assert r.status_code == 303, r.status_code
+
+
+def test_unreadable_pdf_gets_an_honest_message():
+    import pytest as _p
+
+    from app.utils.uploads import UploadError, validate_upload
+
+    with _p.raises(UploadError, match="Não foi possível abrir"):
+        validate_upload("conta.pdf", b"%PDF-1.4\nlixo sem estrutura", 10_000_000)

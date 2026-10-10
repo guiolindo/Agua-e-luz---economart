@@ -45,6 +45,8 @@ def validate_upload(filename: str, data: bytes, max_bytes: int) -> tuple[str, st
         raise UploadError("O conteúdo do arquivo não corresponde ao formato informado.")
     if real == "application/pdf":
         pages = _pdf_page_count(data)
+        if pages == 0:
+            raise UploadError("Não foi possível abrir este PDF. Confira se o arquivo não está corrompido ou protegido por senha.")
         if pages > MAX_PDF_PAGES:
             raise UploadError(f"O PDF tem {pages} páginas. Envie apenas a(s) página(s) da conta (até {MAX_PDF_PAGES}).")
     else:
@@ -58,11 +60,11 @@ def validate_upload(filename: str, data: bytes, max_bytes: int) -> tuple[str, st
 def _pdf_page_count(data: bytes) -> int:
     """Conta as páginas com o mesmo leitor usado depois (pypdfium2), não por regex nos bytes crus: um PDF com
     páginas em object streams comprimidos (comum em PDFs gerados por scanner) escondem "/Type /Page" do regex
-    e passariam pelo limite sem serem contadas. Se o PDF não abrir, trata como "demais": rejeita (ele também não
-    abriria depois)."""
+    e passariam pelo limite sem serem contadas. Devolve 0 se o PDF não abrir (o chamador rejeita: ele também não
+    abriria depois, na impressão da conta)."""
     from app.services.pdf_pages import true_page_count
 
-    return true_page_count(data) or MAX_PDF_PAGES + 1
+    return true_page_count(data)
 
 
 def _image_size(data: bytes) -> tuple[int, int] | tuple[None, None]:

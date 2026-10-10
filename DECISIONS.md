@@ -161,12 +161,17 @@ números e controlar o fechamento, não em acrescentar gráficos.
 
 **Contexto.** Pedido explícito do usuário: "Faça tudo pra melhorar segurança. E tente fazer um pentest no sistema."
 Revisão em duas frentes: um agente leu o código de ponta a ponta (autorização, CSRF, injeção, upload, configuração) e,
-em paralelo, foram feitos ataques reais contra uma cópia local do sistema (banco separado, dados fictícios) — nunca a
-produção. Matriz de autorização por perfil em todas as rotas, tentativa de contornar o limite de tentativas de login com
-cabeçalhos forjados e variação de maiúsculas (ambos já bloqueados corretamente pelo código existente), e leitura de código
-para o resto.
+em paralelo, foram feitos testes reais contra uma cópia local do sistema (banco separado, dados fictícios) — nunca a
+produção. **O que rodou ao vivo:** matriz de autorização por perfil (admin, funcionário, diretoria, consulta) em todas as
+rotas GET e POST, e POST sem token CSRF em todas as rotas de escrita. **O que foi confirmado só por leitura de código, não
+por ataque real:** tentativa de contornar o limite de login com `X-Forwarded-For` forjado e com variação de maiúsculas
+(o script de força bruta que eu escreveria foi interrompido antes de rodar e não foi refeito), enumeração de usuários,
+injeção (SQL/XSS/fórmula), upload e configuração. Esses itens vêm da leitura do agente revisor e da minha, mais os testes
+automatizados; não houve teste de invasão com ferramenta externa.
 
-**Achados corrigidos** (todos com teste em `tests/test_security_hardening.py`):
+**Achados corrigidos** (com teste em `tests/test_security_hardening.py`; ressalva: o incremento atômico do contador de
+tentativas **não tem teste de concorrência real** — só confirma que o bloqueio continua funcionando como antes. A correção
+é a forma padrão de fechar essa classe de falha, mas não foi reproduzida em duas conexões simultâneas ao Postgres):
 
 1. **[Alta] Bloqueio de conta por condição de corrida.** `user.failed_attempts = (user.failed_attempts or 0) + 1` lia,
    somava em Python e gravava — duas tentativas de login ao mesmo tempo podiam partir do mesmo valor e uma delas "sumir".
@@ -174,7 +179,7 @@ para o resto.
    do bloqueio valer. Corrigido com `UPDATE ... SET failed_attempts = failed_attempts + 1` (atômico no banco; em
    produção/Postgres o próprio UPDATE serializa tentativas concorrentes pela trava de linha). Mesma correção na tabela de
    usuários inexistentes (`LoginThrottle`) e no contador de erros do código do 2FA.
-2. **[Média] Bloqueio de conta sem recuperação.** Qualquer um bloqueia uma conta alheia só de errar a senha 5 vezes; se
+2. **[Média] Bloqueio de conta sem recuperação — mitigado, não eliminado.** Qualquer um bloqueia uma conta alheia só de errar a senha 5 vezes; se
    for o único administrador, ninguém mais consegue desbloquear pela interface. Isso é inerente a qualquer política de
    bloqueio por tentativas (a alternativa, não bloquear, é pior). Mitigação: `python -m scripts.unlock_user <usuario>`,
    para quem tem acesso ao servidor.
@@ -198,10 +203,11 @@ para o resto.
 7. **[Baixa] Conta desativada era distinguível por tempo e comportamento.** Pulava a verificação de senha (mais rápida)
    e nunca mostrava "bloqueado" mesmo após várias tentativas — diferente de uma senha errada comum, o que permitia
    inventariar quais contas foram desativadas. Agora gasta o mesmo tempo (`verify_dummy`) e conta como falha igual.
-8. **[Baixa] Ações de privilégio de administrador sem segunda confirmação.** Quem tinha uma sessão de admin (mesmo com
+8. **[Baixa] Ações de privilégio de administrador sem segunda confirmação (parcial).** Quem tinha uma sessão de admin (mesmo com
    2FA) conseguia sozinho criar outro admin, promover alguém a admin ou tirar o 2FA de outro admin — uma sessão
    sequestrada virava posse de todos os admins. Agora essas três ações pedem a senha de quem está fazendo a ação
-   (confirmação simples por `prompt()`, sem redesenho de tela).
+   (confirmação simples por `prompt()`, sem redesenho de tela). **Ficou de fora:** redefinir a senha de outro
+   administrador, que ainda não pede confirmação.
 9. **[Informativa] `Admin` e `admin` podiam coexistir** (comparação de usuário sensível a maiúsculas). A checagem de
    usuário duplicado na criação passou a ser por `lower(username)`.
 10. **[Informativa] Nome de arquivo com acento quebrava o download** (`Content-Disposition` só aceita Latin-1). Corrigido

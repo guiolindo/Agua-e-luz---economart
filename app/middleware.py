@@ -97,19 +97,27 @@ class BodySizeLimitMiddleware:
             return await resp(scope, receive, send)
 
         seen = 0
+        exceeded = False
 
         async def limited_receive():
-            nonlocal seen
+            nonlocal seen, exceeded
             message = await receive()
             if message["type"] == "http.request":
                 seen += len(message.get("body") or b"")
                 if seen > limit:
+                    exceeded = True
                     raise _BodyTooLarge
             return message
 
+        async def guarded_send(message):
+            if not exceeded:                 # depois de abortar, o que o app tentar responder é descartado (o FastAPI
+                await send(message)          # converte a nossa exceção em "400 erro ao ler o corpo"): quem responde é a gente
+
         try:
-            await self.app(scope, limited_receive, send)
+            await self.app(scope, limited_receive, guarded_send)
         except _BodyTooLarge:
+            pass
+        if exceeded:
             resp = _deny(f"Requisição excede o limite de {limit // (1024 * 1024)} MB.", 413)
             await resp(scope, receive, send)
 

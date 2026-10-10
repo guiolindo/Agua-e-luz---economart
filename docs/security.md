@@ -213,8 +213,11 @@ importam aqui:
 - vale **por processo**: com mais de uma instância, cada uma conta separado (Redis seria o próximo passo);
 - `RATE_LIMIT_ENABLED=false` desliga (usado em testes).
 
-**Tamanho do corpo** (`BodySizeLimitMiddleware`): em mutações, `Content-Length` acima de 1 MB é recusado com
-`413`; em `POST /import` o teto é `MAX_UPLOAD_MB + 1 MB`. A checagem ocorre antes do parse multipart.
+**Tamanho do corpo** (`BodySizeLimitMiddleware`, ASGI puro): em mutações, acima de 1 MB é recusado com `413`; em
+`POST /import` o teto é `MAX_UPLOAD_MB + 1 MB`. Um `Content-Length` declarado acima do teto é recusado na hora; sem
+esse cabeçalho (ou com um valor falso), os bytes são contados conforme chegam e a leitura é interrompida ao passar do
+teto (a resposta é descartada e o middleware devolve o `413`, porque o FastAPI converteria a interrupção em `400`). A
+checagem ocorre antes do parse multipart e antes de qualquer verificação de sessão.
 
 ---
 
@@ -511,8 +514,10 @@ Regras que protegem a administração: não é possível rebaixar nem desativar 
 administrador não desativa a si mesmo; mudança de perfil revoga as sessões do usuário. Os avisos de vencimento
 (`/api/due`) são só do `operator`.
 
-Há um ponto de atenção: toda a leitura (`/stores`, `/notas`, `/documents/{id}`, `/bills/{id}/print`, etc.) está
-liberada a **qualquer perfil logado**, sem escopo por loja. O modelo de dados não tem restrição por loja ou região.
+Há um ponto de atenção: toda a leitura (`/stores`, `/notas`, `/bills/{id}/print`, etc.) está liberada a **qualquer
+perfil logado**, sem escopo por loja. O modelo de dados não tem restrição por loja ou região. Exceção, desde
+2026-10-10: `/documents/{id}` só entrega o arquivo a qualquer perfil quando ele pertence a uma conta confirmada;
+enquanto a importação ainda está em conferência, só quem lança contas (`operator`, `admin`) abre o arquivo.
 
 ---
 
@@ -563,9 +568,8 @@ Itens abaixo são verificáveis no código, a menos que marcados como "não veri
 - **PDF sem CSP**: `/documents/{id}` entrega PDF sem `Content-Security-Policy` (só imagem leva `sandbox`). Há
   `nosniff`, `Content-Type: application/pdf`, `X-Frame-Options: SAMEORIGIN` e `Cross-Origin-Resource-Policy`; o
   navegador abre o PDF no visualizador próprio. Um PDF malicioso depende de falhas desse visualizador.
-- A checagem de `BodySizeLimitMiddleware` lê o `Content-Length`. Requisição sem esse cabeçalho (transferência em
-  *chunks*) tem tamanho considerado 0 pela checagem; o comportamento do servidor ASGI nesse caso não foi
-  verificado.
+- Corrigido em 2026-10-10: o limite de corpo antes só olhava o `Content-Length` declarado; hoje conta os bytes
+  recebidos (ver "Tamanho do corpo"). Testado de ponta a ponta com corpo em pedaços (`tests/test_security_hardening.py`).
 - Respostas `500` geradas pelo `@app.exception_handler(Exception)` provavelmente saem por fora do
   `SecurityHeadersMiddleware` (no Starlette esse tratador fica na camada mais externa), logo sem os cabeçalhos
   de segurança. Não verificado por execução. A página é fixa e sem dado sensível.
@@ -573,9 +577,9 @@ Itens abaixo são verificáveis no código, a menos que marcados como "não veri
 
 **Upload e IA**
 
-- A contagem de páginas do PDF é uma expressão regular sobre `/Type /Page`; PDFs com objetos comprimidos podem
-  contar menos páginas do que têm. O Gemini e o `pypdfium2` (impressão) têm seus próprios limites (a impressão
-  mostra no máximo 6 páginas).
+- Corrigido em 2026-10-10: a contagem de páginas do PDF era uma expressão regular sobre `/Type /Page`, que PDFs com
+  objetos comprimidos burlavam. Hoje usa o `pypdfium2`, o mesmo leitor que abre o arquivo depois; PDF que não abre é
+  recusado com mensagem própria. O Gemini e a impressão (no máximo 6 páginas) têm seus próprios limites.
 - A classificação "é conta de energia?" depende do modelo. O servidor só rejeita quando o modelo diz que não é, ou
   quando nada identificável foi lido. Um documento adulterado ou uma foto de outra conta de energia (de outro
   cliente) passa; quem barra o erro é a **conferência humana**, obrigatória antes de salvar.
@@ -584,8 +588,8 @@ Itens abaixo são verificáveis no código, a menos que marcados como "não veri
 - **A imagem da conta sai para a API do Google.** Confirme que o plano e os termos usados atendem à política da
   empresa: planos pagos e Vertex AI têm termos de retenção diferentes da cota gratuita. Nada neste repositório
   controla isso.
-- O Pillow decodifica imagens enviadas por usuários autenticados (`prepare_for_model`); exceções são engolidas,
-  mas não há limite explícito de pixels além do padrão da biblioteca.
+- Corrigido em 2026-10-10: imagem com dimensões acima de 40 milhões de pixels é recusada no upload, lendo só o
+  cabeçalho (sem decodificar), antes de o Pillow decodificar em `prepare_for_model`.
 
 **Dados**
 

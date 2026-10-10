@@ -167,12 +167,12 @@ Todas as rotas exigem **Admin**. Todo `POST` exige CSRF.
 | Método | Caminho | Parâmetros | Resposta |
 |---|---|---|---|
 | GET | `/admin/users` | n/a | `200` lista de usuários, bloqueios e perfis |
-| POST | `/admin/users` | form `username` (até 80, mín. 3), `role` | `200` com a senha provisória (uma vez); `303` com *flash* de erro |
+| POST | `/admin/users` | form `username` (até 80, mín. 3; único sem diferenciar maiúsculas), `role`, `confirm_password` (obrigatório e conferido só quando `role=admin`: a senha de quem está criando) | `200` com a senha provisória (uma vez); `303` com *flash* de erro |
 | POST | `/admin/users/{user_id}/reset-password` | n/a | `200` com nova senha provisória; `303` se não existe |
 | POST | `/admin/users/{user_id}/unlock` | n/a | `303` `/admin/users` |
-| POST | `/admin/users/{user_id}/role` | form `role` | `303` `/admin/users` |
+| POST | `/admin/users/{user_id}/role` | form `role`, `confirm_password` (obrigatório só ao promover a `admin`) | `303` `/admin/users`; senha errada vira *flash* de erro e a mudança não acontece |
 | POST | `/admin/users/{user_id}/toggle` | n/a | `303` `/admin/users` |
-| POST | `/admin/users/{user_id}/reset-2fa` | n/a | `303` `/admin/users` |
+| POST | `/admin/users/{user_id}/reset-2fa` | form `confirm_password` (obrigatório só quando o alvo é administrador) | `303` `/admin/users` |
 | POST | `/admin/audit/verify` | n/a | `200` página de auditoria com o relatório de integridade |
 | GET | `/admin/audit` | query `action` (filtro) | `200`, últimos 300 eventos |
 | GET | `/admin/audit/export.csv` | query `action` | `200` CSV, até 20 mil eventos |
@@ -445,8 +445,8 @@ Acesso: **Logado** (qualquer perfil, inclusive `viewer`). Limite `documents`: 60
 
 | Método | Caminho | Resposta |
 |---|---|---|
-| GET | `/documents/{doc_id}` | `200` com os bytes decifrados e o `Content-Type` original; `404` se não existe; `410` se o arquivo expirou; `500` se a chave de criptografia não abre o arquivo |
-| GET | `/documents/{doc_id}/pages/{number}.png` | `200` PNG da página `number` (1 a 6) de um PDF; `404` se não é PDF ou a página não existe; `410`; `500` |
+| GET | `/documents/{doc_id}` | `200` com os bytes decifrados e o `Content-Type` original; `403` se o documento ainda está em conferência e o perfil não lança contas; `404` se não existe; `410` se o arquivo expirou ou foi apagado com a conta; `500` se a chave de criptografia não abre o arquivo |
+| GET | `/documents/{doc_id}/pages/{number}.png` | `200` PNG da página `number` (1 a 6) de um PDF; `403` (mesma regra do documento); `404` se não é PDF ou a página não existe; `410`; `500` |
 
 Cabeçalhos: `Content-Disposition: inline; filename="…"` (nome já sanitizado), `X-Content-Type-Options: nosniff`,
 `Cache-Control: no-store`. Para imagem, `Content-Security-Policy: default-src 'none'; img-src 'self' data:; sandbox`.

@@ -29,7 +29,7 @@ document.addEventListener('change', (e) => {
   }
   if (t.matches('[data-autosubmit]') && t.form) {
     if (t.name === 'role' && t.value === 'admin') {   // promover alguém a admin: confirma com a SUA senha antes de enviar
-      const pw = window.prompt('Confirme sua senha de administrador para promover ' + (t.getAttribute('aria-label') || 'este usuário') + ':');
+      const pw = window.prompt('Confirme sua senha de administrador para promover ' + (t.dataset.user || 'este usuário') + ':');
       if (!pw) return;                                 // cancelou: não envia (a tela volta ao estado real no próximo load)
       let h = t.form.querySelector('input[name=confirm_password]');
       if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = 'confirm_password'; t.form.appendChild(h); }

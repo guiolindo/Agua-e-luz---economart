@@ -291,7 +291,8 @@ uso único). Se um administrador perde o celular:
 
 1. Usar um **código de recuperação** no login.
 2. Ou outro administrador abre *Usuários* e clica em *Redefinir 2FA*
-   (rota `/admin/users/{id}/reset-2fa`; não funciona sobre si mesmo).
+   (rota `/admin/users/{id}/reset-2fa`; não funciona sobre si mesmo; se o alvo for administrador, pede a senha de quem
+   está fazendo a ação).
 3. Se for o **único** administrador, no servidor:
    ```bash
    python -m scripts.reset_2fa <usuario>
@@ -382,3 +383,16 @@ A foto/PDF original é removida do banco após `DOCUMENT_RETENTION_DAYS`
   produção.
 - Não há envio de e-mail: recuperação de senha é feita pelo
   administrador.
+
+## Conta bloqueada por tentativas erradas (inclusive o único administrador)
+
+Qualquer um pode bloquear uma conta alheia errando a senha 5 vezes (3, se a senha ainda é a provisória). Para contas
+comuns, o administrador usa *Usuários → Desbloquear*. Se foi o **único administrador** que ficou bloqueado, no servidor:
+
+```bash
+python -m scripts.unlock_user <usuario>
+```
+
+Mesma regra do `reset_2fa`: roda com o `DATABASE_URL` do app, só zera o bloqueio e o contador (não mexe na senha nem no
+2FA) e grava `account_unlocked` na auditoria. Testado em banco local de teste; ainda não executado no Railway.
+
