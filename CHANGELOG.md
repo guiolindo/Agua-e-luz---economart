@@ -5,6 +5,8 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-10
 
+- **Painel da diretoria: dá para saber qual loja é qual.** Os gráficos mostravam só o código (ex.: "CD300"); agora os gráficos de barras mostram "CÓDIGO · Nome" (ex.: "CD300 · CD Ribeirão das Neves"), o gráfico de evolução impresso ganhou legenda (antes as linhas ficavam sem nome), o mapa de calor mostra o nome ao passar o mouse e o relatório impresso termina com a *Legenda das lojas* (código, nome e estado). No A3, o gráfico de composição, que é o mais estreito, usa só o código.
+
 - **Impressão do painel da diretoria reorganizada, com escolha de papel:** o botão *Imprimir painel* abre **A4 · várias páginas** (4 páginas A4 paisagem, uma ideia por página: resumo e indicadores · desempenho · custos e demanda · detalhe e pendências) ou **A3 · uma folha só** (grade de 12 colunas: resumo no alto, gráficos lado a lado, tabelas embaixo). Nenhum gráfico é cortado; tabelas longas passam de página repetindo o cabeçalho. Antes eram 6 páginas A4, a última só com a nota. No A3, até ~18 lojas cabem numa folha; acima disso o painel segue numa 2ª folha A3 (folha 1 com o resumo e os gráficos, folha 2 com as tabelas). O bloco "Comparar duas lojas" (interativo) não imprime.
 
 - **Pentest interno:** 1 achado alto, 3 médios, 4 baixos, corrigidos ou mitigados (bloqueio de conta por condição de corrida,

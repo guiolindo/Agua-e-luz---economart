@@ -85,7 +85,7 @@
   <div style="padding:14px 18px 0"><h2>Mapa de calor — gasto mensal por loja (R$)</h2><div class="muted small">cor mais forte = mês mais caro <em>daquela loja</em></div></div>
   <div class="tablewrap"><table class="heat">
     <thead><tr><th>Loja</th>{% for l in labels %}<th class="num">{{ l }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
-    <tbody>{% for r in rows %}<tr><td class="nowrap"><a href="/stores/{{ r.id }}"><strong>{{ r.code }}</strong></a>{% if r.region %} <span class="badge">{{ r.region }}</span>{% endif %}</td>
+    <tbody>{% for r in rows %}<tr><td class="nowrap"><a href="/stores/{{ r.id }}" title="{{ r.name }}"><strong>{{ r.code }}</strong></a>{% if r.region %} <span class="badge">{{ r.region }}</span>{% endif %}</td>
       {% for v in r['values'] %}<td class="num" {% if v is not none %}style="background: rgba(47,111,159,{{ (0.06 + 0.5 * r.heat[loop.index0])|round(2) }})"{% endif %}>{{ v|num(0) if v is not none else '' }}</td>{% endfor %}
       <td class="num"><strong>{{ r.total|num(0) }}</strong></td></tr>{% endfor %}</tbody>
     <tfoot><tr><td>Total</td>{% for t in month_totals %}<td class="num">{{ t|num(0) if t is not none else '' }}</td>{% endfor %}<td class="num">{{ kpi.total|num(0) }}</td></tr>
@@ -119,6 +119,8 @@
     <li><strong>Demanda:</strong> a ultrapassagem só conta acima de 5% da demanda contratada (REN ANEEL 1.000/2021, Grupo A). Unidades sem leitura de demanda não entram.</li>
     <li><strong>Variações e destaques:</strong> indicam onde conferir. A causa não é identificada pelo sistema.</li>
   </ul></aside>
+{% if rows|selectattr('name')|list %}<section class="card storekey a3-12" aria-label="Legenda das lojas"><h2>Legenda das lojas</h2>
+  <ul>{% for r in rows %}<li><strong>{{ r.code }}</strong> {{ r.name or '' }}{% if r.region %} <span>· {{ r.region }}</span>{% endif %}</li>{% endfor %}</ul></section>{% endif %}
 <script type="application/json" id="dir-data">{{ payload|tojson }}</script>
 </div>
 {% endblock %}

@@ -326,3 +326,28 @@ def test_director_print_button_offers_a4_and_a3(client, db):
     assert "print-a3" in js and "afterprint" in js                                      # liga ao escolher e desliga ao terminar
     css = open("app/static/css/app.css", encoding="utf-8").read()
     assert "html.print-a3 .dirpanel .card.a3-3" in css and "repeat(12, minmax(0, 1fr))" in css
+
+
+def test_director_panel_tells_which_store_is_which(client, db):
+    """O leitor precisa saber qual loja é qual: nome nos gráficos, legenda das lojas no papel e nome no tooltip."""
+    _world(db)
+    d = _user(client, "diretor11", "director")
+    html = d.get("/diretoria?start=2026-01&end=2026-02").text
+    assert 'class="card storekey a3-12"' in html and "Legenda das lojas" in html
+    assert "<strong>A</strong> Loja A" in html and "<strong>C</strong> Loja C" in html     # código + nome de cada loja
+    assert 'title="Loja A"' in html                                                          # nome no tooltip do mapa de calor
+    js = open("app/static/js/director.js", encoding="utf-8").read()
+    assert "const lab = (r)" in js and "top.map(lab)" in js and "setLineLegend" in js       # nome nos gráficos; legenda da evolução no papel
+    css = open("app/static/css/app.css", encoding="utf-8").read()
+    assert ".storekey { display: none; }" in css
+
+
+def test_print_menu_is_moved_out_of_the_hero_so_it_is_not_clipped():
+    """Bug visto no uso: o menu A4/A3 abria dentro do hero (overflow:hidden + isolation) e ficava cortado e atrás dos
+    cartões. A lista tem de sair do hero ao abrir (fixa, dentro da tela) e nunca imprimir."""
+    js = open("app/static/js/app.js", encoding="utf-8").read()
+    assert "document.body.appendChild(list)" in js and "position: 'fixed'" in js and "innerWidth - w - 8" in js
+    assert "addEventListener('scroll', () => toggle(false), true)" not in js          # a rolagem interna não pode fechar o menu
+    css = open("app/static/css/app.css", encoding="utf-8").read()
+    assert ".printmenu-list { display: none !important; }" in css
+

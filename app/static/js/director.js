@@ -11,6 +11,8 @@
   Chart.defaults.font.family = 'Inter, "Segoe UI", system-ui, sans-serif'; Chart.defaults.color = INK;
   const arrow = (p) => p == null ? '—' : (p > 0 ? '↑ ' : p < 0 ? '↓ ' : '→ ') + nfN.format(Math.abs(p)) + '%';
   const $ = (id) => document.getElementById(id);
+  // Rótulo da loja nos gráficos: "CD300 · CD Ribeirão das Neves" (só o código, se não houver nome); sem isso, o leitor não sabe qual loja é qual.
+  const lab = (r) => (r.name && r.name.trim().toLowerCase() !== String(r.code).toLowerCase()) ? r.code + ' · ' + (r.name.length > 26 ? r.name.slice(0, 25) + '…' : r.name) : r.code;
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const refLine = (value, color, label) => ({ id: 'ref' + label, afterDatasetsDraw(c) {
     const x = c.scales.x.getPixelForValue(value); if (!isFinite(x)) return;
@@ -34,17 +36,17 @@
 
   // 2) ranking
   const top = rows.slice(0, 15);
-  hbar('c-rank', top.map((r) => r.code), top.map((r) => r.total), top.map((r, i) => i === 0 ? BLUE : '#9aa5b4'),
+  hbar('c-rank', top.map(lab), top.map((r) => r.total), top.map((r, i) => i === 0 ? BLUE : '#9aa5b4'),
        (v, i) => nfBRL0.format(v) + ' · ' + nfN.format(top[i].share) + '% da empresa', { tick: (v) => nfBRL0.format(v) });
 
   // 3) variação último mês vs anterior
   const mv = rows.filter((r) => r.var_last != null).sort((a, b) => b.var_last - a.var_last).slice(0, 20);
-  hbar('c-var', mv.map((r) => r.code), mv.map((r) => r.var_last), mv.map((r) => r.var_last > 0 ? UP : r.var_last < 0 ? DOWN : NEUTRAL),
+  hbar('c-var', mv.map(lab), mv.map((r) => r.var_last), mv.map((r) => r.var_last > 0 ? UP : r.var_last < 0 ? DOWN : NEUTRAL),
        (v, i) => arrow(v) + ' (' + nfBRL0.format(mv[i].before) + ' → ' + nfBRL0.format(mv[i].last) + ')', { tick: (v) => v + '%' });
 
   // 4) composição por fornecedor (100%)
   const typeIds = Object.keys(D.types);
-  const mixChart = new Chart($('c-mix'), { type: 'bar', data: { labels: top.map((r) => r.code), datasets: typeIds.map((id) => ({
+  const mixChart = new Chart($('c-mix'), { type: 'bar', data: { labels: top.map(lab), datasets: typeIds.map((id) => ({
       label: D.types[id].name, backgroundColor: D.types[id].color, data: top.map((r) => r.total ? ((r.mix[id] || 0) / r.total) * 100 : 0) })) },
     options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: false,
       scales: { x: { stacked: true, max: 100, grid: { color: GRID }, ticks: { callback: (v) => v + '%' } }, y: { stacked: true, grid: { display: false } } },
@@ -52,21 +54,21 @@
 
   // 5) evolução das lojas (com seleção)
   const lineChart = new Chart($('c-line'), { type: 'line', data: { labels: D.labels, datasets: rows.map((r, i) => ({
-      label: r.code, data: r.values, borderColor: PALETTE[i % PALETTE.length], backgroundColor: PALETTE[i % PALETTE.length], borderWidth: 2, pointRadius: 2.5, spanGaps: true, hidden: i >= 5 })) },
+      label: lab(r), data: r.values, borderColor: PALETTE[i % PALETTE.length], backgroundColor: PALETTE[i % PALETTE.length], borderWidth: 2, pointRadius: 2.5, spanGaps: true, hidden: i >= 5 })) },
     options: { responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'nearest', intersect: false },
       scales: { y: { beginAtZero: true, grid: { color: GRID }, ticks: { callback: (v) => nfBRL0.format(v) } }, x: { grid: { display: false } } },
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (i) => i.dataset.label + ': ' + nfBRL0.format(i.raw) } } } } });
   const pick = $('storepick');
   rows.forEach((r, i) => { const l = document.createElement('label'); l.className = 'chk';
-    l.innerHTML = '<input type="checkbox"' + (i < 5 ? ' checked' : '') + '><span class="dot" style="background:' + PALETTE[i % PALETTE.length] + '"></span>' + esc(r.code);
+    l.innerHTML = '<input type="checkbox"' + (i < 5 ? ' checked' : '') + '><span class="dot" style="background:' + PALETTE[i % PALETTE.length] + '"></span>' + esc(lab(r));
     l.querySelector('input').addEventListener('change', (e) => { lineChart.setDatasetVisibility(i, e.target.checked); lineChart.update('none'); }); pick.appendChild(l); });
 
   // 6) R$/kWh e 7) uso da demanda
   const ek = rows.filter((r) => r.rs_kwh).sort((a, b) => b.rs_kwh - a.rs_kwh);
-  hbar('c-kwh', ek.map((r) => r.code), ek.map((r) => r.rs_kwh), ek.map((r) => D.avg_rs_kwh && r.rs_kwh > D.avg_rs_kwh ? UP : '#9aa5b4'),
+  hbar('c-kwh', ek.map(lab), ek.map((r) => r.rs_kwh), ek.map((r) => D.avg_rs_kwh && r.rs_kwh > D.avg_rs_kwh ? UP : '#9aa5b4'),
        (v) => nfBRL3.format(v) + '/kWh', { tick: (v) => nfBRL3.format(v), refs: D.avg_rs_kwh ? [refLine(D.avg_rs_kwh, BLUE, 'média ' + nfBRL3.format(D.avg_rs_kwh))] : [] });
   const eu = rows.filter((r) => r.demand_use != null).sort((a, b) => b.demand_use - a.demand_use);
-  hbar('c-util', eu.map((r) => r.code), eu.map((r) => r.demand_use), eu.map((r) => r.demand_use > 100 ? UP : r.demand_use < 70 ? '#c9a227' : '#5b9a6b'),
+  hbar('c-util', eu.map(lab), eu.map((r) => r.demand_use), eu.map((r) => r.demand_use > 100 ? UP : r.demand_use < 70 ? '#c9a227' : '#5b9a6b'),
        (v, i) => nfN.format(v) + '% da demanda contratada' + (eu[i].demand_over ? ' · ' + eu[i].demand_over + (eu[i].demand_over === 1 ? ' conta acima' : ' contas acima') : ''),
        { tick: (v) => v + '%', refs: [refLine(100, UP, '100%')], x: { suggestedMax: 110 } });
 
@@ -98,7 +100,17 @@
   // navegador não refaz o tamanho dos gráficos no layout de impressão. Por isso, no A3 os gráficos recebem tamanho FIXO,
   // calculado da grade conhecida (12 colunas, folha útil de 1527 px, intervalo de 6 px, cartão com 10 px de margem interna).
   const A3 = { 'c-month': [4, 255], 'c-rank': [3, 255], 'c-var': [3, 255], 'c-mix': [2, 255], 'c-line': [4, 205], 'c-kwh': [4, 205], 'c-util': [4, 205] };
-  const setMixLegend = (on) => { mixChart.options.plugins.legend.display = on; mixChart.update('none'); };
+  // No A3 a composição é a coluna mais estreita: só o código na vertical (o nome está na "Legenda das lojas" e nos outros gráficos).
+  const mixNames = mixChart.data.labels.slice();
+  const setMixLegend = (on, narrow) => {
+    mixChart.options.plugins.legend.display = on; mixChart.data.labels = narrow ? top.map((r) => r.code) : mixNames; mixChart.update('none');
+  };
+  // Evolução das lojas: na tela a legenda é a lista de caixas de seleção; no papel não existe, então as linhas ficariam sem nome.
+  const setLineLegend = (on) => {
+    const lg = lineChart.options.plugins.legend; lg.display = on;
+    lg.labels = on ? { boxWidth: 12, filter: (item) => lineChart.isDatasetVisible(item.datasetIndex) } : {};
+    lineChart.update('none');
+  };
   const sizeCharts = (a3) => Chart.instances && Object.values(Chart.instances).forEach((c) => {
     const spec = A3[c.canvas.id];
     if (a3 && spec) {
@@ -109,8 +121,9 @@
   });
   window.addEventListener('beforeprint', () => {
     const a3 = document.documentElement.classList.contains('print-a3');
-    if (a3) setMixLegend(false);
+    if (a3) setMixLegend(false, true);
+    setLineLegend(true);
     sizeCharts(a3);
   });
-  window.addEventListener('afterprint', () => { setMixLegend(true); sizeCharts(false); });
+  window.addEventListener('afterprint', () => { setMixLegend(true, false); setLineLegend(false); sizeCharts(false); });
 })();

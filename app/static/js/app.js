@@ -393,12 +393,24 @@ document.querySelectorAll('[data-copy-insights]').forEach((btn) => btn.addEventL
   const menu = document.querySelector('.printmenu'); if (!menu) return;
   const btn = menu.querySelector('[data-print-menu]'), list = menu.querySelector('.printmenu-list');
   const toggle = (open) => { list.hidden = !open; btn.setAttribute('aria-expanded', String(open)); };
-  btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(list.hidden); });
+  // O hero tem overflow:hidden e isolation:isolate: um menu dentro dele ficava cortado e atrás dos cartões seguintes.
+  // Ao abrir, a lista vai para o <body> e é posicionada (fixa) a partir do botão, sem sair da tela (celular).
+  const open = () => {
+    document.body.appendChild(list);
+    Object.assign(list.style, { position: 'fixed', zIndex: '1000', right: 'auto' });
+    toggle(true);                                              // visível, para medir a largura
+    const r = btn.getBoundingClientRect(), w = list.offsetWidth;
+    const left = Math.min(Math.max(8, r.right - w), innerWidth - w - 8);
+    Object.assign(list.style, { top: (r.bottom + 6) + 'px', left: left + 'px' });
+  };
+  btn.addEventListener('click', (e) => { e.stopPropagation(); if (list.hidden) open(); else toggle(false); });
+  list.addEventListener('click', (e) => e.stopPropagation());
   document.addEventListener('click', () => toggle(false));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggle(false); });
+  addEventListener('resize', () => toggle(false)); addEventListener('scroll', () => toggle(false));   // só a rolagem da página (sem captura)
   const a3 = document.getElementById('page-a3'), root = document.documentElement;
   const reset = () => { root.classList.remove('print-a3'); if (a3) a3.media = 'not all'; root.style.removeProperty('--a3fit'); };
-  menu.addEventListener('click', (e) => {
+  list.addEventListener('click', (e) => {
     const o = e.target.closest('[data-print-size]'); if (!o) return;
     toggle(false);
     if (o.dataset.printSize === 'a3' && a3) {

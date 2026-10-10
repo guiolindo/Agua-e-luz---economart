@@ -633,3 +633,12 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
   .print-a3 .dirpanel .card.flush { break-inside: avoid; }
   .print-a3 .dirpanel table { font-size: 10px; }
 }
+
+/* Legenda das lojas: só no papel (na tela, nomes aparecem nos gráficos e no tooltip). */
+.storekey { display: none; }
+@media print {
+  .storekey { display: block; break-inside: avoid; } .storekey h2 { font-size: 11px; margin: 0 0 4px; }
+  .storekey ul { list-style: none; margin: 0; padding: 0; columns: 4; column-gap: 14px; font-size: 9px; line-height: 1.45; } .storekey li { break-inside: avoid; } .storekey span { color: var(--muted); }
+  html.print-a3 .dirpanel .card.a3-12 { grid-column: 1 / -1 !important; } .print-a3 .storekey ul { columns: 6; }
+}
+@media print { .printmenu-list { display: none !important; } }
