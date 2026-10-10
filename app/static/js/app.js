@@ -387,3 +387,27 @@ document.querySelectorAll('[data-copy-insights]').forEach((btn) => btn.addEventL
       el.textContent = d.count > 99 ? '99+' : String(d.count); el.hidden = false; el.classList.toggle('hot', d.high > 0);
     }).catch(() => {});
 })();
+
+// Painel da diretoria: ao imprimir, escolhe o papel (A4 em várias páginas ou A3 em uma folha só).
+(() => {
+  const menu = document.querySelector('.printmenu'); if (!menu) return;
+  const btn = menu.querySelector('[data-print-menu]'), list = menu.querySelector('.printmenu-list');
+  const toggle = (open) => { list.hidden = !open; btn.setAttribute('aria-expanded', String(open)); };
+  btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(list.hidden); });
+  document.addEventListener('click', () => toggle(false));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggle(false); });
+  const a3 = document.getElementById('page-a3'), root = document.documentElement;
+  const reset = () => { root.classList.remove('print-a3'); if (a3) a3.media = 'not all'; root.style.removeProperty('--a3fit'); };
+  menu.addEventListener('click', (e) => {
+    const o = e.target.closest('[data-print-size]'); if (!o) return;
+    toggle(false);
+    if (o.dataset.printSize === 'a3' && a3) {
+      a3.media = 'print'; root.classList.add('print-a3');
+      const n = Number((document.querySelector('.dirpanel') || {}).dataset?.stores || 0);
+      root.style.setProperty('--a3fit', String(Math.max(0.62, Math.min(1, 1030 / (1190 + n * 28)))));   // altura natural medida: ~1190 px + 28 px por loja; folha A3 útil ~1060 px.
+      // piso de 62%: até ~18 lojas cabem numa folha; acima disso a letra ficaria ilegível e o painel segue numa 2ª folha A3
+    }
+    setTimeout(() => window.print(), 80);                                                              // deixa o navegador aplicar o layout A3
+  });
+  addEventListener('afterprint', reset);
+})();

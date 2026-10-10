@@ -600,3 +600,36 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
   .dirpanel .card.flush table td, .dirpanel .card.flush table th { padding-top: 5px; padding-bottom: 5px; }     /* tabelas mais compactas no papel */
   .method { margin-top: 8px; padding: 8px 12px; } .method h2 { font-size: 11px; margin-bottom: 3px; } .method ul { font-size: 9px; line-height: 1.3; }
 }
+
+/* Botão "Imprimir painel": escolhe o papel (A4 em várias páginas ou A3 em uma folha só). */
+.printmenu { position: relative; display: inline-block; }
+.printmenu-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 270px; display: flex; flex-direction: column; gap: 2px; padding: 6px;
+  background: #fff; border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 14px 30px -12px rgba(16,36,63,.35); }
+.printmenu-list[hidden] { display: none; }
+.printmenu-list button { display: flex; flex-direction: column; gap: 2px; text-align: left; background: transparent; border: 0; border-radius: 8px; padding: 10px 12px; cursor: pointer; color: var(--text); font: inherit; }
+.printmenu-list button:hover, .printmenu-list button:focus-visible { background: var(--accent-soft); outline: none; }
+.printmenu-list strong { font-size: 14px; color: var(--navy); } .printmenu-list small { font-size: 12px; color: var(--muted); }
+
+/* A3 em uma folha só: grade de 12 colunas (resumo no alto, gráficos lado a lado, tabelas embaixo). Ligado por
+   html.print-a3 (o JS liga ao escolher A3 e desliga no afterprint); --a3fit reduz o conjunto se houver muitas lojas. */
+@media print {
+  .print-a3 .dirpanel { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px; align-items: start; zoom: var(--a3fit, 1); }
+  .print-a3 .dirpanel > * { min-width: 0; margin: 0; }
+  .print-a3 .dirpanel > .print-head { grid-column: 1 / -1; margin-bottom: 0; }
+  .print-a3 .dirpanel .grid:not(.dir-kpis) { display: contents; }          /* os cartões dos grupos viram itens da grade principal */
+  .print-a3 .dirpanel .card { margin: 0; }
+  html.print-a3 .dirpanel .card.a3-2 { grid-column: span 2 !important; } html.print-a3 .dirpanel .card.a3-3 { grid-column: span 3 !important; } html.print-a3 .dirpanel .card.a3-4 { grid-column: span 4 !important; }
+  html.print-a3 .dirpanel .card.a3-5, html.print-a3 .dirpanel .a3-5 { grid-column: span 5 !important; } html.print-a3 .dirpanel .card.a3-7, html.print-a3 .dirpanel .a3-7 { grid-column: span 7 !important; }
+  /* "html" + ".card": especificidade maior que a regra '.grid.cols-main2.pp-1 > :first-child' do A4, também !important */
+  .print-a3 .pp-break { break-before: auto; page-break-before: auto; }
+  .print-a3 .dirpanel { gap: 6px; } .print-a3 .dirpanel .card { padding: 8px 10px; } .print-a3 .dirpanel .card-head { margin-bottom: 4px; }
+  .print-a3 .dirpanel .pp-1 .dchart, .print-a3 .dirpanel .pp-1 .dchart.tall, .print-a3 .dirpanel .pp-2 .dchart, .print-a3 .dirpanel .pp-2 .dchart.tall { height: 255px !important; }   /* linha 2: a legenda quebra e precisa de altura */
+  .print-a3 .dirpanel .pp-evol .dchart, .print-a3 .dirpanel .pp-3 .dchart, .print-a3 .dirpanel .pp-3 .dchart.tall { height: 205px !important; }                                       /* linha 3 */
+  .print-a3 .dirpanel .insights li { padding: 2px 0; } .print-a3 .dirpanel .dir-kpis { gap: 6px; } .print-a3 .dirpanel .dir-kpis .kpi { padding: 6px 9px; }
+  .print-a3 .dirpanel .card.flush.a3-5 td .small { display: none; }
+  .print-a3 .dirpanel .card.flush.a3-5 .tablewrap { overflow: visible; } .print-a3 .dirpanel .card.flush.a3-5 td, .print-a3 .dirpanel .card.flush.a3-5 th { padding-left: 5px; padding-right: 5px; }                    /* comparativo: só o código da loja, uma linha por loja */
+  .print-a3 .dirpanel .card.flush td, .print-a3 .dirpanel .card.flush th { padding-top: 2px; padding-bottom: 2px; }
+  .print-a3 .dirpanel .heat td, .print-a3 .dirpanel .heat th { padding-top: 2px; padding-bottom: 2px; }
+  .print-a3 .dirpanel .card.flush { break-inside: avoid; }
+  .print-a3 .dirpanel table { font-size: 10px; }
+}

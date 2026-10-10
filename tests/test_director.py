@@ -312,3 +312,17 @@ def test_director_print_layout_has_one_theme_per_page(db):
     assert "pp-1" in html and "pp-evol" in html and 'class="card no-print"' in html   # "comparar duas lojas" não imprime
     css = Path("app/static/css/app.css").read_text(encoding="utf-8")
     assert ".pp-break { break-before: page;" in css and ".dirpanel table tr { break-inside: avoid; }" in css
+
+
+def test_director_print_button_offers_a4_and_a3(client, db):
+    """O botão Imprimir abre a escolha de papel: A4 em várias páginas ou A3 em uma folha só."""
+    _world(db)
+    d = _user(client, "diretor10", "director")
+    html = d.get("/diretoria?start=2026-01&end=2026-02").text
+    assert "data-print-menu" in html and 'data-print-size="a4"' in html and 'data-print-size="a3"' in html
+    assert 'id="page-a4"' in html and 'id="page-a3" media="not all"' in html           # o A3 só liga quando escolhido
+    assert 'data-stores="3"' in html                                                    # a escala do A3 depende do nº de lojas
+    js = open("app/static/js/app.js", encoding="utf-8").read()
+    assert "print-a3" in js and "afterprint" in js                                      # liga ao escolher e desliga ao terminar
+    css = open("app/static/css/app.css", encoding="utf-8").read()
+    assert "html.print-a3 .dirpanel .card.a3-3" in css and "repeat(12, minmax(0, 1fr))" in css

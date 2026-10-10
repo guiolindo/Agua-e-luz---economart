@@ -5,7 +5,7 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-10
 
-- **Impressão do painel da diretoria reorganizada:** sai em 4 páginas A4 paisagem, uma ideia por página (1 resumo e indicadores · 2 desempenho · 3 custos e demanda · 4 detalhe e pendências), sem gráfico cortado no meio, com cabeçalho de tabela repetido quando uma tabela passa de página. Antes eram 6 páginas, a última só com a nota. O bloco "Comparar duas lojas" (interativo) não imprime.
+- **Impressão do painel da diretoria reorganizada, com escolha de papel:** o botão *Imprimir painel* abre **A4 · várias páginas** (4 páginas A4 paisagem, uma ideia por página: resumo e indicadores · desempenho · custos e demanda · detalhe e pendências) ou **A3 · uma folha só** (grade de 12 colunas: resumo no alto, gráficos lado a lado, tabelas embaixo). Nenhum gráfico é cortado; tabelas longas passam de página repetindo o cabeçalho. Antes eram 6 páginas A4, a última só com a nota. No A3, até ~18 lojas cabem numa folha; acima disso o painel segue numa 2ª folha A3 (folha 1 com o resumo e os gráficos, folha 2 com as tabelas). O bloco "Comparar duas lojas" (interativo) não imprime.
 
 - **Pentest interno:** 1 achado alto, 3 médios, 4 baixos, corrigidos ou mitigados (bloqueio de conta por condição de corrida,
   limite de envio sem Content-Length, documentos visíveis além da conta, confirmação de senha para ações de admin,

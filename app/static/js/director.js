@@ -44,7 +44,7 @@
 
   // 4) composição por fornecedor (100%)
   const typeIds = Object.keys(D.types);
-  new Chart($('c-mix'), { type: 'bar', data: { labels: top.map((r) => r.code), datasets: typeIds.map((id) => ({
+  const mixChart = new Chart($('c-mix'), { type: 'bar', data: { labels: top.map((r) => r.code), datasets: typeIds.map((id) => ({
       label: D.types[id].name, backgroundColor: D.types[id].color, data: top.map((r) => r.total ? ((r.mix[id] || 0) / r.total) * 100 : 0) })) },
     options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: false,
       scales: { x: { stacked: true, max: 100, grid: { color: GRID }, ticks: { callback: (v) => v + '%' } }, y: { stacked: true, grid: { display: false } } },
@@ -93,5 +93,24 @@
       '<tr class="sub"><td>Diferença (%)</td>' + pct.map((p) => '<td class="num">' + (p == null ? '' : arrow(p)) + '</td>').join('') + '<td class="num">' + (b.total ? arrow(((a.total - b.total) / b.total) * 100) : '') + '</td></tr></tbody>';
   }
   A.addEventListener('change', drawPair); B.addEventListener('change', drawPair); drawPair();
-  window.addEventListener('beforeprint', () => Chart.instances && Object.values(Chart.instances).forEach((c) => c.resize()));
+  // A3 em uma folha. Dois cuidados: (1) a legenda da composição repete as cores do gráfico mensal: some, para o gráfico ter
+  // altura; (2) a escala (zoom) engana o Chart.js, que mede o contêiner pelo tamanho visual e encolhe o gráfico duas vezes, e o
+  // navegador não refaz o tamanho dos gráficos no layout de impressão. Por isso, no A3 os gráficos recebem tamanho FIXO,
+  // calculado da grade conhecida (12 colunas, folha útil de 1527 px, intervalo de 6 px, cartão com 10 px de margem interna).
+  const A3 = { 'c-month': [4, 255], 'c-rank': [3, 255], 'c-var': [3, 255], 'c-mix': [2, 255], 'c-line': [4, 205], 'c-kwh': [4, 205], 'c-util': [4, 205] };
+  const setMixLegend = (on) => { mixChart.options.plugins.legend.display = on; mixChart.update('none'); };
+  const sizeCharts = (a3) => Chart.instances && Object.values(Chart.instances).forEach((c) => {
+    const spec = A3[c.canvas.id];
+    if (a3 && spec) {
+      const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--a3fit')) || 1;
+      const col = (1527 / z - 11 * 6) / 12;
+      c.options.responsive = false; c.resize(Math.floor(spec[0] * col + (spec[0] - 1) * 6 - 20), spec[1]);
+    } else { c.options.responsive = true; c.resize(); }
+  });
+  window.addEventListener('beforeprint', () => {
+    const a3 = document.documentElement.classList.contains('print-a3');
+    if (a3) setMixLegend(false);
+    sizeCharts(a3);
+  });
+  window.addEventListener('afterprint', () => { setMixLegend(true); sizeCharts(false); });
 })();
