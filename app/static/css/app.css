@@ -571,3 +571,8 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
 .sheet .rtable .xcol { border-left: 1px solid var(--line-strong); } .sheet .rtable tr.varrow td { font-size: .92em; color: var(--muted); border-top: 0; }
 .compo { margin: 8px 0 2px; } .compo-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--surface-3); } .compo-bar span { display: block; height: 100%; }
 .compo-leg { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 5px; font-size: 10.5px; color: var(--ink-2); } .compo-leg span { display: inline-flex; align-items: center; gap: 5px; } .compo-leg i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; } .compo-leg b { font-weight: 700; }
+
+.filterbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line-strong); border-left: 4px solid var(--accent); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; }
+.filterbar label { margin: 0; font-weight: 600; color: var(--navy); }
+.filterbar select { width: auto; min-width: 240px; max-width: 100%; border: 1.5px solid var(--line-strong); background-color: #fff; }
+@media (max-width: 760px) { .filterbar select { width: 100%; } }

@@ -7,8 +7,11 @@
   <div class="actions">
     <form method="post" action="/admin/audit/verify" style="display:inline">{{ csrf(csrf_token) }}<button class="btn">Verificar integridade</button></form>
     <a class="btn" href="/admin/audit/export.csv{{ '?action=' ~ action if action }}">Baixar CSV</a>
-    <form method="get" class="actions" style="display:inline-flex"><label for="a" style="margin:0">Evento</label>
-    <select id="a" name="action" style="width:auto" data-autosubmit><option value="">Todos</option>{% for a, lbl in actions %}<option value="{{ a }}" {{ 'selected' if a == action }}>{{ lbl }}</option>{% endfor %}</select></form></div></div>
+  </div></div>
+<form method="get" class="filterbar"><label for="a">Filtrar por evento</label>
+  <select id="a" name="action" data-autosubmit><option value="">Todos os eventos</option>{% for a, lbl in actions %}<option value="{{ a }}" {{ 'selected' if a == action }}>{{ lbl }}</option>{% endfor %}</select>
+  {% if action %}<a class="btn sm" href="/admin/audit">Limpar filtro</a>{% endif %}
+  <span class="muted small">{{ rows|length }} evento(s) exibido(s)</span></form>
 {% if integrity %}{% if integrity.ok %}<div class="flash ok" role="status"><strong>Auditoria íntegra.</strong> {{ integrity.protected }} evento(s) protegidos conferidos{% if integrity.legacy %}; {{ integrity.legacy }} anterior(es) à proteção (não verificáveis){% endif %}.
   <div class="small muted" style="margin-top:4px">Selo final: <span class="mono">{{ integrity.head[:16] }}…</span> Guarde uma cópia deste código: se os últimos registros forem apagados, só ele revela.</div></div>
 {% else %}<div class="flash error" role="alert"><strong>Adulteração detectada no evento #{{ integrity.broken_id }}.</strong> {{ integrity.reason|capitalize }}. Os eventos a partir dele não são confiáveis; preserve uma cópia do banco e investigue.</div>{% endif %}{% endif %}
