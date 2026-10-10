@@ -10,7 +10,7 @@ O projeto nasceu para tirar de uma pessoa o trabalho manual de montar, a cada co
 | Na planilha | No sistema |
 |---|---|
 | Digitar à mão cada conta (valor, datas, consumo, demanda) | Foto ou PDF da conta: o sistema lê, o funcionário só **confere** e salva |
-| Montar a tabela e o gráfico de cada loja | Gerados sozinhos; a **folha impressa reproduz a planilha ao centavo** (resumo por vencimento, gráfico por referência, valor/dias/variação) |
+| Montar a tabela e o gráfico de cada loja | Gerados sozinhos; a **folha impressa reproduz a planilha ao centavo** (resumo por vencimento, gráfico por referência, valor/dias/variação) e ainda traz média por mês, % de cada fornecedor, variação do total, composição do gasto e custo por kWh |
 | Ver só uma loja de cada vez | Painel da diretoria com **todas as lojas**: ranking, variação, custo por kWh, demanda, comparação entre lojas e mapa de calor |
 | Descobrir um problema quando alguém lembra de olhar | **Alertas automáticos**: conta fora do padrão da unidade, demanda acima do contratado, nota repetida |
 | Esquecer um vencimento | Aviso no dia do vencimento e lista de pendências do mês |

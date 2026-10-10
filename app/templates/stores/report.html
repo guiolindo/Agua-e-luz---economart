@@ -29,10 +29,16 @@
   <section class="rblock">
     <h2>RESUMO MENSAL — TOTAL GERAL DA LOJA (R$)</h2>
     {% if summary.rows %}<table class="rtable">
-      <thead><tr><th>Fornecedor</th>{% for m in sum_months %}<th class="num {{ 'lastcol' if loop.index0 == last_idx }}">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
-      <tbody>{% for r in summary.rows %}<tr><td>{{ r.type.name }}</td>{% for v in r['values'] %}<td class="num {{ 'lastcol' if loop.index0 == last_idx }}">{{ v|num(2) if v is not none else '' }}</td>{% endfor %}<td class="num">{{ r.total|num(2) }}</td></tr>{% endfor %}</tbody>
-      <tfoot><tr><td>Total geral</td>{% for t in summary.totals %}<td class="num">{{ t|num(2) if t is not none else '' }}</td>{% endfor %}<td class="num">{{ summary.grand_total|num(2) }}</td></tr></tfoot>
-    </table>{% else %}<p class="muted">Sem registros no período.</p>{% endif %}
+      <thead><tr><th>Fornecedor</th>{% for m in sum_months %}<th class="num {{ 'lastcol' if loop.index0 == last_idx }}">{{ m|month_label }}</th>{% endfor %}<th class="num">Total</th><th class="num xcol">Média/mês</th><th class="num">% do total</th></tr></thead>
+      <tbody>{% for r in summary.rows %}<tr><td>{{ r.type.name }}</td>{% for v in r['values'] %}<td class="num {{ 'lastcol' if loop.index0 == last_idx }}">{{ v|num(2) if v is not none else '' }}</td>{% endfor %}<td class="num">{{ r.total|num(2) }}</td><td class="num xcol">{{ r.avg|num(2) if r.avg is not none else '' }}</td><td class="num">{{ r.pct|num(1) ~ '%' if r.pct is not none else '' }}</td></tr>{% endfor %}</tbody>
+      <tfoot><tr><td>Total geral</td>{% for t in summary.totals %}<td class="num">{{ t|num(2) if t is not none else '' }}</td>{% endfor %}<td class="num">{{ summary.grand_total|num(2) }}</td><td class="num xcol">{{ summary.avg|num(2) if summary.avg is not none else '' }}</td><td class="num">100%</td></tr>
+        <tr class="varrow"><td>Variação do total (%)</td>{% for v in summary.variations %}<td class="num">{{ variation(v) }}</td>{% endfor %}<td></td><td class="xcol"></td><td></td></tr></tfoot>
+    </table>
+    {% set pal = ['#1b4f8a', '#f47920', '#4f9a94', '#8a6aa3', '#b08a3e', '#7a8f5a', '#7f8b9b'] %}
+    <div class="compo" aria-label="Composição do gasto no período por fornecedor">
+      <div class="compo-bar">{% for r in summary.rows if r.pct %}<span style="width:{{ r.pct|round(2) }}%;background:{{ pal[loop.index0 % 7] }}" title="{{ r.type.name }}: {{ r.pct|num(1) }}%"></span>{% endfor %}</div>
+      <div class="compo-leg">{% for r in summary.rows if r.pct %}<span><i style="background:{{ pal[loop.index0 % 7] }}"></i>{{ r.type.name }} <b>{{ r.pct|num(1) }}%</b></span>{% endfor %}</div>
+    </div>{% else %}<p class="muted">Sem registros no período.</p>{% endif %}
   </section>
 
   {% for b in blocks %}
@@ -56,6 +62,7 @@
         <tr><td><strong>Valor da fatura</strong></td>{% for v in b.totals %}<td class="num">{{ v|brl if v is not none else '' }}</td>{% endfor %}</tr>
         {% if b.cons %}<tr><td>Consumo (kWh)</td>{% for v in b.cons %}<td class="num">{{ v|num(0) if v is not none else '' }}</td>{% endfor %}</tr>{% endif %}
         {% if b.dem %}<tr><td>Demanda HFP (kW)</td>{% for v in b.dem %}<td class="num">{{ v|num(0) if v is not none else '' }}</td>{% endfor %}</tr>{% endif %}
+        {% if b.rs_kwh %}<tr><td>Custo (R$/kWh)</td>{% for v in b.rs_kwh %}<td class="num">{{ v|num(3) if v is not none else '' }}</td>{% endfor %}</tr>{% endif %}
         {% if b.days %}<tr><td>Dias de consumo</td>{% for d in b.days %}<td class="num">{{ d if d is not none else '' }}</td>{% endfor %}</tr>{% endif %}
         <tr><td>Variação (%)</td>{% for v in b.variations %}<td class="num">{{ variation(v) }}</td>{% endfor %}</tr>
       </tbody>

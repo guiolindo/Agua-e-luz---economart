@@ -566,3 +566,8 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
 .sevb-alta { background: var(--bad-soft); color: var(--bad); border: 1px solid var(--bad-line); } .sevb-media { background: var(--orange-soft); color: var(--orange-dark); border: 1px solid var(--orange-line); } .sevb-baixa { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--info-line); }
 .aact { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; } .aact form { margin: 0; }
 @media (max-width: 760px) { .acard { grid-template-columns: 5px 1fr; padding-right: 12px; } .aact { grid-column: 2; justify-content: flex-start; padding-bottom: 12px; } }
+
+/* folha: extras que a planilha não tinha (média, %, variação do total, composição) */
+.sheet .rtable .xcol { border-left: 1px solid var(--line-strong); } .sheet .rtable tr.varrow td { font-size: .92em; color: var(--muted); border-top: 0; }
+.compo { margin: 8px 0 2px; } .compo-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--surface-3); } .compo-bar span { display: block; height: 100%; }
+.compo-leg { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 5px; font-size: 10.5px; color: var(--ink-2); } .compo-leg span { display: inline-flex; align-items: center; gap: 5px; } .compo-leg i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; } .compo-leg b { font-weight: 700; }

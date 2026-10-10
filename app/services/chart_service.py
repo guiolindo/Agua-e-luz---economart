@@ -347,6 +347,7 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
         out.append({
             "type": blk["type"], "rows": rows if len(rows) > 1 else [], "totals": totals, "variations": vars_,
             "latest": blk.get("latest"), "months": bm, "last_idx": len(bm) - 1,
+            "rs_kwh": ([(t / c) if t is not None and c else None for t, c in zip(totals, cons)] if any(v for v in cons) else None),
             "cons": cons if any(v is not None for v in cons) else None,
             "dem": dem if any(v is not None for v in dem) else None,
             "kpis": _sheet_kpis(bm, totals, vars_),
@@ -361,6 +362,13 @@ def report_data(db: Session, store: Store, start: date | None = None, end: date 
     summ = {**summ, "months": months[scut], "totals": summ["totals"][scut], "variations": summ["variations"][scut],
             "rows": [{**r, "values": r["values"][scut]} for r in summ["rows"]]}
     sum_months = summ["months"]
+    grand = summ["grand_total"] or Decimal(0)
+    for r in summ["rows"]:                                          # extras ao lado do Total (a planilha não tinha)
+        n_with = sum(1 for v in r["values"] if v is not None)
+        r["avg"] = (r["total"] / n_with) if n_with and r["total"] is not None else None
+        r["pct"] = (r["total"] / grand * 100) if grand and r["total"] is not None else None
+    n_tot = sum(1 for t in summ["totals"] if t is not None)
+    summ["avg"] = (grand / n_tot) if n_tot else None
     last_idx = max((i for i, t in enumerate(summ["totals"]) if t), default=len(sum_months) - 1)   # último mês COM dados
     return {"months": months, "sum_months": sum_months, "start": start, "end": end, "blocks": out, "by": by, "by_sum": by_sum, "last_idx": last_idx, "type_id": selected, "available": available, "all_types": all_types,
             "summary": summ}
