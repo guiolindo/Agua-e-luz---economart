@@ -324,6 +324,11 @@ body.drawer-open { overflow: hidden; }
 .orig { max-width: 100%; max-height: 240mm; display: block; margin: 0 auto; } .pagebreak { break-before: page; }
 @page orig { size: A4 portrait; margin: 10mm; }
 .orig-page { margin-top: 18px; }
+/* colunas de ações: os botões quebram em duas linhas em vez de alargar a tabela (rolagem lateral) */
+.actcell { white-space: normal; min-width: 190px; max-width: 300px; } .actcell .btn, .actcell form { margin: 2px 0 2px 4px; display: inline-block; vertical-align: middle; }
+@media (max-width: 1320px) { .hide-md { display: none; } } @media (max-width: 1150px) { .hide-sm { display: none; } }   /* colunas secundárias somem em telas estreitas (sem rolagem lateral) */
+table.dense th, table.dense td { padding: 8px 4px; font-size: 12px; } table.dense td:first-child, table.dense th:first-child { white-space: normal; min-width: 96px; max-width: 150px; padding-left: 12px; }   /* resumo de 12 meses: cabe no notebook sem rolar */
+table.dense th { letter-spacing: 0; font-size: 10.5px; } table.dense td.num { font-size: 11.5px; }
 .stack { display: grid; gap: 16px; align-content: start; min-width: 0; }
 @media screen { .report { overflow-x: auto; } }   /* a folha tem largura de papel: na tela rola dentro do cartão, não a página toda */
 @media print { .orig-page { page: orig; break-before: page; margin: 0; } .orig-page .orig { max-height: 275mm; } }
@@ -668,3 +673,6 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
   html.print-a3 .dirpanel .card.a3-12 { grid-column: 1 / -1 !important; } .print-a3 .storekey ul { columns: 6; }
 }
 @media print { .printmenu-list { display: none !important; } }
+/* mapa de calor (12 meses) no notebook: colunas mais justas para não rolar para o lado (depois das regras base) */
+@media (max-width: 1500px) { table.heat td, table.heat th { padding: 5px 3px; font-size: 11px; letter-spacing: 0; } table.heat th { font-size: 10px; } }
+@media (max-width: 1300px) and (min-width: 801px) { table.dense th, table.dense td { padding-left: 3px; padding-right: 3px; } table.dense td.num { font-size: 11px; } table.dense th { font-size: 10px; } :root { --side: 212px; } }

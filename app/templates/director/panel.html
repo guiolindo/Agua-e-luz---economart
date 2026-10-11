@@ -78,7 +78,7 @@
   <div class="card-head"><h2>Comparar duas lojas</h2>
     <div class="actions no-print pair-actions"><select id="pair-a" aria-label="Loja A"></select><span class="muted">×</span><select id="pair-b" aria-label="Loja B"></select></div></div>
   <div class="dchart"><canvas id="c-pair" role="img" aria-label="Comparação entre duas lojas"></canvas></div>
-  <div class="tablewrap"><table class="rtable" id="pair-table"></table></div>
+  <div class="tablewrap"><table class="rtable dense" id="pair-table"></table></div>
 </section>
 
 <section class="card flush a3-7">
@@ -96,7 +96,7 @@
 <section class="card flush pp-break a3-5">
   <div style="padding:14px 18px 0"><h2>Comparativo entre lojas</h2></div>
   {% set ns = namespace(prev=false) %}{% for r in rows %}{% if r.vs_prev_period and r.vs_prev_period.pct is not none %}{% set ns.prev = true %}{% endif %}{% endfor %}
-  <div class="tablewrap"><table>
+  <div class="tablewrap"><table class="dense">
     <thead><tr><th>Loja</th><th>Região</th><th class="num">Total no período</th><th class="num">% da empresa</th><th class="num">Média/mês</th>{% if ns.prev %}<th class="num" title="média mensal vs. média do período anterior">vs. período anterior</th>{% endif %}<th class="num">{{ focus_label }}</th><th class="num">vs. {{ prev_label }}</th><th class="num">R$/kWh</th><th class="num">Demanda usada</th></tr></thead>
     <tbody>{% for r in rows %}<tr><td><a href="/stores/{{ r.id }}"><strong>{{ r.code }}</strong></a><div class="muted small">{{ r.name }}</div></td><td>{{ r.region or '—' }}</td>
       <td class="num">{{ r.total|brl(0) }}</td><td class="num">{{ r.share|num(1) }}%</td><td class="num">{{ r.avg|brl(0) }}</td>{% if ns.prev %}<td class="num">{{ delta(r.vs_prev_period) }}</td>{% endif %}
@@ -107,7 +107,7 @@
 </section>
 
 {% if pending_items %}<section class="card flush a3-7"><div style="padding:14px 18px 0"><h2>Pendências de {{ focus_label }}</h2></div>
-  <div class="tablewrap"><table><thead><tr><th>Loja</th><th>Fornecedor</th><th>Situação</th></tr></thead><tbody>
+  <div class="tablewrap"><table class="dense"><thead><tr><th>Loja</th><th>Fornecedor</th><th>Situação</th></tr></thead><tbody>
     {% for p in pending_items %}<tr><td><a href="/stores/{{ p.store.id }}">{{ p.store.code }}</a></td><td>{{ p.type.name }}{% if p.unit %} · <span class="mono">{{ p.unit.number }}</span>{% endif %}</td><td class="muted">{{ p.text }}</td></tr>{% endfor %}
   </tbody></table></div></section>{% endif %}
 {% endif %}

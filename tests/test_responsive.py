@@ -19,3 +19,14 @@ def test_login_chart_only_hides_on_really_short_windows():
 def test_tablewrap_contains_visually_hidden_text():
     """.sr é position:absolute: sem position:relative no wrapper ele escapava do recorte e criava rolagem lateral no celular."""
     assert ".tablewrap { overflow-x: auto; position: relative; }" in CSS
+
+
+def test_wide_tables_fit_the_laptop_without_side_scroll():
+    """O funcionário reclamou de ter que arrastar a tabela de Contas para o lado (notebook 1366x768)."""
+    assert ".actcell { white-space: normal;" in CSS                                          # botões de ação quebram em 2 linhas
+    assert "@media (max-width: 1320px) { .hide-md { display: none; } }" in CSS               # colunas secundárias somem em tela estreita
+    assert "table.dense th, table.dense td" in CSS and "table.heat td, table.heat th { padding: 5px 3px" in CSS
+    unit = open("app/templates/units/detail.html", encoding="utf-8").read()
+    assert 'class="right actcell"' in unit and 'class="num hide-md">Dias' in unit
+    assert 'table class="dense"' in open("app/templates/stores/history.html", encoding="utf-8").read()
+    assert 'class="right actcell"' in open("app/templates/bills/list.html", encoding="utf-8").read()

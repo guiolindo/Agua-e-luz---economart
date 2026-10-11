@@ -54,7 +54,7 @@
         <td class="num"><strong>{{ r.value|brl }}</strong></td>
         <td class="nowrap">{{ r.due_date|date_br if r.due_date else '—' }}</td>
         <td><span class="badge{% if r.origin == 'bill' %} ok{% endif %}">{{ 'Foto/IA' if r.origin == 'bill' else 'Manual' }}</span></td>
-        <td class="right nowrap">
+        <td class="right actcell">
           {% if r.doc_id %}<a class="btn sm" href="/documents/{{ r.doc_id }}" target="_blank" rel="noopener" title="Abre o PDF/foto original em uma aba nova">PDF</a>{% endif %}
           {% if r.bill_id %}<a class="btn sm primary" href="/stores/{{ r.store_id }}/report?bill={{ r.bill_id }}&doc=1" target="_blank" rel="noopener" title="Folha da loja + conta original, para o diretor assinar">Imprimir para assinatura</a>
           <a class="btn sm" href="/bills/{{ r.bill_id }}/print" target="_blank" rel="noopener" title="Dados e gráficos só desta conta (não é a folha da loja)">Relatório da conta</a>{% endif %}
