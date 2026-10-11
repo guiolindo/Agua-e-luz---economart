@@ -217,7 +217,7 @@ def store_report(request: Request, store_id: int, start: str | None = None, end:
             if sign_bill.document.content_type == "application/pdf":
                 sizes = pdf_pages.page_sizes(raw)
                 doc_pages = len(sizes)
-                orig_pages = [{"src": f"/documents/{sign_bill.document_id}/pages/{n}.png", "land": w > h, "n": n}
+                orig_pages = [{"src": f"/documents/{sign_bill.document_id}/pages/{n}.png?hq=1", "land": w > h, "n": n}
                               for n, (w, h) in enumerate(sizes, 1)]
             else:                                                       # foto: a página sai na orientação da própria foto
                 size = pdf_pages.image_display_size(raw)

@@ -130,3 +130,24 @@ def test_image_orientation_follows_exif_like_the_browser():
 def test_original_images_are_never_stretched_in_print_css():
     css = open("app/static/css/app.css", encoding="utf-8").read()
     assert "width: auto; height: auto; object-fit: contain" in css and "max-height: 278mm" in css and "max-height: 190mm" in css
+
+
+def test_print_pages_of_a_pdf_use_the_sharper_render():
+    """115 dpi esticado até A4 saía borrado: a impressão pede a página em ~190 dpi (hq=1)."""
+    import io
+    import struct
+
+    from PIL import Image
+
+    from app.services import pdf_pages
+
+    buf = io.BytesIO()
+    Image.new("RGB", (600, 900), "white").save(buf, "PDF", resolution=72)
+
+    def width(png):
+        return struct.unpack(">I", png[16:20])[0]
+
+    normal = pdf_pages.render_page(buf.getvalue(), 1)
+    sharp = pdf_pages.render_page(buf.getvalue(), 1, pdf_pages.PRINT_SCALE)
+    assert width(sharp) > width(normal) * 1.5
+    assert "hq=1" in open("app/routes/stores.py", encoding="utf-8").read()

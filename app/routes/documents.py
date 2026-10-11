@@ -51,7 +51,7 @@ def document(doc_id: int, user: User = Depends(current_user), db: Session = Depe
 
 
 @router.get("/documents/{doc_id}/pages/{number}.png")
-def document_page(doc_id: int, number: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+def document_page(doc_id: int, number: int, hq: int = 0, user: User = Depends(current_user), db: Session = Depends(get_db)):
     """Página `number` de um PDF original como PNG (usada na impressão da conta)."""
     doc = db.get(Document, doc_id)
     if not doc or doc.content_type != "application/pdf":
@@ -64,7 +64,7 @@ def document_page(doc_id: int, number: int, user: User = Depends(current_user), 
         content = doc.plain()
     except CryptoError:
         raise HTTPException(500, "Não foi possível abrir o documento (erro de chave de criptografia).")
-    png = pdf_pages.render_page(content, number)
+    png = pdf_pages.render_page(content, number, pdf_pages.PRINT_SCALE if hq else pdf_pages.SCALE)
     if png is None:
         raise HTTPException(404, "Página não encontrada.")
     return Response(png, media_type="image/png", headers={

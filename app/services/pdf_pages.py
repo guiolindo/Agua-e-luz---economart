@@ -5,7 +5,8 @@ import threading
 import pypdfium2 as pdfium
 
 MAX_PAGES = 6          # uma conta tem 1–2 páginas; mais que isso é arquivo errado, não vale imprimir
-SCALE = 1.6            # ~115 dpi: legível no papel sem gerar imagens pesadas
+SCALE = 1.6            # ~115 dpi: legível na tela (conferência) sem gerar imagens pesadas
+PRINT_SCALE = 2.6      # ~190 dpi: para o papel (impressão para assinatura); 115 dpi esticado em A4 fica borrado
 _lock = threading.Lock()   # o pdfium não é thread-safe e o FastAPI roda rotas síncronas em threads
 
 
@@ -58,7 +59,7 @@ def image_display_size(data: bytes) -> tuple[int, int] | None:
         return None
 
 
-def render_page(data: bytes, number: int) -> bytes | None:
+def render_page(data: bytes, number: int, scale: float = SCALE) -> bytes | None:
     """PNG da página `number` (1-based), ou None se não existir/ilegível."""
     if not 1 <= number <= MAX_PAGES:
         return None
@@ -68,7 +69,7 @@ def render_page(data: bytes, number: int) -> bytes | None:
             try:
                 if number > len(pdf):
                     return None
-                image = pdf[number - 1].render(scale=SCALE).to_pil().convert("RGB")
+                image = pdf[number - 1].render(scale=scale).to_pil().convert("RGB")
             finally:
                 pdf.close()
         out = io.BytesIO()
