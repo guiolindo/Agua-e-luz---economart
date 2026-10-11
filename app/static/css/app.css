@@ -322,6 +322,9 @@ body.drawer-open { overflow: hidden; }
 .rchart.sm { height: 190px; } .kpis { margin-bottom: 14px; } .bill-print .kpi .value { font-size: 18px; }
 .rtable.kv th { background: #fff; color: var(--muted); font-weight: 600; width: 13%; } .rtable.kv td { width: 20%; }
 .orig { max-width: 100%; max-height: 240mm; display: block; margin: 0 auto; } .pagebreak { break-before: page; }
+@page orig { size: A4 portrait; margin: 10mm; }
+.orig-page { margin-top: 18px; }
+@media print { .orig-page { page: orig; break-before: page; margin: 0; } .orig-page .orig { max-height: 275mm; } }
 @media print { .bill-print .kpi { border-color: var(--line-strong); } .bill-print .cols-2 { grid-template-columns: 1fr 1fr; } .bill-print .cols-4 { grid-template-columns: repeat(4, 1fr); } }
 
 /* A folha tem, na tela, a largura útil do papel: o gráfico é desenhado já no tamanho final (sem depender de resize ao imprimir). */

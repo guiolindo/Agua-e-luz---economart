@@ -99,10 +99,10 @@ async def manual_save(request: Request, user: User = Depends(writer_required), d
         if dups and action not in ("replace", "new"):
             return rerender(dups, 409)
         target = existing or (dups[0] if dups and action == "replace" else None)
-        save_bill(db, unit, rtype.id, values, user.id, source="manual" if not target else target.source, replace=target)
+        saved = save_bill(db, unit, rtype.id, values, user.id, source="manual" if not target else target.source, replace=target)
         db.commit()
         flash(request, "Conta salva.")
-        return RedirectResponse(f"/stores/{unit.store_id}?highlight={unit.id}&type_id={rtype.id}", status_code=303)
+        return RedirectResponse(f"/stores/{unit.store_id}?highlight={unit.id}&type_id={rtype.id}&bill={saved.id}", status_code=303)
 
     # tipos manuais
     reference = parse_reference(posted.get("reference"))

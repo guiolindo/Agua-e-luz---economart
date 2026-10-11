@@ -4,7 +4,8 @@
 {% block content %}
 <style>@page { size: A4 portrait; margin: 10mm; }</style>
 <div class="page-head no-print">
-  <div><div class="crumbs"><a href="/units/{{ unit.id }}">{{ unit.number }}</a> /</div><h1>Imprimir conta</h1></div>
+  <div><div class="crumbs"><a href="/units/{{ unit.id }}">{{ unit.number }}</a> /</div><h1>Relatório da conta</h1>
+    <div class="muted">Dados e gráficos só desta conta. Para o diretor assinar, use <a href="/stores/{{ store.id }}/report?bill={{ bill.id }}&doc=1"><strong>Imprimir para assinatura</strong></a> (folha da loja + conta original).</div></div>
   <form method="get" class="actions">
     <label for="b" style="margin:0">Conta</label>
     <select id="b" style="width:auto" data-bill-switch>

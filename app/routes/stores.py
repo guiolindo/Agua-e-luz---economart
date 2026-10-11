@@ -72,7 +72,7 @@ def store_create(request: Request, code: str = Form(...), name: str = Form(""), 
 @router.get("/stores/{store_id}")
 def store_history(request: Request, store_id: int, type_id: int | None = None, indicator: str | None = None,
                   view: str = "units", start: str | None = None, end: str | None = None,
-                  highlight: int | None = None, unit_id: int | None = None, by: str = "reference",
+                  highlight: int | None = None, unit_id: int | None = None, by: str = "reference", bill: int | None = None,
                   user: User = Depends(current_user), db: Session = Depends(get_db)):
     store = _store_or_404(db, store_id)
     by = "due" if by == "due" else "reference"
@@ -87,7 +87,7 @@ def store_history(request: Request, store_id: int, type_id: int | None = None, i
         profile = executive_service.store_profile(executive_service.build(db, start_d, end_d, by), store.id)
     return render(request, "stores/history.html", user=user, profile=profile, store=store, types=types, chosen=chosen,
                   view=view if view in ("units", "types") else "units", indicator=indicator, start=start_d, end=end_d,
-                  highlight=highlight, unit_id=unit_id, summary=summary, by=by)
+                  highlight=highlight, unit_id=unit_id, summary=summary, by=by, bill=bill)
 
 
 @router.get("/stores/{store_id}/settings")
@@ -194,11 +194,29 @@ def unit_page(request: Request, unit_id: int, indicator: str | None = None, user
 
 @router.get("/stores/{store_id}/report")
 def store_report(request: Request, store_id: int, start: str | None = None, end: str | None = None,
-                 by: str = "sheet", type_id: int | None = None, all: int = 0, user: User = Depends(current_user), db: Session = Depends(get_db)):
+                 by: str = "sheet", type_id: int | None = None, all: int = 0, bill: int | None = None, doc: int = 1,
+                 user: User = Depends(current_user), db: Session = Depends(get_db)):
     from datetime import datetime, timezone
+
+    from app.models import EnergyBill
 
     store = _store_or_404(db, store_id)
     by = by if by in ("due", "reference", "sheet") else "sheet"      # padrão: como na planilha impressa
+    # "Imprimir para assinatura": a folha da loja + a conta original que a gerou, na mesma impressão
+    sign_bill = db.get(EnergyBill, bill) if bill else None
+    if sign_bill is not None and sign_bill.unit.store_id != store.id:
+        sign_bill = None
+    if sign_bill is not None and type_id is None:
+        type_id = sign_bill.record_type_id                              # o bloco do imóvel é o do fornecedor da conta
+    include_doc, doc_pages = False, 0
+    if sign_bill is not None and doc and sign_bill.document and sign_bill.document.available:
+        include_doc = True
+        if sign_bill.document.content_type == "application/pdf":
+            from app.services import pdf_pages
+            try:
+                doc_pages = pdf_pages.page_count(sign_bill.document.plain())
+            except Exception:                                           # PDF ilegível: a folha imprime e o original abre por link
+                doc_pages = 0
     data = chart_service.report_data(db, store, parse_reference(start), parse_reference(end), by, type_id, bool(all))
     return render(request, "stores/report.html", user=user, store=store, generated=datetime.now(timezone.utc),
-                  **{**data, "by": by})
+                  sign_bill=sign_bill, include_doc=include_doc, doc_pages=doc_pages, **{**data, "by": by})

@@ -238,4 +238,4 @@ async def confirm(request: Request, import_id: int, user: User = Depends(writer_
         return rerender()
 
     flash(request, f"Conta {values['reference'].strftime('%m/%Y')} da unidade {unit.number} salva em {unit.store.code}.")
-    return RedirectResponse(f"/stores/{unit.store_id}?highlight={unit.id}&type_id={rtype.id}", status_code=303)
+    return RedirectResponse(f"/stores/{unit.store_id}?highlight={unit.id}&type_id={rtype.id}&bill={bill.id}", status_code=303)
