@@ -157,10 +157,12 @@ def test_sign_page_has_two_separate_print_jobs(client, db, png):
     """Cada impressão com uma orientação só: 1) a folha da loja; 2) a conta original sozinha (foto ou PDF do jeito que é)."""
     _, bill = _saved_bill(client, db, _png(600, 900))
     html = client.get(f"/stores/{bill.unit.store_id}/report?bill={bill.id}&doc=1").text
-    assert "data-print-sheet" in html and "1 · Imprimir a folha da loja" in html and "2 · Imprimir a conta original" in html
-    assert f'href="/impressao/original/{bill.document_id}"' in html and "Tudo junto" in html
+    assert "data-print-chain" in html and "Imprimir tudo: folha e depois a conta" in html and "data-print-sheet" in html
+    assert f'data-next="/impressao/original/{bill.document_id}"' in html and f'href="/impressao/original/{bill.document_id}"' in html
+    assert "Tudo no mesmo trabalho" in html
     assert "html.sheet-only .orig-page { display: none" in open("app/static/css/app.css", encoding="utf-8").read()
-    assert "data-print-sheet" in open("app/static/js/app.js", encoding="utf-8").read()
+    js = open("app/static/js/app.js", encoding="utf-8").read()
+    assert "data-print-sheet" in js and "data-print-chain" in js and "afterprint" in js and "window.location.href = next" in js
 
 
 def test_original_photo_print_page_matches_the_photo_orientation(client, db):
@@ -181,3 +183,26 @@ def test_original_print_page_needs_login_and_missing_is_404(client):
     assert client.get("/impressao/original/99999").status_code == 404
     r = _new_client().get("/impressao/original/1")
     assert "/login" in str(r.url)
+
+
+def test_original_pdf_print_page_uses_the_pages_in_the_orientation_of_the_first(client, db):
+    """2º passo do "Imprimir tudo" para PDF: páginas em ~190 dpi, um trabalho só, na orientação da 1ª página."""
+    import io
+
+    from PIL import Image
+
+    from app.models import Document
+
+    buf = io.BytesIO()
+    a, b = Image.new("RGB", (600, 900), "white"), Image.new("RGB", (600, 900), "white")
+    a.save(buf, "PDF", save_all=True, append_images=[b], resolution=100)
+    _make_store(client)
+    r = client.post("/import", {"store_id": ""}, files={"file": ("conta.pdf", buf.getvalue(), "application/pdf")})
+    assert r.status_code == 303
+    job = int(r.headers["location"].rsplit("/", 1)[1])
+    html = client.get(f"/import/{job}/review").text
+    client.post(f"/import/{job}/confirm", {**_form_from_review(html), "unit_mode": "matched"})
+    doc = db.query(Document).order_by(Document.id.desc()).first()
+    r = client.get(f"/impressao/original/{doc.id}")
+    assert r.status_code == 200 and "size: A4 portrait" in r.text
+    assert r.text.count(f"/documents/{doc.id}/pages/") == 2 and "hq=1" in r.text

@@ -226,8 +226,7 @@ def store_report(request: Request, store_id: int, start: str | None = None, end:
             doc_pages, orig_pages = 0, []
     if sign_bill is not None and sign_bill.document and sign_bill.document.available:
         # a conta original em OUTRO trabalho de impressão: PDF abre no leitor do navegador, foto na página própria
-        orig_href = (f"/documents/{sign_bill.document_id}" if sign_bill.document.content_type == "application/pdf"
-                     else f"/impressao/original/{sign_bill.document_id}")
+        orig_href = f"/impressao/original/{sign_bill.document_id}"
     data = chart_service.report_data(db, store, parse_reference(start), parse_reference(end), by, type_id, bool(all))
     return render(request, "stores/report.html", user=user, store=store, generated=datetime.now(timezone.utc),
                   sign_bill=sign_bill, include_doc=include_doc, doc_pages=doc_pages, orig_pages=orig_pages, orig_href=orig_href,

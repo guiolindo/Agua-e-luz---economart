@@ -53,22 +53,32 @@ def document(doc_id: int, user: User = Depends(current_user), db: Session = Depe
 
 @router.get("/impressao/original/{doc_id}")
 def print_original(request: Request, doc_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """Foto da conta original sozinha numa página da MESMA orientação dela, pronta para imprimir (um trabalho de impressão
-    só, sem misturar com a folha da loja). PDF não passa por aqui: abre direto no leitor do navegador."""
+    """A conta original SOZINHA, num trabalho de impressão de uma orientação só (a da 1ª página), pronta para imprimir:
+    foto = a própria foto; PDF = as páginas em ~190 dpi. Cada página mantém a proporção (nunca estica). Serve de 2º passo
+    do "Imprimir tudo": impressoras e drivers aplicam UMA orientação por trabalho, então folha deitada e conta em pé
+    vão em trabalhos separados, um logo depois do outro."""
     doc = db.get(Document, doc_id)
     if not doc:
         raise HTTPException(404, "Documento não encontrado.")
-    if doc.content_type == "application/pdf":
-        return RedirectResponse(f"/documents/{doc_id}", status_code=303)
     if not _visible(doc_id, user, db):
         raise HTTPException(403, "Documento não disponível para o seu perfil.")
     if doc.data is None:
         raise HTTPException(410, "O arquivo original expirou e foi removido.")
     try:
-        size = pdf_pages.image_display_size(doc.plain())
+        raw = doc.plain()
     except CryptoError:
         raise HTTPException(500, "Não foi possível abrir o documento (erro de chave de criptografia).")
-    return render(request, "documents/print_original.html", user=user, doc=doc, land=bool(size and size[0] > size[1]))
+    if doc.content_type == "application/pdf":
+        sizes = pdf_pages.page_sizes(raw)
+        if not sizes:
+            return RedirectResponse(f"/documents/{doc_id}", status_code=303)       # PDF ilegível: o leitor do navegador tenta
+        land = sizes[0][0] > sizes[0][1]
+        pages = [f"/documents/{doc_id}/pages/{n}.png?hq=1" for n in range(1, len(sizes) + 1)]
+    else:
+        size = pdf_pages.image_display_size(raw)
+        land = bool(size and size[0] > size[1])
+        pages = [f"/documents/{doc_id}"]
+    return render(request, "documents/print_original.html", user=user, doc=doc, land=land, pages=pages)
 
 
 @router.get("/documents/{doc_id}/pages/{number}.png")

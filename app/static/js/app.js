@@ -1,5 +1,8 @@
 // Comportamentos globais sem JS inline (compatível com CSP sem 'unsafe-inline' em script).
 document.addEventListener('click', (e) => {
+  const chain = e.target.closest('[data-print-chain]');       // folha da loja e, ao fechar a impressão, a conta original (2º trabalho)
+  if (chain) { e.preventDefault(); const next = chain.dataset.next; document.documentElement.classList.add('sheet-only');
+    window.addEventListener('afterprint', () => { window.location.href = next; }, { once: true }); window.print(); return; }
   const sheet = e.target.closest('[data-print-sheet]');       // só a folha da loja (a conta original vai em outro trabalho de impressão)
   if (sheet) { e.preventDefault(); document.documentElement.classList.add('sheet-only'); window.print(); return; }
   const print = e.target.closest('[data-print]');
