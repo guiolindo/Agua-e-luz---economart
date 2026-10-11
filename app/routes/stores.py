@@ -208,15 +208,23 @@ def store_report(request: Request, store_id: int, start: str | None = None, end:
         sign_bill = None
     if sign_bill is not None and type_id is None:
         type_id = sign_bill.record_type_id                              # o bloco do imóvel é o do fornecedor da conta
-    include_doc, doc_pages = False, 0
+    include_doc, doc_pages, orig_pages = False, 0, []
     if sign_bill is not None and doc and sign_bill.document and sign_bill.document.available:
         include_doc = True
-        if sign_bill.document.content_type == "application/pdf":
-            from app.services import pdf_pages
-            try:
-                doc_pages = pdf_pages.page_count(sign_bill.document.plain())
-            except Exception:                                           # PDF ilegível: a folha imprime e o original abre por link
-                doc_pages = 0
+        from app.services import pdf_pages
+        try:
+            raw = sign_bill.document.plain()
+            if sign_bill.document.content_type == "application/pdf":
+                sizes = pdf_pages.page_sizes(raw)
+                doc_pages = len(sizes)
+                orig_pages = [{"src": f"/documents/{sign_bill.document_id}/pages/{n}.png", "land": w > h, "n": n}
+                              for n, (w, h) in enumerate(sizes, 1)]
+            else:                                                       # foto: a página sai na orientação da própria foto
+                size = pdf_pages.image_display_size(raw)
+                orig_pages = [{"src": f"/documents/{sign_bill.document_id}", "land": bool(size and size[0] > size[1]), "n": 1}]
+        except Exception:                                               # arquivo ilegível: a folha imprime e o original abre por link
+            doc_pages, orig_pages = 0, []
     data = chart_service.report_data(db, store, parse_reference(start), parse_reference(end), by, type_id, bool(all))
     return render(request, "stores/report.html", user=user, store=store, generated=datetime.now(timezone.utc),
-                  sign_bill=sign_bill, include_doc=include_doc, doc_pages=doc_pages, **{**data, "by": by})
+                  sign_bill=sign_bill, include_doc=include_doc, doc_pages=doc_pages, orig_pages=orig_pages,
+                  **{**data, "by": by})

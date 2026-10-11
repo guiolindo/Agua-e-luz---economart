@@ -31,6 +31,33 @@ def true_page_count(data: bytes) -> int:
         return 0
 
 
+def page_sizes(data: bytes) -> list[tuple[float, float]]:
+    """(largura, altura) de cada página impressa, já considerando a rotação da página (vazio se ilegível)."""
+    try:
+        with _lock:
+            pdf = pdfium.PdfDocument(data)
+            try:
+                return [tuple(pdf[i].get_size()) for i in range(min(len(pdf), MAX_PAGES))]
+            finally:
+                pdf.close()
+    except Exception:
+        return []
+
+
+def image_display_size(data: bytes) -> tuple[int, int] | None:
+    """Tamanho com que o navegador MOSTRA a foto (a orientação EXIF de foto de celular troca largura e altura)."""
+    try:
+        from PIL import Image
+
+        with Image.open(io.BytesIO(data)) as im:
+            w, h = im.size
+            if im.getexif().get(0x0112) in (5, 6, 7, 8):
+                w, h = h, w
+            return w, h
+    except Exception:
+        return None
+
+
 def render_page(data: bytes, number: int) -> bytes | None:
     """PNG da página `number` (1-based), ou None se não existir/ilegível."""
     if not 1 <= number <= MAX_PAGES:

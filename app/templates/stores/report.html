@@ -75,11 +75,9 @@
     <span>Variação = mês em relação ao mês anterior (↑ gastou mais, ↓ gastou menos) · barra escura = último mês</span></footer>
 </div>
 {% if sign_bill and include_doc %}
-  {# a conta original sai DEPOIS da folha, cada página em retrato (a folha da loja é paisagem) #}
-  {% if sign_bill.document.content_type == 'application/pdf' and doc_pages %}
-  {% for n in range(1, doc_pages + 1) %}<section class="orig-page" aria-label="Conta original, página {{ n }}"><img class="orig" src="/documents/{{ sign_bill.document_id }}/pages/{{ n }}.png" alt="Página {{ n }} da conta original"></section>{% endfor %}
-  {% elif sign_bill.document.content_type == 'application/pdf' %}<p class="muted no-print">Não foi possível preparar o PDF original para a impressão. <a href="/documents/{{ sign_bill.document_id }}" target="_blank" rel="noopener">Abra-o</a> e imprima separado.</p>
-  {% else %}<section class="orig-page" aria-label="Conta original"><img class="orig" src="/documents/{{ sign_bill.document_id }}" alt="Foto da conta original"></section>{% endif %}
+  {# a conta original sai DEPOIS da folha, cada página na proporção e na orientação originais (retrato ou paisagem) #}
+  {% for pg in orig_pages %}<section class="orig-page {{ 'l' if pg.land else 'p' }}" aria-label="Conta original, página {{ pg.n }}"><img class="orig" src="{{ pg.src }}" alt="Página {{ pg.n }} da conta original"></section>{% endfor %}
+  {% if not orig_pages %}<p class="muted no-print">Não foi possível preparar o arquivo original para a impressão. <a href="/documents/{{ sign_bill.document_id }}" target="_blank" rel="noopener">Abra-o</a> e imprima separado.</p>{% endif %}
 {% endif %}
 {% endblock %}
 {% block scripts %}

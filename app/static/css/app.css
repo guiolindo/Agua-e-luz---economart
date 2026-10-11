@@ -322,8 +322,9 @@ body.drawer-open { overflow: hidden; }
 .rchart.sm { height: 190px; } .kpis { margin-bottom: 14px; } .bill-print .kpi .value { font-size: 18px; }
 .rtable.kv th { background: #fff; color: var(--muted); font-weight: 600; width: 13%; } .rtable.kv td { width: 20%; }
 .orig { max-width: 100%; max-height: 240mm; display: block; margin: 0 auto; } .pagebreak { break-before: page; }
-@page orig { size: A4 portrait; margin: 10mm; }
-.orig-page { margin-top: 18px; }
+@page orig-p { size: A4 portrait; margin: 8mm; }
+@page orig-l { size: A4 landscape; margin: 8mm; }
+.orig-page { margin-top: 18px; } .orig-page .orig { max-width: 100%; height: auto; }
 /* colunas de ações: os botões quebram em duas linhas em vez de alargar a tabela (rolagem lateral) */
 .actcell { white-space: normal; min-width: 190px; max-width: 300px; } .actcell .btn, .actcell form { margin: 2px 0 2px 4px; display: inline-block; vertical-align: middle; }
 @media (max-width: 1320px) { .hide-md { display: none; } } @media (max-width: 1150px) { .hide-sm { display: none; } }   /* colunas secundárias somem em telas estreitas (sem rolagem lateral) */
@@ -331,7 +332,10 @@ table.dense th, table.dense td { padding: 8px 4px; font-size: 12px; } table.dens
 table.dense th { letter-spacing: 0; font-size: 10.5px; } table.dense td.num { font-size: 11.5px; }
 .stack { display: grid; gap: 16px; align-content: start; min-width: 0; }
 @media screen { .report { overflow-x: auto; } }   /* a folha tem largura de papel: na tela rola dentro do cartão, não a página toda */
-@media print { .orig-page { page: orig; break-before: page; margin: 0; } .orig-page .orig { max-height: 275mm; } }
+/* cada página da conta original sai na própria orientação, SEM esticar: largura e altura "auto" + limites em mm (a proporção da imagem é preservada) */
+@media print { .orig-page { break-before: page; margin: 0; } .orig-page.p { page: orig-p; } .orig-page.l { page: orig-l; }
+  .orig-page .orig { display: block; margin: 0 auto; width: auto; height: auto; object-fit: contain; }
+  .orig-page.p .orig { max-width: 192mm; max-height: 278mm; } .orig-page.l .orig { max-width: 279mm; max-height: 190mm; } }
 @media print { .bill-print .kpi { border-color: var(--line-strong); } .bill-print .cols-2 { grid-template-columns: 1fr 1fr; } .bill-print .cols-4 { grid-template-columns: repeat(4, 1fr); } }
 
 /* A folha tem, na tela, a largura útil do papel: o gráfico é desenhado já no tamanho final (sem depender de resize ao imprimir). */
