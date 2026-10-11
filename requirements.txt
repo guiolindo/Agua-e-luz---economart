@@ -14,3 +14,4 @@ tzdata>=2024.1
 segno>=1.6
 alembic>=1.13
 openpyxl>=3.1
+python-pptx>=1.0

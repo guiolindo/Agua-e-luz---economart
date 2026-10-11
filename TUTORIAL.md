@@ -204,7 +204,7 @@ Como ler com cuidado:
 
 **Relatório da conta (1 página A4 retrato):** **Unidade → Contas → Relatório da conta** (ao lado da conta desejada). Dá para trocar de mês na própria tela e marcar **"Incluir foto/PDF original"** (vai numa segunda página, se o arquivo ainda não expirou).
 
-**Painel da diretoria:** botão **Imprimir painel**.
+**Painel da diretoria:** botão **Imprimir painel** (A4 em várias páginas ou A3 numa folha). Para levar à reunião: **Baixar planilha** (Excel) e **Baixar apresentação** (PowerPoint com gráficos editáveis e um slide por loja).
 
 Na janela de impressão do navegador:
 

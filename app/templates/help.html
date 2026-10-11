@@ -19,6 +19,7 @@
   <p>Você <strong>acompanha</strong> os custos de energia de todas as lojas. Não precisa digitar nada: tudo já vem pronto no <a href="/diretoria">Painel da diretoria</a>.</p>
   <ul><li>Ver qual loja gasta mais e o que mudou desde o mês passado — <a href="#dir-painel">como ler o painel</a>.</li>
     <li>Comparar duas lojas lado a lado — <a href="#dir-comparar">como fazer</a>.</li>
+    <li>Imprimir o painel, baixar a planilha ou levar para uma reunião em PowerPoint — <a href="#dir-exportar">como fazer</a>.</li>
     <li>Procurar ou imprimir uma conta específica — <a href="#achar">como fazer</a>.</li></ul>
   {% elif user.can_write %}
   <h2>O que o funcionário faz</h2>
@@ -47,6 +48,7 @@
       <li><strong>Confira</strong> os campos ao lado da imagem. A leitura é feita por inteligência artificial e pode errar; o que estiver marcado como “conferir” merece atenção. Pode corrigir qualquer campo.</li>
       <li>Clique em <strong>Confirmar e salvar</strong>. O gráfico da loja já aparece atualizado.</li>
     </ol>
+    <p class="hint"><strong>Limites do envio:</strong> JPG, PNG, WEBP ou PDF, até <strong>12 MB</strong> e até <strong>10 páginas</strong> por PDF; envie só a(s) página(s) da conta. Um arquivo por vez (você pode abrir outra aba e enviar a próxima enquanto a anterior é lida).</p>
     <p class="hint">Se o sistema avisar que a conta <strong>já existe</strong>, ele pergunta se você quer substituir ou salvar como nova. Na dúvida, escolha substituir — assim não duplica.</p></section>
 
   <section class="card" id="func-manual"><h2>Lançar à mão (sem foto)</h2>
@@ -82,6 +84,14 @@
   <section class="card" id="dir-comparar"><h2>Comparar duas lojas</h2>
     <p>Mais abaixo no painel, em <strong>Comparar duas lojas</strong>, escolha as duas lojas e veja mês a mês a diferença de valor e de consumo.</p>
     <p class="hint">O painel só <strong>consulta</strong>: você não precisa (nem consegue) alterar contas por aqui. Se algo parecer errado, avise o funcionário.</p></section>
+  <section class="card" id="dir-exportar"><h2>Imprimir, baixar planilha e levar para a reunião</h2>
+    <p>Tudo sai do <strong>Painel da diretoria</strong>, com o mesmo período, região e fornecedor que estiverem na tela.</p>
+    <ul>
+      <li><strong>Imprimir painel</strong>: escolha <strong>A4 · várias páginas</strong> (uma ideia por página) ou <strong>A3 · uma folha só</strong> (o painel inteiro na horizontal). Se a impressora ignorar a orientação, escolha “Paisagem” e o papel A3 na janela de impressão.</li>
+      <li><strong>Baixar planilha</strong>: arquivo do Excel (.xlsx) já formatado, com resumo, lojas, mês a mês, fornecedores e pendências.</li>
+      <li><strong>Baixar apresentação</strong>: arquivo do PowerPoint (.pptx) com capa, destaques, gráficos, ranking, altas e quedas, custo por kWh, pendências e <strong>um slide por loja</strong> com a evolução mensal. Os gráficos são do próprio PowerPoint (clique com o botão direito &gt; Editar dados) e os slides já têm transição suave e entrada em cascata dos elementos. Abra no PowerPoint e use o modo de apresentação (F5).</li>
+    </ul>
+    <p class="hint">Dica: a fonte dos títulos é a Segoe UI, que já vem no Windows; em outros computadores o PowerPoint troca por uma parecida.</p></section>
   {% endif %}
 
   {# ======================= ADMINISTRADOR ======================= #}
@@ -141,6 +151,12 @@
       <li><strong>Linha</strong> = quanto subiu ou desceu em relação ao mês anterior (%). Acima de zero, subiu; abaixo, desceu.</li>
       <li>Passe o dedo (ou o mouse) numa barra ou ponto para ver o valor exato.</li>
       <li>Clique no nome na legenda para esconder ou mostrar uma série.</li></ul></section>
+
+  <section class="card" id="apresentacao-sistema"><h2>Apresentação do sistema e uso no celular</h2>
+    <ul>
+      <li>O botão <strong>Apresentação do sistema</strong>, no rodapé do menu, abre os slides que explicam o sistema (setas do teclado, <strong>R</strong> para a versão resumida, <strong>P</strong> para passar sozinho, <strong>F</strong> para tela cheia). Ele fica disponível por tempo limitado.</li>
+      <li>O sistema se adapta ao <strong>celular</strong>: o menu vira uma barra embaixo, com o botão de importar sempre à mão. As tabelas largas rolam para o lado.</li>
+    </ul></section>
 
   <section class="card" id="faq"><h2>Dúvidas comuns</h2>
     <details><summary>Esqueci minha senha</summary><p>Peça ao administrador para <strong>Redefinir senha</strong>. Ele te passa uma senha provisória de 4 dígitos; você cria a sua no primeiro acesso.</p></details>

@@ -55,6 +55,29 @@ def executive_csv(start: str | None = None, end: str | None = None, by: str = "r
                     headers={"Content-Disposition": 'attachment; filename="comparativo-lojas-economart.csv"'})
 
 
+@router.get("/diretoria/export.pptx")
+def executive_pptx(start: str | None = None, end: str | None = None, by: str = "reference", region: str | None = None,
+                   types: list[int] | None = None, user: User = Depends(director_required), db: Session = Depends(get_db)):
+    """Apresentação PowerPoint do painel (capa, destaques, gráficos nativos, um slide por loja), mesmos filtros da tela."""
+    from fastapi.responses import Response
+
+    from app.services import audit_service, dashboard_service, pptx_service
+    from app.services.calculation_service import add_months
+
+    data = executive_service.build(db, parse_reference(start), parse_reference(end), "due" if by == "due" else "reference",
+                                   types or None, region or None)
+    pending = []
+    if data["months"]:
+        month = data["months"][data["focus_idx"]]
+        pending = dashboard_service.pending_items(db, month, add_months(month, -1))
+    filters = ("por vencimento" if by == "due" else "por mês de referência") + (f" · região {region}" if region else "")
+    body = pptx_service.executive_deck(data, executive_service.insights(data), pending, filters, user.username)
+    audit_service.log(db, user.id, "export", "bills", None, {"painel": "diretoria", "formato": "pptx", "lojas": len(data["rows"])})
+    db.commit()
+    return Response(body, media_type=pptx_service.PPTX_MIME,
+                    headers={"Content-Disposition": 'attachment; filename="painel-diretoria-economart.pptx"'})
+
+
 @router.get("/diretoria/export.xlsx")
 def executive_xlsx(start: str | None = None, end: str | None = None, by: str = "reference", region: str | None = None,
                    types: list[int] | None = None, user: User = Depends(director_required), db: Session = Depends(get_db)):

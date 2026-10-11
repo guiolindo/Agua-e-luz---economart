@@ -14,6 +14,7 @@
 {% call hero(greeting_now() ~ ", " ~ user.username, "Painel da diretoria", "Custos de energia e despesas relacionadas · " ~ (start|month_label) ~ " a " ~ (end|month_label)) %}
   <a class="btn on-dark" href="/alertas">Alertas{% if alerts_open and alerts_open.count %} · {{ alerts_open.count }}{% endif %}</a>
   <a class="btn on-dark" href="/diretoria/export.xlsx?{{ request.url.query }}" title="Baixa a planilha formatada: resumo, lojas, mês a mês, fornecedores e pendências">Baixar planilha</a>
+  <a class="btn on-dark" href="/diretoria/export.pptx?{{ request.url.query }}" title="Baixa uma apresentação PowerPoint com destaques, gráficos editáveis e um slide por loja">Baixar apresentação</a>
   <span class="printmenu">
     <button class="btn cta" type="button" data-print-menu aria-haspopup="true" aria-expanded="false">Imprimir painel ▾</button>
     <span class="printmenu-list" role="menu" hidden>

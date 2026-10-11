@@ -211,6 +211,7 @@ Acesso: **Diretoria** (`director`, `admin`).
 |---|---|---|---|
 | GET | `/diretoria` | `start`, `end` (`AAAA-MM`), `by` (`reference` ou `due`; outro valor vira `reference`), `region`, `types` (repetível, ids inteiros) | `200` painel com KPIs, destaques e gráficos |
 | GET | `/diretoria/export.xlsx` | os mesmos filtros | `200` planilha XLSX formatada (abas Resumo, Lojas, Mês a mês, Fornecedores, Pendências) |
+| GET | `/diretoria/export.pptx` | os mesmos filtros | `200` apresentação PowerPoint (capa, destaques, gráficos nativos, ranking, altas e quedas, custo por kWh, pendências e um slide por loja, até 60; transição e entrada em cascata em cada slide) |
 | GET | `/diretoria/export.csv` | os mesmos filtros | `200` CSV do comparativo entre lojas |
 
 Os dados dos gráficos vão embutidos na página em `<script type="application/json" id="dir-data">`.
@@ -489,6 +490,7 @@ Três endpoints, todos `GET`, com o mesmo formato:
 |---|---|---|---|
 | `/notas/export.csv` | Logado | `contas-economart.csv` | contas e lançamentos filtrados: mês, loja, unidade, tipo, valor, vencimento, nota, origem ("Foto/IA" ou "Manual") |
 | `/diretoria/export.xlsx` | Diretoria | `painel-diretoria-economart.xlsx` | planilha formatada com 5 abas, mesmos filtros do painel |
+| `/diretoria/export.pptx` | Diretoria | `painel-diretoria-economart.pptx` | apresentação PowerPoint 16:9 com gráficos editáveis, mesmos filtros do painel |
 | `/notas/export.xlsx` | qualquer perfil logado | `contas-economart.xlsx` | contas e lançamentos filtrados, com valores e datas tipados |
 | `/diretoria/export.csv` | Diretoria | `comparativo-lojas-economart.csv` | comparativo entre lojas, mesmos filtros do painel |
 | `/admin/audit/export.csv` | Admin | `auditoria-economart.csv` | até 20 mil eventos mais recentes, com a coluna *Selo* (16 primeiros caracteres do selo da cadeia) |
