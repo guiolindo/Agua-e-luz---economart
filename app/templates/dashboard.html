@@ -36,6 +36,15 @@
     {% else %}<p class="muted" style="padding:0 18px 16px">Nenhuma pendência para este mês.</p>{% endif %}
   </section>
 
+  <div class="stack">
+  {% if recent_bills %}
+  <section class="card flush" id="recentes">
+    <div style="padding:14px 18px 0"><h2>Últimas contas lançadas</h2><p class="muted small" style="margin:2px 0 6px">Terminou de lançar? Imprima a folha da loja com a conta original para o diretor assinar.</p></div>
+    <div class="tablewrap"><table><tbody>{% for b in recent_bills %}<tr>
+      <td><a href="/stores/{{ b.unit.store_id }}"><strong>{{ b.unit.store.code }}</strong></a><div class="muted small">{{ b.reference|month_label }} · {{ b.total_value|brl }}</div></td>
+      <td class="right nowrap"><a class="btn sm primary" href="/stores/{{ b.unit.store_id }}/report?bill={{ b.id }}&doc=1" target="_blank" rel="noopener" title="Folha da loja + conta original, para o diretor assinar">Imprimir p/ assinatura</a></td></tr>{% endfor %}</tbody></table></div>
+  </section>
+  {% endif %}
   <section class="card flush">
     <div style="padding:14px 18px 0"><h2>Lojas</h2></div>
     {% if stores_list %}<div class="tablewrap"><table><tbody>
@@ -45,6 +54,7 @@
     {% else %}<p class="muted" style="padding:0 18px 16px">Nenhuma loja cadastrada.
       {% if user.can_write %}<a href="/stores/new">Cadastrar a primeira loja</a>{% endif %}</p>{% endif %}
   </section>
+  </div>
 </div>
 {% if user.can_write and units_no_due_total %}
 <section class="card" aria-labelledby="nodue"><div class="card-head"><h2 id="nodue" style="margin:0">Pontos de energia sem dia de vencimento ({{ units_no_due_total }})</h2></div>

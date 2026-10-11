@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
-from app.models import User
+from app.models import ConsumerUnit, EnergyBill, User
 from app.repositories.stores import list_stores
 from app.security import current_user
 from app.services import alert_service, dashboard_service
@@ -18,5 +19,7 @@ def home(request: Request, month: str | None = None, user: User = Depends(curren
     if user.is_director:
         return RedirectResponse("/diretoria", status_code=303)
     data = dashboard_service.overview(db, parse_reference(month))
+    recent_bills = db.scalars(select(EnergyBill).options(joinedload(EnergyBill.unit).joinedload(ConsumerUnit.store))
+                              .order_by(EnergyBill.id.desc()).limit(5)).all()      # o fim do trabalho: imprimir para assinatura
     return render(request, "dashboard.html", user=user, stores_list=list_stores(db, only_active=True),
-                  alerts_open=alert_service.counts(db), **data)
+                  alerts_open=alert_service.counts(db), recent_bills=recent_bills, **data)

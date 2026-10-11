@@ -198,9 +198,11 @@ Como ler com cuidado:
 
 ## B6. Imprimir
 
+**Imprimir para assinatura (o mais usado):** é o fluxo de sempre, a folha da loja com a conta original atrás, para o diretor conferir e assinar a nota. Três caminhos para o mesmo botão **Imprimir para assinatura**: (1) logo depois de salvar uma conta, o botão laranja na tela da loja; (2) **Painel → Últimas contas lançadas**; (3) **Contas → linha da conta**. Na tela que abre, confira e clique em **Imprimir**: a folha da loja sai em A4 paisagem e cada página da conta original em A4 retrato, na mesma impressão. Dá para desmarcar "Incluir a conta original". Conta lançada à mão (sem arquivo) ou com arquivo já apagado (6 meses) imprime só a folha. O botão **Relatório da conta** é outro relatório (dados e gráficos só daquela conta).
+
 **Folha da loja (1 página A4 paisagem):** **Lojas → (loja) → Imprimir relatório**. Escolha o período, se agrupa por referência ou vencimento e o **imóvel/fornecedor**. A folha traz o resumo mensal de todos os fornecedores com Total Geral, indicadores, gráfico com variação e a tabela de Valor, Consumo, Demanda, Dias e Variação. Marque **"um por folha (todos)"** para imprimir uma folha de cada fornecedor.
 
-**Ficha de uma conta (1 página A4 retrato):** **Unidade → Contas → Imprimir** (ao lado da conta desejada). Dá para trocar de mês na própria tela e marcar **"Incluir foto/PDF original"** (vai numa segunda página, se o arquivo ainda não expirou).
+**Relatório da conta (1 página A4 retrato):** **Unidade → Contas → Relatório da conta** (ao lado da conta desejada). Dá para trocar de mês na própria tela e marcar **"Incluir foto/PDF original"** (vai numa segunda página, se o arquivo ainda não expirou).
 
 **Painel da diretoria:** botão **Imprimir painel**.
 
@@ -264,6 +266,6 @@ Na janela de impressão do navegador:
 7. [ ] **Funcionário:** entrar (trocando a senha), cadastrar as lojas (com região) e as unidades.
 8. [ ] **Importar 3 ou 4 contas reais** (CEMIG e Coelba, foto e PDF) e conferir a leitura com cuidado.
 9. [ ] Lançar o histórico dos meses anteriores (manual) para os gráficos fazerem sentido.
-10. [ ] Imprimir uma folha da loja e uma ficha de conta para conferir o resultado no papel.
+10. [ ] Imprimir para assinatura (folha da loja + conta original) e conferir no papel: a folha na horizontal e a conta em pé.
 
 > **Importante:** a leitura das contas pela IA ainda não foi testada com a chave do Gemini de vocês. Por isso o passo 8 é essencial. Se algum campo vier errado de forma repetida, avise para ajustarmos as instruções da IA.

@@ -59,3 +59,19 @@ def test_old_bill_report_explains_what_it_is(client, db, png):
     _, bill = _saved_bill(client, db, png)
     html = client.get(f"/bills/{bill.id}/print").text
     assert "Relatório da conta" in html and "Imprimir para assinatura" in html
+
+
+def test_dashboard_lists_recent_bills_with_the_signature_button(client, db, png):
+    _, bill = _saved_bill(client, db, png)
+    html = client.get("/").text
+    assert "Últimas contas lançadas" in html and f"/stores/{bill.unit.store_id}/report?bill={bill.id}&doc=1" in html
+
+
+def test_dashboard_without_bills_has_no_recent_card(client):
+    assert "Últimas contas lançadas" not in client.get("/").text
+
+
+def test_help_and_tutorial_explain_the_signature_print():
+    help_html = open("app/templates/help.html", encoding="utf-8").read()
+    assert 'id="assinar"' in help_html and "Imprimir para assinatura" in help_html and "Relatório da conta" in help_html
+    assert "Imprimir para assinatura" in open("TUTORIAL.md", encoding="utf-8").read()
