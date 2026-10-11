@@ -105,3 +105,13 @@ def test_summary_mode_has_eight_slides_and_a_toggle(client, until):
     assert '<div class="deck" id="deck" aria-hidden' not in html                                       # o deck não é escondido de leitores de tela
     js = open("app/static/js/presentation.js", encoding="utf-8").read()
     assert "opener.focus()" in js and "e.key === 'Tab'" in js                                         # zoom devolve e prende o foco
+
+
+def test_two_factor_slide_follows_the_real_setting(client, until, monkeypatch):
+    """O slide só diz "obrigatória" quando REQUIRE_ADMIN_2FA está ligado de verdade."""
+    until("2999-01-01T00:00:00-03:00")
+    op = _user(client, "apres9", "operator")                      # administrador sem 2FA seria desviado para configurá-lo
+    monkeypatch.setattr(get_settings(), "require_admin_2fa", False)
+    assert "disponível para os administradores" in op.get("/apresentacao").text
+    monkeypatch.setattr(get_settings(), "require_admin_2fa", True)
+    assert "obrigatória para os administradores" in op.get("/apresentacao").text
