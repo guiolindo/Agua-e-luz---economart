@@ -31,6 +31,10 @@ PROMPT = """Você é um extrator estruturado de dados de contas de energia elét
 
 ## Regras gerais
 - ZERO CHUTE: se um campo não estiver visível ou legível, devolva null. Nunca invente nem complete valores.
+- Se um número NÃO estiver nítido (foto escura, borrada, cortada, com reflexo), devolva null para ele, mesmo que os outros
+  campos estejam legíveis: é melhor null do que um número duvidoso. Isso vale em especial para consumo (kWh) e demanda (kW).
+- Em kWh e kW, ponto seguido de exatamente 3 dígitos é separador de milhar: "5.000 kWh" = 5000 e "70.000" = 70000 (nunca 5,0 ou 70,0).
+- Números com muitos zeros seguidos (unidade consumidora, notas): conte os dígitos com cuidado e copie exatamente o que está impresso.
 - Números no formato brasileiro: ponto é milhar e vírgula é decimal ("20.505,00" -> 20505.00; "58.372" kWh -> 58372).
   Devolva sempre número JSON, sem "R$" nem separador de milhar.
 - Sinal negativo pode vir DEPOIS do número ("184,37-" = -184.37). Descontos/créditos são valores negativos.
@@ -76,6 +80,13 @@ class ExtractionError(RuntimeError):
 
 class UpstreamError(ExtractionError):
     """O problema é do Google (429/5xx, rede, timeout) e não do arquivo: só estas falhas abrem o disjuntor."""
+
+
+def _is_bad_key(exc: Exception) -> bool:
+    """O Google devolve chave inválida/revogada como HTTP 400 ("API key not valid"), não 401/403: sem isto o usuário
+    lia "arquivo inválido" e perdia tempo trocando de foto. Só olha o texto; nunca o repassa."""
+    text = str(exc).lower()
+    return "api key not valid" in text or "api_key_invalid" in text or "api key expired" in text
 
 
 def message_for_code(code: int | None) -> str:
@@ -145,6 +156,8 @@ class GeminiService:
                 if code in RETRY_CODES and attempt < MAX_ATTEMPTS:
                     self._sleep(2 ** attempt)
                     continue
+                if code == 400 and _is_bad_key(exc):
+                    code = 401
                 raise (UpstreamError if code in RETRY_CODES or (code or 0) >= 500 else ExtractionError)(message_for_code(code)) from exc
             except Exception as exc:  # rede, timeout, SSL... nunca expor str(exc): pode conter URL
                 last = exc

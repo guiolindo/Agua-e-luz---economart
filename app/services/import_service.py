@@ -10,6 +10,7 @@ from app.database import SessionLocal
 from app.models import ConsumerUnit, Document, EnergyBill, Import, Store
 from app.models.mixins import utcnow
 from app.schemas.extraction import BillExtraction
+from app.utils import formatting as fmt
 from app.services import audit_service
 from app.services.crypto_service import CryptoError, encrypt
 from app.services.extraction_service import Extractor, get_extractor
@@ -29,6 +30,23 @@ BILL_FIELDS = [
     "consumption_kwh", "consumption_hp", "consumption_hfp", "consumption_hr", "demand_hp", "demand_hfp", "contracted_demand",
     "pis_cofins_value", "icms_value", "bill_class", "subclass", "tariff_modality", "notes",
 ]
+
+
+def plausibility_warnings(e) -> list[str]:
+    """Avisos para o funcionário conferir quando a leitura tem números que não combinam (típico de foto ruim):
+    custo por kWh fora do usual ou demanda medida muito diferente da contratada. Não bloqueia nada."""
+    out: list[str] = []
+    parts = [v for v in (e.consumption_kwh, e.consumption_hp_kwh, e.consumption_hfp_kwh, e.consumption_hr_kwh) if v]
+    kwh = sum(parts)
+    if e.total_value and kwh:
+        price = e.total_value / kwh
+        if price < 0.10 or price > 3.0:
+            out.append(f"O valor da conta dividido pelo consumo lido dá {fmt.brl(price)}/kWh, fora do usual (cerca de R$ 0,20 a R$ 2,50). "
+                       "Confira o consumo na imagem: pode ter sido lido errado.")
+    dem = max([v for v in (e.demand_hp_kw, e.demand_hfp_kw) if v] or [0])
+    if dem and e.contracted_demand_kw and (dem > 2.5 * e.contracted_demand_kw or dem < 0.1 * e.contracted_demand_kw):
+        out.append(f"A demanda lida ({dem:g} kW) está muito longe da contratada ({e.contracted_demand_kw:g} kW). Confira na imagem.")
+    return out
 
 
 def create_import(db: Session, filename: str, data: bytes, user_id: int | None,

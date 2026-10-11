@@ -25,6 +25,7 @@ from app.services.import_service import (
     create_unit,
     expire_if_stale,
     get_extraction,
+    plausibility_warnings,
     run_import,
     save_bill,
 )
@@ -154,6 +155,7 @@ def _review_ctx(db: Session, job: Import, form: dict, errors: dict | None = None
                         f"{unit.record_type.name}. Confira o cadastro.")
     if not unit and note and not hint_store:
         warnings.append(f"Anotação à mão lida: “{note}” (não corresponde a nenhuma loja cadastrada).")
+    warnings += plausibility_warnings(extraction)
     default_store_id = (hint_store.id if hint_store else None) or job.store_hint_id
     return {
         "warnings": warnings, "default_store_id": default_store_id, "util_type": util_type,
