@@ -208,6 +208,19 @@ h2 em, h1 em { background: linear-gradient(100deg, #ffb15c 0%, #ff7a1a 55%, #ff5
 .zoom .ibtn { position: absolute; top: 16px; right: 16px; font-size: 26px; line-height: 1; }
 
 /* ---------- telas menores ---------- */
+/* notebook (janela com ~600 px de altura): menos texto em volta, telas maiores */
+@media (max-height: 720px) and (min-width: 1001px) {
+  .s-compare .head .lead, .s-hero .lead { display: none; }
+  .s-compare h2 { font-size: 34px; margin-bottom: 2px; } .s-hero .copy h2 { font-size: 32px; }
+  .eyebrow { margin-bottom: 8px; }
+  .cmp { width: min(100%, calc((100dvh - var(--bar-h) - var(--nav-h) - 105px) * 1.415)); }
+  .dev { width: min(100%, calc((100dvh - var(--bar-h) - var(--nav-h) - 40px) * var(--ar))); }
+  .s-hero .dev, .s-hero:has(.lead) .dev { width: min(100%, calc((100dvh - var(--bar-h) - var(--nav-h) - 150px) * var(--ar))); }
+  .phone { --w: min(22vw, calc((100dvh - var(--bar-h) - var(--nav-h) - 60px) * .47)); }
+  .hint { margin-top: 16px; } .chips { margin-top: 18px; } .actions { margin-top: 20px; } .note { margin-top: 14px; }
+  .steps li { padding: 16px 18px; } .stats { margin-top: 12px; } .stat { padding: 18px 16px; } .cards article { padding: 18px; }
+  .mega { font-size: clamp(52px, 9vw, 120px); } .div-in h2 { font-size: clamp(52px, 8vw, 110px); }
+}
 @media (max-width: 1000px) {
   .s-split, .s-split.rev { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 22px; }
   .s-split.rev .copy { order: 0; }

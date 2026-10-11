@@ -35,7 +35,7 @@ h3 { font-size: 13px; margin: 0 0 8px; font-weight: 600; color: var(--muted); te
 .nav .cta::before { display: none; }
 .nav hr { border: 0; border-top: 1px solid rgba(255,255,255,.14); margin: 12px 4px; }
 .side a:focus-visible, .side button:focus-visible { outline-color: #fff; }
-.side-foot { margin-top: auto; padding: 14px 16px 10px; font-size: 12px; color: rgba(255,255,255,.78); border-top: 1px solid rgba(255,255,255,.12); }
+.side-foot { position: sticky; bottom: 0; z-index: 2; background: var(--accent-dark); margin-top: auto; padding: 14px 16px 10px; font-size: 12px; color: rgba(255,255,255,.78); border-top: 1px solid rgba(255,255,255,.12); }
 .side-foot .whoami { display: flex; flex-direction: column; margin-bottom: 10px; }
 .side-foot .whoami strong { color: #fff; font-weight: 600; font-size: 13px; }
 .side-foot .whoami span { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.6); margin-top: 2px; }
@@ -46,6 +46,14 @@ h3 { font-size: 13px; margin: 0 0 8px; font-weight: 600; color: var(--muted); te
 .side-foot .present-btn:hover { background: var(--orange); border-color: var(--orange); text-decoration: none; }
 .side-foot .present-btn svg { flex-shrink: 0; }
 @media print { .present-btn { display: none !important; } }
+/* Notebook / janela baixa: menu mais compacto para o rodapé (Apresentação, usuário, Sair) caber sem rolar. */
+@media (max-height: 820px) and (min-width: 801px) {
+  .brand { padding: 10px 18px; } .brand img { width: 118px; }
+  .nav { padding: 10px 12px 0; }
+  .nav a { padding: 6px 12px; margin-bottom: 1px; font-size: 13.5px; }
+  .nav .cta { margin-bottom: 8px; padding: 8px 12px; } .nav hr { margin: 6px 4px; }
+  .side-foot { padding: 8px 14px 8px; } .side-foot .present-btn { margin-bottom: 8px; padding: 6px 10px; } .side-foot .whoami { margin-bottom: 6px; }
+}
 .side-foot button { background: none; border: 0; color: rgba(255,255,255,.9); padding: 0; cursor: pointer; font: inherit; }
 .side-foot button:hover { color: #fff; text-decoration: underline; }
 .main { padding: 22px 28px 40px; min-width: 0; }
@@ -104,7 +112,7 @@ details > summary { cursor: pointer; font-weight: 600; font-size: 13px; padding:
 table { width: 100%; border-collapse: collapse; } th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
 th { font-size: 11px; color: var(--accent); font-weight: 700; background: var(--surface-2); border-bottom: 1px solid var(--line); white-space: nowrap; text-transform: uppercase; letter-spacing: .05em; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } td:first-child { white-space: nowrap; } tbody tr { transition: background .12s; } tbody tr:hover td { background: rgba(244,121,32,.04); } tfoot td { font-weight: 700; background: var(--surface-2); color: var(--text); }
-.tablewrap { overflow-x: auto; } tr.hl td { background: var(--accent-soft); }
+.tablewrap { overflow-x: auto; position: relative; }   /* relative: o texto .sr (position:absolute) ficava fora do recorte e alargava a página no celular */ tr.hl td { background: var(--accent-soft); }
 
 /* charts */
 .chart-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 12px; }
@@ -209,7 +217,14 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
   .auth-box { position: relative; z-index: 2; margin-top: -44px; background: #fff; border-radius: 18px; padding: 26px 22px 22px; box-shadow: 0 18px 40px -18px rgba(16,36,63,.35); border: 1px solid var(--line-soft); }
   .auth-box h1 { font-size: 24px; }
 }
-@media (max-height: 700px) and (min-width: 861px) { .auth-glass { display: none; } }
+/* Telas baixas (notebook 1366x768 tem ~600 px úteis no navegador): o gráfico encolhe em vez de sumir; só some abaixo de 500 px. */
+@media (max-height: 760px) and (min-width: 861px) {
+  .auth-brand { padding: 28px 48px 22px; }
+  .auth-logo img { width: 170px; }
+  .auth-pitch h2 { font-size: 28px; margin-bottom: 8px; } .auth-pitch p { font-size: 14.5px; }
+  .auth-glass { max-width: 440px; padding: 12px 16px 6px; }
+}
+@media (max-height: 500px) and (min-width: 861px) { .auth-glass { display: none; } }
 @media (prefers-reduced-motion: reduce) {
   .auth-glow, .auth-logo, .auth-pitch, .auth-glass, .auth-foot, .auth-box > *, .auth-box .flash.error { animation: none !important; } .auth-logo { opacity: 1; }
   .auth-art .bar, .auth-art .dot { animation: none !important; opacity: 1; transform: none; } .auth-art .trend { animation: none !important; stroke-dashoffset: 0; } .auth-art .pulse { display: none; }
