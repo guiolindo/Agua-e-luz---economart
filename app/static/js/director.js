@@ -1,4 +1,4 @@
-// Painel da diretoria: gráficos comparativos (dados vêm de #dir-data; sem JS inline).
+// Painel executivo: gráficos comparativos (dados vêm de #dir-data; sem JS inline).
 (function () {
   if (typeof Chart === 'undefined') return;
   const D = JSON.parse(document.getElementById('dir-data').textContent);

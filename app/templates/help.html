@@ -16,7 +16,7 @@
     <li>Ver quem fez o quê e conferir se o histórico não foi alterado — <a href="#admin-auditoria">como fazer</a>.</li></ul>
   {% elif user.is_director %}
   <h2>O que a diretoria faz</h2>
-  <p>Você <strong>acompanha</strong> os custos de energia de todas as lojas. Não precisa digitar nada: tudo já vem pronto no <a href="/diretoria">Painel da diretoria</a>.</p>
+  <p>Você <strong>acompanha</strong> os custos de energia de todas as lojas. Não precisa digitar nada: tudo já vem pronto no <a href="/diretoria">Painel executivo</a>.</p>
   <ul><li>Ver qual loja gasta mais e o que mudou desde o mês passado — <a href="#dir-painel">como ler o painel</a>.</li>
     <li>Comparar duas lojas lado a lado — <a href="#dir-comparar">como fazer</a>.</li>
     <li>Imprimir o painel, baixar a planilha ou levar para uma reunião em PowerPoint — <a href="#dir-exportar">como fazer</a>.</li>
@@ -73,9 +73,9 @@
 
   {# ======================= DIRETORIA ======================= #}
   {% if user.can_see_executive %}
-  <section class="card" id="dir-painel"><h2>Como ler o Painel da diretoria</h2>
+  <section class="card" id="dir-painel"><h2>Como ler o Painel executivo</h2>
     <ol class="steps-help">
-      <li>Abra <strong>Painel da diretoria</strong> no menu. No topo, escolha o <strong>período</strong>, a <strong>região</strong> ou o <strong>fornecedor</strong>.</li>
+      <li>Abra <strong>Painel executivo</strong> no menu. No topo, escolha o <strong>período</strong>, a <strong>região</strong> ou o <strong>fornecedor</strong>.</li>
       <li>Os quadros de cima mostram o total e o que mudou em relação ao mês anterior: <strong>↑</strong> gastou mais, <strong>↓</strong> gastou menos.</li>
       <li>O <strong>ranking</strong> mostra quais lojas custam mais. O <strong>custo por kWh</strong> mostra quanto se paga por cada unidade de energia — quanto menor, melhor.</li>
       <li>A <strong>demanda contratada</strong> mostra se a loja usa muito menos ou mais do que contratou. Passar do contratado gera cobrança extra; contratar demais é dinheiro parado.</li>
@@ -85,7 +85,7 @@
     <p>Mais abaixo no painel, em <strong>Comparar duas lojas</strong>, escolha as duas lojas e veja mês a mês a diferença de valor e de consumo.</p>
     <p class="hint">O painel só <strong>consulta</strong>: você não precisa (nem consegue) alterar contas por aqui. Se algo parecer errado, avise o funcionário.</p></section>
   <section class="card" id="dir-exportar"><h2>Imprimir, baixar planilha e levar para a reunião</h2>
-    <p>Tudo sai do <strong>Painel da diretoria</strong>, com o mesmo período, região e fornecedor que estiverem na tela.</p>
+    <p>Tudo sai do <strong>Painel executivo</strong>, com o mesmo período, região e fornecedor que estiverem na tela.</p>
     <ul>
       <li><strong>Imprimir painel</strong>: escolha <strong>A4 · várias páginas</strong> (uma ideia por página) ou <strong>A3 · uma folha só</strong> (o painel inteiro na horizontal). Se a impressora ignorar a orientação, escolha “Paisagem” e o papel A3 na janela de impressão.</li>
       <li><strong>Baixar planilha</strong>: arquivo do Excel (.xlsx) já formatado, com resumo, lojas, mês a mês, fornecedores e pendências.</li>

@@ -62,7 +62,7 @@
       <div class="cover-in">
         <p class="eyebrow rv" style="--i:0">Economart Atacadista</p>
         <h1 class="mega"><span class="ln"><span style="--i:1">Controle</span></span><span class="ln"><span style="--i:2">de <em>Energia</em></span></span></h1>
-        <p class="lead rv" style="--i:4">Da conta de luz ao painel da diretoria, com o mínimo de digitação.</p>
+        <p class="lead rv" style="--i:4">Da conta de luz ao painel executivo, com o mínimo de digitação.</p>
         <div class="chips rv" style="--i:5"><span>Funcionário</span><span>Diretoria</span><span>Consulta</span></div>
         <p class="hint rv" style="--i:6">Use <kbd>←</kbd> <kbd>→</kbd> para navegar · <kbd>P</kbd> passa sozinho (cerca de 4 minutos) · <kbd>F</kbd> tela cheia</p>
       </div>
@@ -96,7 +96,7 @@
           <li class="rv" style="--i:2"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span><b>01</b><strong>Foto ou PDF</strong><span>O funcionário envia a conta, do celular ou do computador.</span></li>
           <li class="rv" style="--i:3"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4M5 17v4M3 19h4"/></svg></span><b>02</b><strong>O sistema lê</strong><span>Valor, vencimento, consumo e demanda aparecem preenchidos.</span></li>
           <li class="rv" style="--i:4"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></svg></span><b>03</b><strong>Conferência</strong><span>Os dados ficam ao lado da imagem. Nada é salvo sem conferir.</span></li>
-          <li class="rv" style="--i:5"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-6 3 4 5-8"/></svg></span><b>04</b><strong>Tudo pronto</strong><span>Gráficos, folha impressa, painel da diretoria e alertas se atualizam.</span></li>
+          <li class="rv" style="--i:5"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-6 3 4 5-8"/></svg></span><b>04</b><strong>Tudo pronto</strong><span>Gráficos, folha impressa, painel executivo e alertas se atualizam.</span></li>
         </ol>
         <p class="note rv" style="--i:6">CEMIG, CEMIG Geração e Transmissão, COELBA, Energisa, LL Energia, CCEE, combustível e manutenção de gerador.</p>
       </div>
@@ -111,7 +111,7 @@
           <div class="stat rv" style="--i:2"><b data-count="8">8</b><span>tipos de conta e de lançamento</span></div>
           <div class="stat rv" style="--i:3"><b data-count="4">4</b><span>perfis de acesso</span></div>
           <div class="stat rv" style="--i:4"><b data-count="2">2</b><span>formatos de impressão do painel: A4 e A3</span></div>
-          <div class="stat rv" style="--i:5"><b data-count="5">5</b><span>abas na planilha de exportação</span></div>
+          <div class="stat rv" style="--i:5"><b data-count="3">3</b><span>jeitos de levar o painel: papel, planilha e PowerPoint</span></div>
           <div class="stat rv" style="--i:6"><b data-count="1">1</b><span>conferência antes de qualquer conta ser salva</span></div>
         </div>
       </div>
@@ -176,6 +176,12 @@
       {{ dev('folha-impressa', 'Folha da loja impressa pelo sistema', 'Imprimir relatório', [], 'paper') }}
     </section>
 
+    <section class="slide s-split" data-chapter="func" aria-label="Imprimir para assinatura">
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · assinatura</p>{{ lines(['Folha e conta', 'num só <em>clique</em>']) }}
+        <ul class="rv" style="--i:2"><li>Na lista de contas ou no painel: <b>Imprimir p/ assinatura</b>.</li><li><b>Imprimir tudo</b> imprime a folha da loja e, em seguida, a conta original, sem esticar.</li><li>Pronto para o diretor conferir e assinar.</li></ul></div>
+      {{ dev('func-assinar', 'Tela Folha para assinatura com o botão Imprimir tudo', 'Folha para assinatura', [{'x':56,'y':33,'t':'Folha + conta original','side':'l'}]) }}
+    </section>
+
     <section class="slide s-split rev" data-chapter="func" aria-label="Lançamento manual">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · manual</p>{{ lines(['O que não vem', 'em <em>foto</em>']) }}
         <ul class="rv" style="--i:2"><li>LL Energia, CCEE, combustível e manutenção de gerador.</li><li>Lançamento em lote para várias lojas de uma vez.</li><li>Serve também se a leitura da foto não estiver disponível.</li></ul></div>
@@ -204,22 +210,22 @@
       </div>
     </section>
 
-    <section class="slide s-split" data-chapter="dir" data-sum aria-label="Painel da diretoria">
+    <section class="slide s-split" data-chapter="dir" data-sum aria-label="Painel executivo">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · painel</p>{{ lines(['Tudo o que importa,', 'em <em>frases</em>']) }}
         <ul class="rv" style="--i:2"><li>O que subiu, o que caiu e quem foge do padrão.</li><li>Total do período, último mês, custo por kWh e pendências.</li><li>Filtro por período e por região.</li></ul></div>
-      {{ dev('dir-painel', 'Painel da diretoria com destaques e indicadores', 'Painel da diretoria', [{'x':52,'y':30,'t':'Resumo em frases','side':'l'},{'x':30,'y':74,'t':'Indicadores do mês','side':'r'},{'x':91,'y':21,'t':'Imprime em A4 ou A3','side':'l'}]) }}
+      {{ dev('dir-painel', 'Painel executivo com destaques e indicadores', 'Painel executivo', [{'x':52,'y':30,'t':'Resumo em frases','side':'l'},{'x':30,'y':74,'t':'Indicadores do mês','side':'r'},{'x':91,'y':21,'t':'Imprime em A4 ou A3','side':'l'}]) }}
     </section>
 
     <section class="slide s-split rev" data-chapter="dir" aria-label="Gráficos">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · gráficos</p>{{ lines(['Comparar lojas', 'num <em>relance</em>']) }}
         <ul class="rv" style="--i:2"><li>Gasto por mês e por fornecedor.</li><li>Ranking de lojas e variação contra o mês anterior.</li><li>Composição do gasto de cada loja.</li><li>Cada barra traz o código e o nome da loja.</li></ul></div>
-      {{ dev('dir-graficos', 'Gráficos de gasto por mês, ranking e variação', 'Painel da diretoria · gráficos') }}
+      {{ dev('dir-graficos', 'Gráficos de gasto por mês, ranking e variação', 'Painel executivo · gráficos') }}
     </section>
 
     <section class="slide s-split" data-chapter="dir" aria-label="Evolução e comparação">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · evolução</p>{{ lines(['Evolução', 'e <em>demanda</em>']) }}
         <ul class="rv" style="--i:2"><li>Marque as lojas que quer ver na linha do tempo.</li><li>Custo efetivo por kWh contra a média da empresa.</li><li>Uso da demanda contratada, loja a loja.</li><li>Mapa de calor e comparação entre duas lojas.</li></ul></div>
-      {{ dev('dir-graficos-2', 'Evolução das lojas e outros gráficos do painel', 'Painel da diretoria · evolução') }}
+      {{ dev('dir-graficos-2', 'Evolução das lojas e outros gráficos do painel', 'Painel executivo · evolução') }}
     </section>
 
     <section class="slide s-split rev" data-chapter="dir" aria-label="Impressão">
@@ -230,13 +236,19 @@
 
     <section class="slide s-hero" data-chapter="dir" data-sum aria-label="Painel em A3">
       <div class="copy wide-copy"><p class="eyebrow rv" style="--i:0">Diretoria · A3</p>{{ lines(['O painel inteiro em <em>uma folha</em>']) }}</div>
-      {{ dev('dir-a3', 'Painel da diretoria impresso em uma folha A3', 'Impressão A3 · horizontal', [], 'paper') }}
+      {{ dev('dir-a3', 'Painel executivo impresso em uma folha A3', 'Impressão A3 · horizontal', [], 'paper') }}
     </section>
 
     <section class="slide s-split" data-chapter="dir" aria-label="Planilha">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · planilha</p>{{ lines(['Planilha pronta', 'para o <em>Excel</em>']) }}
-        <ul class="rv" style="--i:2"><li>Botão <b>Baixar planilha</b> no painel: cinco abas (Resumo, Lojas, Mês a mês, Fornecedores e Pendências), já formatada.</li><li>Para a reunião: <b>Baixar apresentação</b> gera um PowerPoint com gráficos editáveis e um slide por loja.</li></ul></div>
+        <ul class="rv" style="--i:2"><li>Botão <b>Baixar planilha</b> no painel executivo.</li><li>Cinco abas: Resumo, Lojas, Mês a mês, Fornecedores e Pendências.</li><li>Já formatada, com os mesmos filtros da tela.</li></ul></div>
       {{ dev('dir-xlsx', 'Aba Lojas da planilha exportada', 'Planilha · aba Lojas') }}
+    </section>
+
+    <section class="slide s-split rev" data-chapter="dir" aria-label="Apresentação em PowerPoint">
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · reunião</p>{{ lines(['O painel vira', '<em>PowerPoint</em>']) }}
+        <ul class="rv" style="--i:2"><li>Botão <b>Baixar apresentação</b>: o mesmo visual desta apresentação, com transições e animações.</li><li>Gráficos editáveis e <b>um slide por loja</b>.</li><li>Só usa os números que o painel já mostra.</li></ul></div>
+      {{ dev('dir-pptx', 'Slide do PowerPoint gerado com o gasto por mês e fornecedor', 'PowerPoint gerado') }}
     </section>
 
     {# ============================ CONSULTA ============================ #}
@@ -268,7 +280,7 @@
       <div class="cover-in">
         <p class="eyebrow rv" style="--i:0">Obrigado</p>
         <h1 class="mega"><span class="ln"><span style="--i:1">Dúvidas<em>?</em></span></span></h1>
-        <p class="lead rv" style="--i:3">Do envio da foto ao painel da diretoria, tudo em um só lugar.</p>
+        <p class="lead rv" style="--i:3">Do envio da foto ao painel executivo, tudo em um só lugar.</p>
         <div class="actions rv" style="--i:4"><a class="btn go" href="/">Voltar ao sistema</a><button type="button" class="btn ghost" id="restart">Ver de novo</button></div>
         <p class="hint rv" style="--i:5">As telas desta apresentação usam dados de demonstração.{% if until %} Disponível até {{ until }}.{% endif %}</p>
       </div>

@@ -1,4 +1,4 @@
-"""Apresentação (PowerPoint .pptx) do painel da diretoria, no mesmo visual do modo apresentação do sistema.
+"""Apresentação (PowerPoint .pptx) do painel executivo, no mesmo visual do modo apresentação do sistema.
 
 Para reuniões em que o diretor ou o gerente precisa de um arquivo PowerPoint: capa, destaques, gráficos do painel e um
 slide por loja com a evolução mensal. Os gráficos são NATIVOS do PowerPoint (editáveis: clique com o botão direito >
@@ -471,7 +471,7 @@ def _closing(prs, who, when):
         bars.append(shp.shape_id)
     k = _text(s, 0.8, 2.6, 6, 0.4, "OBRIGADO", size=13, bold=True, color=AMBER, name="Chamada")
     t = _text(s, 0.8, 3.1, 6.5, 1.4, "Dúvidas?", size=60, bold=True, font=HEAD_FONT, name="Título")
-    sb = _text(s, 0.8, 4.9, 6.2, 1.2, ["Dados do painel da diretoria do sistema Controle de Energia.",
+    sb = _text(s, 0.8, 4.9, 6.2, 1.2, ["Dados do sistema Controle de Energia.",
                                        f"Gerado por {who} em {when}."], size=14, color=MUTED, name="Rodapé")
     _transition(s)
     _fade_in(s, [[k.shape_id], [t.shape_id], [sb.shape_id], bars], dur=500)
@@ -483,14 +483,14 @@ def executive_deck(data: dict, insights: list[dict], pending: list, filters_labe
     """Monta a apresentação a partir dos dados do painel (`executive_service.build`)."""
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(W), Inches(H)
-    prs.core_properties.title = "Controle de Energia: painel da diretoria"
+    prs.core_properties.title = "Controle de Energia: visão executiva"
     prs.core_properties.author = "Economart · Controle de Energia"
     prs.core_properties.subject = filters_label
     prs.slide_master.background.fill.solid()
     prs.slide_master.background.fill.fore_color.rgb = _rgb(NAVY)
 
     period = (f"{fmt.month_label(data['start'])} a {fmt.month_label(data['end'])}" if data["months"] else "sem dados no período")
-    _cover(prs, "Controle de Energia", "Painel da diretoria", "Economart Atacadista", f"{period} · {filters_label}")
+    _cover(prs, "Controle de Energia", "Visão executiva", "Economart Atacadista", f"{period} · {filters_label}")
     rows = data["rows"]
     if not rows:
         s = _new_slide(prs)

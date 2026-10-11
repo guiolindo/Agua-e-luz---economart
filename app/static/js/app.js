@@ -241,7 +241,7 @@ document.querySelectorAll('[data-login-form]').forEach((f) => f.addEventListener
 // Delay em cascata para animar os cartões KPI em sequência (efeito "stagger")
 (function () {
   // Stagger limitado a 180ms no total pra não deixar as últimas cards aparecerem tarde
-  // em telas com muitos KPIs (painel da diretoria tem 8).
+  // em telas com muitos KPIs (painel executivo tem 8).
   document.querySelectorAll('.grid.cols-4 > .kpi, .grid.cols-3 > .kpi, .grid.cols-2 > .kpi').forEach((el, i) => {
     el.style.setProperty('--d', Math.min(i * 40, 180) + 'ms');
   });
@@ -343,7 +343,7 @@ document.querySelectorAll('form[action="/logout"]').forEach((f) => f.addEventLis
   });
 }));
 
-// Painel da diretoria: copia o resumo em texto (para WhatsApp/e-mail).
+// Painel executivo: copia o resumo em texto (para WhatsApp/e-mail).
 document.querySelectorAll('[data-copy-insights]').forEach((btn) => btn.addEventListener('click', async () => {
   const card = btn.closest('.insights'); if (!card) return;
   const lines = [...card.querySelectorAll('li')].map((li) => '• ' + li.lastElementChild.textContent.trim());
@@ -394,7 +394,7 @@ document.querySelectorAll('[data-copy-insights]').forEach((btn) => btn.addEventL
     }).catch(() => {});
 })();
 
-// Painel da diretoria: ao imprimir, escolhe o papel (A4 em várias páginas ou A3 em uma folha só).
+// Painel executivo: ao imprimir, escolhe o papel (A4 em várias páginas ou A3 em uma folha só).
 (() => {
   const menu = document.querySelector('.printmenu'); if (!menu) return;
   const btn = menu.querySelector('[data-print-menu]'), list = menu.querySelector('.printmenu-list');

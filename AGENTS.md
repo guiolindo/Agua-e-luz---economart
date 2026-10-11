@@ -26,7 +26,7 @@ O índice completo está em [`docs/README.md`](docs/README.md).
 | Mexer em modelos ou banco | `docs/database.md` → `app/models/` → `app/db_migrate.py` |
 | Criar migração | `docs/database.md` (seção de migrações) → `docs/operations.md` |
 | Mexer em login, 2FA, sessão, auditoria | `docs/security.md` → `app/security.py`, `app/services/auth_service.py`, `totp_service.py`, `audit_service.py` |
-| Mexer em relatório, folha da loja, painel da diretoria | `docs/domain-model.md` (agrupamento) → `app/services/chart_service.py`, `executive_service.py` → `tests/test_report_sheet.py` |
+| Mexer em relatório, folha da loja, painel executivo | `docs/domain-model.md` (agrupamento) → `app/services/chart_service.py`, `executive_service.py` → `tests/test_report_sheet.py` |
 | Mexer em alertas | `app/services/alert_service.py` → `tests/test_alerts.py` |
 | Mexer na leitura da conta (Gemini) | `app/services/import_service.py`, `circuit_breaker.py` → `docs/security.md` (rejeição de arquivo que não é conta) |
 | Mexer em telas, CSS ou JS | `docs/frontend.md` → `app/static/css/app.css` (tokens em `:root`) |

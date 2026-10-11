@@ -18,7 +18,7 @@ Stack: Python · FastAPI · SQLAlchemy 2 · Jinja2 · Chart.js (embutido em `sta
 - **Auditoria à prova de adulteração:** cada evento é selado em cadeia; *Auditoria → Verificar integridade* aponta qualquer alteração feita fora do sistema.
 - **Arquivo que não é conta de energia** é barrado na importação e os bytes são apagados (o Gemini classifica e o servidor confere).
 - **Disjuntor do Gemini:** depois de 5 falhas seguidas do Google, o sistema falha rápido por 30 s em vez de esperar timeouts.
-- **Planilhas XLSX formatadas:** o painel da diretoria baixa um arquivo com abas (Resumo, Lojas, Mês a mês, Fornecedores, Pendências) e *Contas* baixa o que está filtrado, ambos com valores numéricos, totais e filtros. O CSV de Contas continua disponível.
+- **Planilhas XLSX formatadas:** o painel executivo baixa um arquivo com abas (Resumo, Lojas, Mês a mês, Fornecedores, Pendências) e *Contas* baixa o que está filtrado, ambos com valores numéricos, totais e filtros. O CSV de Contas continua disponível.
 - **Migrações do banco (Alembic):** aplicadas ao subir; bancos antigos são adotados sem perder dados. Veja `docs/operations.md`.
 - **Central de Alertas:** cada conta nova é comparada com o histórico da própria unidade (valor, custo por kWh, demanda acima do contratado (com a tolerância de 5%), nota fiscal repetida, itens que não fecham com o total, período de leitura estranho). Quem confere marca "Conferido" e o alerta some; fica na auditoria.
 - **Ajuda por perfil** (administrador, funcionário, diretoria, consulta).
@@ -35,16 +35,16 @@ Reenviar o **mesmo arquivo** (mesmo hash) de uma conta já salva é recusado ant
 A IA nunca grava sozinha: tudo passa pela tela de conferência. Unidade desconhecida não descarta a conta (cadastrar
 ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decisão: substituir ou salvar como novo.
 
-## Perfis de usuário e painel da diretoria
+## Perfis de usuário e painel executivo
 
 | Perfil | O que faz |
 |---|---|
 | **Administrador** | Cria e gerencia usuários e perfis (senha provisória de 4 dígitos, redefinir, desativar) e acompanha a auditoria. Também pode operar o sistema, mas o dia a dia é do funcionário. |
-| **Funcionário** | **Responsável por toda a gestão de energia**: cadastra lojas/filiais, unidades e fornecedores; envia as contas (foto/PDF); lança manualmente; corrige/exclui; cuida dos vencimentos; imprime. Não vê o painel da diretoria nem a administração de usuários. |
-| **Diretoria** | Só consulta. Ao entrar cai no **Painel da diretoria** (`/diretoria`) e pode abrir lojas e imprimir; não importa nem edita nada. |
+| **Funcionário** | **Responsável por toda a gestão de energia**: cadastra lojas/filiais, unidades e fornecedores; envia as contas (foto/PDF); lança manualmente; corrige/exclui; cuida dos vencimentos; imprime. Não vê o painel executivo nem a administração de usuários. |
+| **Diretoria** | Só consulta. Ao entrar cai no **Painel executivo** (`/diretoria`) e pode abrir lojas e imprimir; não importa nem edita nada. |
 | **Consulta** | Só visualiza e imprime. |
 
-O **painel da diretoria** compara as lojas: KPIs (total, último mês, média, custo médio R$/kWh, maior gasto/alta/queda, pendências),
+O **painel executivo** compara as lojas: KPIs (total, último mês, média, custo médio R$/kWh, maior gasto/alta/queda, pendências),
 gasto da empresa por mês e fornecedor, ranking de lojas, variação do último mês por loja, composição por fornecedor, evolução
 (com seleção de lojas), custo por kWh, uso da demanda contratada, **comparação de duas lojas** (com diferença em R$ e %),
 mapa de calor loja × mês e tabela comparativa. Filtros: período, mês de referência/vencimento, **região** (campo “Região/UF” da loja) e

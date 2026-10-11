@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 {% from "macros.html" import variation as _v, hero %}
 {% macro delta(v) %}{% if v and v.pct is not none %}<span class="var var-{{ v.direction }}">{{ v.text }}</span>{% else %}<span class="muted">—</span>{% endif %}{% endmacro %}
-{% block title %}Painel da diretoria · Economart Energia{% endblock %}
+{% block title %}Painel executivo · Economart Energia{% endblock %}
 {% block content %}
 <div class="dirpanel" data-stores="{{ rows|length }}">
 <style id="page-a4">@page { size: A4 landscape; margin: 8mm; }</style>
 <style id="page-a3" media="not all">@page { size: 420mm 297mm; margin: 8mm; }</style>
 <header class="print-head" aria-hidden="true">
   <img src="/static/img/logo.png" alt="" width="445" height="113">
-  <div class="ph-title"><strong>Painel da diretoria</strong><span>{{ start|month_label }} a {{ end|month_label }}{% if region %} · região {{ region }}{% endif %}</span></div>
+  <div class="ph-title"><strong>Painel executivo</strong><span>{{ start|month_label }} a {{ end|month_label }}{% if region %} · região {{ region }}{% endif %}</span></div>
   <div class="ph-meta">Impresso por {{ user.username }}<br>{{ printed_at|dt_br }}</div>
 </header>
-{% call hero(greeting_now() ~ ", " ~ user.username, "Painel da diretoria", "Custos de energia e despesas relacionadas · " ~ (start|month_label) ~ " a " ~ (end|month_label)) %}
+{% call hero(greeting_now() ~ ", " ~ user.username, "Painel executivo", "Custos de energia e despesas relacionadas · " ~ (start|month_label) ~ " a " ~ (end|month_label)) %}
   <a class="btn on-dark" href="/alertas">Alertas{% if alerts_open and alerts_open.count %} · {{ alerts_open.count }}{% endif %}</a>
   <a class="btn on-dark" href="/diretoria/export.xlsx?{{ request.url.query }}" title="Baixa a planilha formatada: resumo, lojas, mês a mês, fornecedores e pendências">Baixar planilha</a>
   <a class="btn on-dark" href="/diretoria/export.pptx?{{ request.url.query }}" title="Baixa uma apresentação PowerPoint com destaques, gráficos editáveis e um slide por loja">Baixar apresentação</a>

@@ -15,7 +15,7 @@ Visão geral da arquitetura do controle de contas de energia. Para detalhes por 
 
 O sistema recebe a foto ou o PDF de uma conta de energia, extrai os dados com o Gemini, mostra uma tela de
 conferência e, ao confirmar, grava a conta no histórico da loja. Daí saem os gráficos por loja, a folha
-impressa da loja e o painel da diretoria. Também aceita lançamento manual (contas digitadas e despesas sem
+impressa da loja e o painel executivo. Também aceita lançamento manual (contas digitadas e despesas sem
 fatura, como gerador e LL Energia) e lançamento em lote (um valor para várias lojas).
 
 É uma aplicação monolítica: FastAPI com páginas renderizadas no servidor (Jinja2), JavaScript simples no
@@ -56,7 +56,7 @@ Um módulo por área. Todos são registrados em `create_app()` (`app/main.py`).
 | `auth.py` | login, segundo fator (`/login/2fa`), logout |
 | `account.py` | troca de senha, configuração do 2FA (somente administrador) |
 | `dashboard.py` | página inicial (`/`); a diretoria é redirecionada para `/diretoria` |
-| `director.py` | painel da diretoria e exportação CSV |
+| `director.py` | painel executivo e exportação CSV |
 | `stores.py` | lojas, unidades consumidoras, histórico da loja, folha impressa (`/stores/{id}/report`) |
 | `bills.py` | lista única de contas e lançamentos (`/notas`) e CSV |
 | `imports.py` | upload, progresso, conferência e confirmação da importação |
@@ -106,7 +106,7 @@ Jinja2, com `base.html` (menu por perfil, avisos, diálogo de cadastro de ponto)
 ### static (`app/static/`)
 
 `css/app.css` (tokens em `:root`), `js/app.js` (comportamentos globais sem JavaScript inline),
-`js/chart_panel.js` (gráfico da loja), `js/director.js` (painel da diretoria) e `js/vendor/chart.umd.min.js`
+`js/chart_panel.js` (gráfico da loja), `js/director.js` (painel executivo) e `js/vendor/chart.umd.min.js`
 (Chart.js local). O `app/web.py` calcula uma versão (`ASSET_VERSION`, hash de `app.css`, `app.js`,
 `chart_panel.js` e `director.js`) usada para derrubar o cache do navegador.
 
@@ -234,7 +234,7 @@ O lançamento manual vale sempre pelo mês de referência informado; o venciment
 | `matching_service` | busca unidade pelo número, sugere unidades parecidas, resolve loja por anotação à mão, tipo por distribuidora |
 | `duplicate_service` | detecta conta ou lançamento manual duplicado |
 | `chart_service` | séries do gráfico da loja, resumo mensal, folha impressa (`report_data`), ficha de uma conta (`bill_print_data`) |
-| `executive_service` | painel da diretoria: totais, comparação entre lojas, mix por tipo, R$/kWh, uso da demanda contratada, frases de destaque |
+| `executive_service` | painel executivo: totais, comparação entre lojas, mix por tipo, R$/kWh, uso da demanda contratada, frases de destaque |
 | `dashboard_service` | resumo da página inicial e pendências do mês |
 | `alert_service` | Central de Alertas, regras em [domain-model.md](domain-model.md#central-de-alertas) |
 | `due_service` | lembretes de vencimento por unidade (dia do mês) |

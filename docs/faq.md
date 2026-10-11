@@ -55,7 +55,7 @@ enviado.
 
 `python -m scripts.seed_demo` (loja CD300, valores reais da planilha) e,
 depois, `python -m scripts.seed_demo_company` (lojas `DEMO-01..08`,
-fictícias, para o painel da diretoria). Nunca em produção. Ver
+fictícias, para o painel executivo). Nunca em produção. Ver
 [getting-started.md](getting-started.md#dados-de-demonstração).
 
 ### Por que `python scripts/seed_demo.py` dá erro de import?
@@ -243,7 +243,7 @@ agrupamento no cabeçalho da folha ("Agrupado por"). Outros pontos:
 
 - Contas sem `due_date` entram pela referência nos modos por vencimento.
 - Lançamento manual sempre vale pela referência (pergunta anterior).
-- No painel da diretoria, o mês em que poucas lojas já lançaram é
+- No painel executivo, o mês em que poucas lojas já lançaram é
   marcado com `*` e fica fora das variações.
 - Filtros de período, tipo e fornecedor mudam o total.
 

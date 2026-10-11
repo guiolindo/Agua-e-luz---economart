@@ -1,4 +1,4 @@
-"""Planilhas XLSX formatadas (painel da diretoria e lista de contas).
+"""Planilhas XLSX formatadas (painel executivo e lista de contas).
 
 Valores ficam como números reais (moeda, percentual), não como texto, para o Excel somar, ordenar e filtrar.
 Textos digitados por pessoas nunca viram fórmula: células que começam com = + - @ são gravadas como texto.
@@ -114,7 +114,7 @@ def _bytes(wb: Workbook) -> bytes:
     return buf.getvalue()
 
 
-# --------------------------------------------------------------------------- painel da diretoria
+# --------------------------------------------------------------------------- painel executivo
 def executive_workbook(data: dict, insights: list[dict], pending: list[dict], filters_text: str) -> bytes:
     wb = Workbook()
     focus, prev = data["focus_label"], data["prev_label"]
@@ -125,7 +125,7 @@ def executive_workbook(data: dict, insights: list[dict], pending: list[dict], fi
     # ---- Resumo
     ws = wb.active
     ws.title = "Resumo"
-    _title(ws, "Painel da diretoria · Custos de energia", subtitle, 4)
+    _title(ws, "Painel executivo · Custos de energia", subtitle, 4)
     r = 5
     ws.cell(row=r, column=1, value="Indicadores").font = Font(bold=True, size=12, color=NAVY)
     r += 1

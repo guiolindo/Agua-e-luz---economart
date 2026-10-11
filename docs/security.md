@@ -505,9 +505,9 @@ Aplicado no servidor, em cada rota, por dependências (`app/security.py`). Escon
 
 | Perfil | Pode |
 |---|---|
-| `admin` | tudo do funcionário, mais usuários, auditoria, 2FA, painel da diretoria |
-| `operator` | importar, lançar, editar, excluir; lojas, unidades, tipos; vencimentos e alertas. Não vê usuários, auditoria nem painel da diretoria |
-| `director` | consulta, painel da diretoria, imprime; confere alertas. Não escreve |
+| `admin` | tudo do funcionário, mais usuários, auditoria, 2FA, painel executivo |
+| `operator` | importar, lançar, editar, excluir; lojas, unidades, tipos; vencimentos e alertas. Não vê usuários, auditoria nem painel executivo |
+| `director` | consulta, painel executivo, imprime; confere alertas. Não escreve |
 | `viewer` | consulta e imprime |
 
 Regras que protegem a administração: não é possível rebaixar nem desativar o último administrador ativo; o

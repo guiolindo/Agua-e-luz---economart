@@ -188,7 +188,7 @@ python -m scripts.seed_demo_company     # depois do anterior
   com 12 meses (set/2025 a ago/2026) de contas e lançamentos gerados
   por fórmula (`random.Random(300)`, determinístico), e marca o CD300
   com região `MG`.
-- Serve para visualizar o **painel da diretoria** (`/diretoria`) com
+- Serve para visualizar o **painel executivo** (`/diretoria`) com
   várias lojas. Todo dado é **fictício** — o próprio script avisa para
   não usar em produção.
 - Idempotente: se já existe loja `DEMO-*`, imprime "Lojas DEMO já

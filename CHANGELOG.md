@@ -3,6 +3,12 @@
 Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada item corresponde a commits em
 `ccr-9b4b2f9b-4bk1nd`. O motivo das decisões maiores está em [`DECISIONS.md`](DECISIONS.md).
 
+## 2026-10-11
+
+- **"Painel da diretoria" agora se chama "Painel executivo".** O nome antigo soava estranho e se repetia demais. Trocado no menu, nas telas, na Ajuda, no TUTORIAL, nos documentos, na planilha, na apresentação do sistema e no PowerPoint (capa "Visão executiva"; o nome não se repete nos slides). A rota continua `/diretoria` e o perfil continua "Diretoria". Entradas antigas deste histórico mantêm o nome da época.
+
+- **Apresentação do sistema atualizada (27 slides).** Dois slides novos: *Folha e conta num só clique* (imprimir para assinatura, com a tela real) e *O painel vira PowerPoint* (slide gerado pelo próprio sistema). Slide da planilha reescrito em tópicos curtos e o contador "5 abas" virou "3 jeitos de levar o painel: papel, planilha e PowerPoint". Imagens da diretoria refeitas com o nome novo. O modo Resumo continua com 8 slides.
+
 ## 2026-10-10
 
 - **Apresentação em PowerPoint (.pptx) do painel da diretoria.** Botão **Baixar apresentação** no Painel da diretoria (`/diretoria/export.pptx`, mesmos filtros da tela, só diretoria e administrador, registrado na auditoria). Gera um deck 16:9 no visual do modo apresentação do sistema (azul-marinho, laranja, barras de energia na capa e no fim): capa, destaques em frases com 4 indicadores, gasto por mês e fornecedor, ranking de lojas, maiores altas e quedas, custo por kWh, pendências, e **um slide por loja** (até 60) com indicadores e a evolução mensal. Gráficos **nativos e editáveis** do PowerPoint, **transição suave** e **entrada em cascata** em todos os slides, notas do apresentador nos destaques. Só usa números que o painel já calcula. Validado contra o esquema OOXML e renderizado: 9 lojas = 18 slides (159 KB); 100 lojas = 69 slides (622 KB) em 1,4 s. Nova dependência: `python-pptx`. **Ajuda** completada: imprimir A4/A3, baixar planilha e apresentação, limites do envio (12 MB, 10 páginas, um arquivo por vez), uso no celular e botão da apresentação do sistema.

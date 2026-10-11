@@ -45,7 +45,7 @@
         <span>Importar conta</span></a>{% endif %}
       {% if user.can_see_executive %}<a href="/diretoria" class="{{ 'active' if path.startswith('/diretoria') }}" {% if path.startswith('/diretoria') %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-6 3 4 5-8"/></svg>
-        <span>Painel da diretoria</span></a>{% endif %}
+        <span>Painel executivo</span></a>{% endif %}
       {% if not user.is_director %}<a href="/" class="{{ 'active' if path == '/' }}" {% if path == '/' %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
         <span>Painel</span></a>{% endif %}

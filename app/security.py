@@ -182,7 +182,7 @@ def admin_required(user: User = Depends(current_user)) -> User:
 
 def director_required(user: User = Depends(current_user)) -> User:
     if not user.can_see_executive:
-        raise HTTPException(status_code=403, detail="O painel da diretoria é restrito à diretoria e ao administrador.")
+        raise HTTPException(status_code=403, detail="O painel executivo é restrito à diretoria e ao administrador.")
     return user
 
 

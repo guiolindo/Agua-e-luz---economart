@@ -42,7 +42,7 @@ app/
 │   ├── admin/                  # users.html, audit.html
 │   ├── alerts/                 # list.html (central de alertas)
 │   ├── bills/                  # list.html (/notas), print.html (ficha A4 retrato)
-│   ├── director/               # panel.html (painel da diretoria)
+│   ├── director/               # panel.html (painel executivo)
 │   ├── imports/                # upload.html, progress.html, review.html
 │   ├── manual/                 # form.html, batch.html, _modes.html
 │   ├── partials/               # chart_panel.html (painel de gráfico reutilizável)
@@ -56,7 +56,7 @@ app/
     └── js/
         ├── app.js              # comportamentos globais (carregado em toda página)
         ├── chart_panel.js      # gráfico da loja/unidade (via partials/chart_panel.html)
-        ├── director.js         # 8 gráficos do painel da diretoria
+        ├── director.js         # 8 gráficos do painel executivo
         └── vendor/chart.umd.min.js   # Chart.js 4.4.7
 ```
 
@@ -115,7 +115,7 @@ O que a casca monta para o usuário logado:
 - `#toasts` (região `aria-live`) e o `<dialog id="point-dialog">` (para quem pode escrever).
 
 Os itens do menu dependem do perfil: *Importar conta*, *Lançamento manual* e *Tipos de registro* só com
-`can_write`; *Painel da diretoria* com `can_see_executive`; *Painel* some para `director` (que tem o seu); *Auditoria*
+`can_write`; *Painel executivo* com `can_see_executive`; *Painel* some para `director` (que tem o seu); *Auditoria*
 e *Usuários* só para `admin`. Quem está com troca de senha obrigatória não vê o menu.
 
 ### Macros (`macros.html`)
@@ -132,7 +132,7 @@ Importar: `{% from "macros.html" import csrf, hero %}`.
 
 ### Hero
 
-`hero` é a faixa azul com degradê, grade sutil e brilho laranja no topo de **Painel, Painel da diretoria, Central
+`hero` é a faixa azul com degradê, grade sutil e brilho laranja no topo de **Painel, Painel executivo, Central
 de alertas e Histórico da loja**: mesma linguagem visual do login. Estrutura: *eyebrow* (saudação ou contexto),
 `<h1>`, subtítulo e ações. Fica oculta na impressão (`.hero` e `.no-print`). Exemplo de uso real
 (`dashboard.html`): o *eyebrow* é `greeting_now() ~ ", " ~ user.username`, o subtítulo traz a data por extenso, o
@@ -161,7 +161,7 @@ barra do item ativo, linha de tendência), verde/âmbar/vermelho **só** para es
 de custo usa `var-up` em vermelho (subiu = ruim) e `var-down` em verde.
 
 Paleta categórica dos gráficos, repetida em `chart_service.py` e `director.js`: `#1b4f8a`, `#f47920`, `#4f9a94`,
-`#8a6aa3`, `#b08a3e`, `#7a8f5a` (o painel da diretoria usa 12 cores). Cinzas neutros `#9aa5b4`, `#b7c0cc`, `#7f8b9b`
+`#8a6aa3`, `#b08a3e`, `#7a8f5a` (o painel executivo usa 12 cores). Cinzas neutros `#9aa5b4`, `#b7c0cc`, `#7f8b9b`
 para o que não é destaque; o item em destaque nos gráficos da loja é azul-escuro `#1b4f8a` com borda `#10243f`.
 
 ### Componentes principais
@@ -179,7 +179,7 @@ para o que não é destaque; o item em destaque nos gráficos da loja é azul-es
 | `.badge` (`ok`, `warn`, `bad`) | rótulo de estado com ponto colorido |
 | `.tablewrap`, `table` | tabela com rolagem horizontal; `td.num` alinha à direita com algarismos tabulares |
 | `table.stack` | **tabela em cartões no celular** (ver abaixo) |
-| `table.heat` | mapa de calor loja × mês do painel da diretoria |
+| `table.heat` | mapa de calor loja × mês do painel executivo |
 | `.filterbar` | barra de filtro com borda azul à esquerda (usada em *Auditoria*) |
 | `.sevfilter` / `.sevchip` | filtro por severidade da central de alertas: pílulas com contagem; `.on` é a selecionada |
 | `.alist` / `.acard` | cartão de alerta com barra lateral por severidade (`sev-alta`, `sev-media`, `sev-baixa`) |
@@ -187,7 +187,7 @@ para o que não é destaque; o item em destaque nos gráficos da loja é azul-es
 | `.dialog` | `<dialog>` nativo (ponto de energia rápido) |
 | `.drop`, `.steps`, `.review`, `.docpane` | envio de arquivo (arrastar e soltar), progresso, conferência (campos + documento ao lado) |
 | `.report`, `.sheet`, `.rtable`, `.chip`, `.infostrip`, `.sheet-foot` | folha de impressão (ver [Impressão](#impressão)) |
-| `.insights` | destaques do painel da diretoria |
+| `.insights` | destaques do painel executivo |
 | `.empty` | estado vazio |
 | `.skip`, `.sr` | link de pular conteúdo; texto só para leitor de tela |
 | `.splash`, `.bye` | abertura e despedida |
@@ -245,7 +245,7 @@ Delegação de eventos no `document` (por causa do CSP, não há `onclick=`):
 | `data-bill-switch` | `<select>` que troca a conta na ficha de impressão |
 | `data-drawer-toggle` | abre/fecha o menu mobile |
 | `data-open-point`, `data-close-dialog` | abre/fecha o diálogo de ponto de energia |
-| `data-copy-insights` | copia o resumo do painel da diretoria |
+| `data-copy-insights` | copia o resumo do painel executivo |
 | `data-fit="N"` | altura útil (px) para o ajuste da folha de impressão |
 | `data-flash` | nível da mensagem (ok/info somem sozinhas) |
 
@@ -285,7 +285,7 @@ aplicada quando há alertas de severidade alta. Falha em silêncio.
 
 ### Copiar resumo
 
-*Copiar resumo* (painel da diretoria) monta o texto `Destaques — Economart Energia` seguido de uma linha `• …` por
+*Copiar resumo* (painel executivo) monta o texto `Destaques — Economart Energia` seguido de uma linha `• …` por
 destaque e copia com `navigator.clipboard`; sem permissão, usa um `textarea` temporário e `execCommand('copy')`. O
 botão mostra "Copiado" por 1,6 s.
 
@@ -336,7 +336,7 @@ há carregamento global.
 | Onde | Script | Dados |
 |---|---|---|
 | Histórico da loja e da unidade | `chart_panel.js`, incluído por `partials/chart_panel.html` | `fetch GET /api/stores/{id}/chart` com os controles do painel |
-| Painel da diretoria | `director.js` | JSON embutido em `#dir-data` |
+| Painel executivo | `director.js` | JSON embutido em `#dir-data` |
 | Folha da loja | script inline em `stores/report.html` | contexto do servidor |
 | Ficha da conta | script inline em `bills/print.html` | `#bill-data` |
 
@@ -387,7 +387,7 @@ o mês escolhido em destaque. Na tela dá para trocar de conta e marcar **Inclui
 (`?doc=1`), que acrescenta uma página com o original. Como o navegador não imprime PDF embutido, as páginas do PDF
 vão como imagem PNG por `GET /documents/{id}/pages/{n}.png` (até 6 páginas, ~115 dpi).
 
-### Painel da diretoria
+### Painel executivo
 
 Botão *Imprimir painel*: aparece o cabeçalho de relatório (`.print-head`, com logo, título e metadados), os filtros
 e o seletor de lojas somem, os KPIs vão a 4 por linha, os gráficos encolhem (190–210 px) e duas colunas, e **todas
@@ -456,7 +456,7 @@ O que o código faz:
 - botões de menu e sino com `aria-expanded` e `aria-controls`;
 - toasts de vencimento pausam por foco, não só por mouse;
 - tabelas largas rolam por teclado (`tabindex="0"` e `role="region"` aplicados quando há overflow);
-- todo `<canvas>` com `role="img"` e `aria-label`; o painel da diretoria tem tabelas HTML equivalentes;
+- todo `<canvas>` com `role="img"` e `aria-label`; o painel executivo tem tabelas HTML equivalentes;
 - `prefers-reduced-motion` respeitado em CSS e em JS (progresso, *count-up*, splash, despedida);
 - alvos de toque de 44 px e campos com 16 px no mobile;
 - cor nunca é o único sinal: a variação é gerada no servidor como texto com seta (`Variation.text`: "↑ 4,96%",

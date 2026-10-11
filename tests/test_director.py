@@ -129,7 +129,7 @@ def test_only_director_and_admin_see_the_executive_panel(client, db):
     assert director.get("/diretoria").status_code == 200
     assert operator.get("/diretoria").status_code == 403 and viewer.get("/diretoria").status_code == 403
     assert TestClient(app).get("/diretoria", follow_redirects=False).status_code == 303   # anônimo -> login
-    assert "Painel da diretoria" in director.get("/stores").text and "Painel da diretoria" not in operator.get("/stores").text
+    assert "Painel executivo" in director.get("/stores").text and "Painel executivo" not in operator.get("/stores").text
 
 
 def test_director_lands_on_panel_and_is_read_only(client, db):
@@ -254,7 +254,7 @@ def test_entry_screens_open_with_the_brand_hero(client, db):
     assert 'class="hero no-print"' in home and "Painel" in home and ("Bom dia" in home or "Boa tarde" in home or "Boa noite" in home)
     assert 'href="/import"' in home and "Importar conta" in home
     d = _user(client, "diretor10", "director").get("/diretoria").text
-    assert 'class="hero no-print"' in d and "Painel da diretoria" in d and "Baixar planilha" in d
+    assert 'class="hero no-print"' in d and "Painel executivo" in d and "Baixar planilha" in d
     viewer = _user(client, "consul10", "viewer").get("/").text
     assert 'class="hero no-print"' in viewer and 'href="/import"' not in viewer.split("</section>", 1)[0]
 

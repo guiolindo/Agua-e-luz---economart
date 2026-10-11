@@ -11,7 +11,7 @@ O projeto nasceu para tirar de uma pessoa o trabalho manual de montar, a cada co
 |---|---|
 | Digitar à mão cada conta (valor, datas, consumo, demanda) | Foto ou PDF da conta: o sistema lê, o funcionário só **confere** e salva |
 | Montar a tabela e o gráfico de cada loja | Gerados sozinhos; a **folha impressa reproduz a planilha ao centavo** (resumo por vencimento, gráfico por referência, valor/dias/variação) e ainda traz média por mês, % de cada fornecedor, variação do total, composição do gasto e custo por kWh |
-| Ver só uma loja de cada vez | Painel da diretoria com **todas as lojas**: ranking, variação, custo por kWh, demanda, comparação entre lojas e mapa de calor |
+| Ver só uma loja de cada vez | Painel executivo com **todas as lojas**: ranking, variação, custo por kWh, demanda, comparação entre lojas e mapa de calor |
 | Descobrir um problema quando alguém lembra de olhar | **Alertas automáticos**: conta fora do padrão da unidade, demanda acima do contratado, nota repetida |
 | Esquecer um vencimento | Aviso no dia do vencimento e lista de pendências do mês |
 | Conta duplicada ou digitada errado sem ninguém ver | Detecção de duplicidade, conferência antes de salvar e trilha de auditoria |
@@ -24,7 +24,7 @@ Fornecedores já cobertos: CEMIG, CEMIG Geração e Transmissão, COELBA, Energi
 1. **Entrada (1 min).** Login, abertura do sistema. Mostre o painel do funcionário.
 2. **O fluxo principal (4 min).** *Importar conta* com a foto real da CEMIG da CD300 → tela de conferência (dados ao lado da imagem) → salvar → o gráfico da loja já mudou. É o ponto que substitui a digitação.
 3. **A folha igual à planilha (2 min).** *Lojas → CD300 → Imprimir relatório*. Coloque a planilha antiga ao lado: os totais são os mesmos. O resumo está por mês de vencimento e o gráfico por mês de referência, como na planilha.
-4. **O que a planilha não fazia (4 min).** Painel da diretoria (resumo em frases, ranking, comparar duas lojas), ficha da loja, *Alertas* e *Baixar planilha*.
+4. **O que a planilha não fazia (4 min).** Painel executivo (resumo em frases, ranking, comparar duas lojas), ficha da loja, *Alertas* e *Baixar planilha*.
 5. **Segurança e controle (1 min).** Auditoria (quem fez o quê), perfis e 2FA.
 
 Não mostre ao vivo: Energisa e CEMIG Geração e Transmissão com arquivo novo (ver pendências), nem arquivo que não é conta (a barragem foi testada só com simulador).

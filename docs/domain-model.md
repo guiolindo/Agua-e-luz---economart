@@ -13,7 +13,7 @@ O papel fica em `users.role`. Valores aceitos na tela de usuários: `admin`, `op
 valor `user` é legado e tem o mesmo efeito de `operator`. Quem cria o usuário é o administrador, que recebe uma senha
 provisória de 4 dígitos, exibida uma única vez.
 
-| Papel (tela) | Valor | Escrita | Painel da diretoria | Avisos de vencimento | Área administrativa |
+| Papel (tela) | Valor | Escrita | Painel executivo | Avisos de vencimento | Área administrativa |
 |---|---|---|---|---|---|
 | Administrador | `admin` | sim | sim | não | sim |
 | Funcionário (operador) | `operator` (e `user`) | sim | não | sim | não |
@@ -25,7 +25,7 @@ das dependências de `app/security.py`.
 
 **Administrador.** Tudo o que o funcionário faz, mais: gestão de usuários (criar, redefinir senha, desbloquear,
 mudar perfil, ativar/desativar, redefinir o 2FA de outro administrador), consulta e exportação da auditoria,
-verificação de integridade da auditoria e configuração do próprio 2FA. Também vê o painel da diretoria. Não recebe
+verificação de integridade da auditoria e configuração do próprio 2FA. Também vê o painel executivo. Não recebe
 os avisos de vencimento. O sistema não deixa rebaixar ou desativar o último administrador ativo. Com
 `REQUIRE_ADMIN_2FA=true`, o administrador sem 2FA é forçado a configurá-lo antes de usar o sistema; sem isso, só
 aparece um aviso. O 2FA existe apenas para administradores.
@@ -40,7 +40,7 @@ exportar o CSV dele; consulta lojas, histórico, folha impressa, lista de contas
 alertas como conferidos. Não importa, não lança e não edita. Não recebe os lembretes de vencimento.
 
 **Consulta.** Só visualiza e imprime: lojas, histórico, folha, lista de contas, ficha da conta e Central de Alertas
-(sem marcar como conferido). Não vê o painel da diretoria.
+(sem marcar como conferido). Não vê o painel executivo.
 
 Observações verificadas no código:
 
@@ -153,7 +153,7 @@ tratada (`consumer_units.due_ack`, ação "marcada como paga" na auditoria). A p
 amanhã" ou "vence em N dias" nos 3 dias que a antecedem. Se existe uma conta lançada com aquele vencimento exato,
 o valor é mostrado. Esses cálculos usam o fuso America/Sao_Paulo.
 
-**Pendências do mês** (`dashboard_service.pending_items`, página inicial e painel da diretoria). Duas regras:
+**Pendências do mês** (`dashboard_service.pending_items`, página inicial e painel executivo). Duas regras:
 
 1. Unidade ativa, de loja ativa, cujo tipo é conta (ou sem tipo, tratando como o tipo de conta padrão) e que
    não tem conta com `reference` no mês: "Conta do mês não lançada".
@@ -194,7 +194,7 @@ mostra o mês de referência da conta. Detalhes que valem para a folha:
 
 Os outros relatórios usam apenas uma das regras:
 
-- **Painel da diretoria** (`/diretoria`): parâmetro `by` aceita `reference` (padrão) ou `due`. O modo `sheet` não
+- **Painel executivo** (`/diretoria`): parâmetro `by` aceita `reference` (padrão) ou `due`. O modo `sheet` não
   existe nele.
 - **Gráfico e histórico da loja** (`/api/stores/{id}/chart`, `/stores/{id}`): mês de referência.
 - **Lista de contas** (`/notas`): filtro de período por mês de referência.
@@ -221,7 +221,7 @@ menor mês, última variação) e dados da última conta.
 Regra do repositório: não alterar o resumo da folha sem rodar esse teste. A folha também acrescenta colunas
 que a planilha não tinha (média e percentual por fornecedor, indicadores).
 
-## Painel da diretoria
+## Painel executivo
 
 `executive_service.build` calcula, a partir de uma leitura de contas e outra de lançamentos manuais:
 

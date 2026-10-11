@@ -1,4 +1,4 @@
-"""Apresentação PowerPoint do painel da diretoria (.pptx): gráficos nativos, um slide por loja, transições e animações."""
+"""Apresentação PowerPoint do painel executivo (.pptx): gráficos nativos, um slide por loja, transições e animações."""
 import io
 import zipfile
 

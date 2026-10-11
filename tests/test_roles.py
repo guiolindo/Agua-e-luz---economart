@@ -96,13 +96,13 @@ def test_help_is_tailored_to_each_role(client, db):
     assert "O que o funcionário faz" not in admin
     func = _user(client, "func9", "operator").get("/ajuda").text
     assert "O que o funcionário faz" in func and "Enviar uma conta" in func and "Lançar à mão" in func
-    assert "Google Authenticator" not in func and "Como ler o Painel da diretoria" not in func and "Usuários e acessos" not in func
+    assert "Google Authenticator" not in func and "Como ler o Painel executivo" not in func and "Usuários e acessos" not in func
     director = _user(client, "dir9", "director").get("/ajuda").text
-    assert "O que a diretoria faz" in director and "Como ler o Painel da diretoria" in director
+    assert "O que a diretoria faz" in director and "Como ler o Painel executivo" in director
     assert "Enviar uma conta" not in director and "Usuários e acessos" not in director
     viewer = _user(client, "con9", "viewer").get("/ajuda").text
     assert "O que a consulta faz" in viewer and "Achar, abrir e imprimir uma conta" in viewer
-    assert "Enviar uma conta" not in viewer and "Como ler o Painel da diretoria" not in viewer and "Dúvidas comuns" in viewer
+    assert "Enviar uma conta" not in viewer and "Como ler o Painel executivo" not in viewer and "Dúvidas comuns" in viewer
 
 
 def test_deleting_a_bill_that_came_from_an_import_releases_the_import(client, db):

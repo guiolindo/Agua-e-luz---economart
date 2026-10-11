@@ -1,4 +1,4 @@
-"""Painel da diretoria: comparação entre lojas, tendência da empresa, mix por fornecedor, eficiência e demanda.
+"""Painel executivo: comparação entre lojas, tendência da empresa, mix por fornecedor, eficiência e demanda.
 
 Tudo é calculado a partir dos mesmos registros (contas e lançamentos manuais) em UMA leitura por tabela. O agrupamento
 pode ser pelo mês de referência (competência) ou pelo de vencimento, como no resto do sistema.

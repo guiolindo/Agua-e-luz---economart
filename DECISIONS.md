@@ -83,7 +83,7 @@ um disjuntor (circuit breaker) faz o sistema falhar rápido em vez de esperar ti
 
 ## 7. "Maior alta" e "maior queda" só quando existem ✅
 
-**Contexto.** No painel da diretoria, com uma loja só, ou quando todas subiram, o cartão "Maior queda" mostrava uma
+**Contexto.** No painel executivo, com uma loja só, ou quando todas subiram, o cartão "Maior queda" mostrava uma
 alta (↑ 3,12% em vermelho).
 
 **Decisão.** Alta considera apenas variações positivas e queda apenas negativas; sem nenhuma, o cartão mostra "—".
@@ -197,7 +197,7 @@ tentativas **não tem teste de concorrência real** — só confirma que o bloqu
    com páginas em formato comprimido escapava da busca por `/Type /Page` nos bytes crus. Corrigido: dimensões lidas do
    cabeçalho (sem decodificar) e rejeitadas acima de 120 milhões de pixels (JPEG, o formato das fotos de celular, cobre 108 MP) ou 40 milhões (PNG/WEBP); páginas contadas pelo mesmo leitor (pypdfium2)
    que abre o arquivo depois.
-6. **[Baixa] HTML injection armazenada no painel da diretoria** via `innerHTML` com o código da loja (ex.: criar uma loja
+6. **[Baixa] HTML injection armazenada no painel executivo** via `innerHTML` com o código da loja (ex.: criar uma loja
    com código contendo uma tag `<a>`). A CSP já impedia executar script, mas um link ou conteúdo forjado aparecia na
    tela. Corrigido com escape antes de montar o HTML.
 7. **[Baixa] Conta desativada era distinguível por tempo e comportamento.** Pulava a verificação de senha (mais rápida)

@@ -49,7 +49,7 @@ legado `user` é tratado como `operator`.
 | `current_user` | qualquer perfil com sessão válida e conta ativa | `303` login |
 | `writer_required` | `admin`, `operator` (e `user`) | `403` "Seu perfil é somente de consulta." |
 | `admin_required` | `admin` | `403` "Apenas administradores podem acessar esta área." |
-| `director_required` | `director`, `admin` | `403` "O painel da diretoria é restrito à diretoria e ao administrador." |
+| `director_required` | `director`, `admin` | `403` "O painel executivo é restrito à diretoria e ao administrador." |
 | `alerts_required` | `operator` (e `user`); **o administrador não passa** | `403` "Os avisos de vencimento são destinados ao funcionário." |
 
 Nas tabelas abaixo, "Logado" significa `current_user` (qualquer perfil), "Escrita" é `writer_required`.
@@ -203,7 +203,7 @@ Detalhes:
 
 ---
 
-## `director.py` — painel da diretoria
+## `director.py` — painel executivo
 
 Acesso: **Diretoria** (`director`, `admin`).
 

@@ -10,7 +10,7 @@ Este guia tem duas partes: **(A) como colocar o sistema no ar** (feito uma vez, 
 |---|---|---|
 | **Administrador** | Cria e gerencia os **usuários e perfis** (senha provisória, redefinir senha, desativar) e acompanha a **Auditoria**. Também consegue fazer tudo que o funcionário faz, mas esse não é o seu papel no dia a dia. | Painel |
 | **Funcionário** | É o **responsável por toda a gestão de energia da empresa**: cadastra lojas/filiais, unidades consumidoras e fornecedores; envia as contas (foto/PDF); faz os lançamentos manuais; corrige ou exclui o que foi lançado errado; cuida dos vencimentos; imprime. | Painel |
-| **Diretoria** | Só consulta: painel executivo com comparação entre lojas, abre as lojas e imprime. Não altera nada. | Painel da diretoria |
+| **Diretoria** | Só consulta: painel executivo com comparação entre lojas, abre as lojas e imprime. Não altera nada. | Painel executivo |
 | **Consulta** | Só visualiza e imprime. | Painel |
 
 ---
@@ -118,7 +118,7 @@ O funcionário é o responsável por manter tudo de energia da empresa, então �
 **1. Lojas/filiais.** Menu **Lojas → Nova loja**. Informe:
 
 - **Código** (ex.: `CD300`) e **nome**;
-- **Região/UF** (ex.: `MG`, `BA`): é usada para comparar regiões no painel da diretoria;
+- **Região/UF** (ex.: `MG`, `BA`): é usada para comparar regiões no painel executivo;
 - **Apelidos** (ex.: `CD 300, CD Rib Neves`): ajudam a ler anotações escritas à mão nas contas.
 
 **2. Unidades consumidoras (pontos de energia).** Dentro da loja, **Cadastro → Adicionar unidade** (com o **dia de vencimento da conta**, opcional), ou, de qualquer tela, **+ Novo ponto de energia** (veja B4). Cada unidade tem o **número da unidade consumidora** exatamente como está na conta (ex.: `12.060.073.018-19`).
@@ -180,7 +180,7 @@ De **qualquer tela**, clique em **+ Novo ponto de energia** (canto superior dire
 - Contas importadas por foto/PDF ensinam o dia de vencimento ao ponto automaticamente.
 - Para mudar o dia depois, ou remover o vencimento: **Editar unidade**.
 
-## B5. Painel da diretoria
+## B5. Painel executivo
 
 Entra direto ao fazer login (perfil Diretoria). O administrador também acessa pelo menu.
 
@@ -204,7 +204,7 @@ Como ler com cuidado:
 
 **Relatório da conta (1 página A4 retrato):** **Unidade → Contas → Relatório da conta** (ao lado da conta desejada). Dá para trocar de mês na própria tela e marcar **"Incluir foto/PDF original"** (vai numa segunda página, se o arquivo ainda não expirou).
 
-**Painel da diretoria:** botão **Imprimir painel** (A4 em várias páginas ou A3 numa folha). Para levar à reunião: **Baixar planilha** (Excel) e **Baixar apresentação** (PowerPoint com gráficos editáveis e um slide por loja).
+**Painel executivo:** botão **Imprimir painel** (A4 em várias páginas ou A3 numa folha). Para levar à reunião: **Baixar planilha** (Excel) e **Baixar apresentação** (PowerPoint com gráficos editáveis e um slide por loja).
 
 Na janela de impressão do navegador:
 
@@ -230,7 +230,7 @@ Na janela de impressão do navegador:
 | Ao entrar no sistema | Olhar o aviso/sino de vencimentos; dar "Já paguei" | Funcionário |
 | Todo mês | Lançar os fornecedores manuais (LL, Câmara, combustível, manutenção) | Funcionário |
 | Todo mês | Conferir **Pendências** no Painel | Funcionário |
-| Mensal | Abrir o Painel da diretoria e imprimir, se necessário | Diretoria |
+| Mensal | Abrir o Painel executivo e imprimir, se necessário | Diretoria |
 | Mensal | Revisar usuários ativos e a Auditoria | Administrador |
 | Trimestral | Testar a restauração do backup do banco | Administrador |
 

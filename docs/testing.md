@@ -56,7 +56,7 @@ Contagens medidas com `--collect-only`.
 | `test_calculation.py` | 4 | `calculation_service`: variação percentual, `add_months`, `month_range` |
 | `test_cemig_gt.py` | 8 | Conta da CEMIG Geração e Transmissão (tipo `bill` com unidade própria), conversão do tipo manual legado pelo `seed` sem mexer nos lançamentos antigos, e R$/kWh sem contar o kWh duas vezes |
 | `test_coelba_and_limits.py` | 9 | Conta COELBA, redução de foto grande, rotação EXIF, PDF com páginas demais, importação travada (stale), modelo Gemini obsoleto, chaves redigidas nos logs |
-| `test_director.py` | 20 | Painel da diretoria: totais, ranking, custo por kWh, filtros, mês parcial, comparação ano a ano, exportação CSV, perfil executivo da loja, perfis com acesso. Define `_user` (cria e loga usuário de um perfil) |
+| `test_director.py` | 20 | Painel executivo: totais, ranking, custo por kWh, filtros, mês parcial, comparação ano a ano, exportação CSV, perfil executivo da loja, perfis com acesso. Define `_user` (cria e loga usuário de um perfil) |
 | `test_due.py` | 16 | Vencimentos: dia 31 em mês curto, "hoje" no fuso do Brasil, baixa ("Já paguei"), "+ Novo ponto de energia", avisos só para o funcionário, página de ajuda por perfil |
 | `test_energisa.py` | 3 | Conta ENERGISA (baixa tensão, consumo único) |
 | `test_export_csv.py` | 3 | CSV de contas (filtros, compatível com Excel, neutralização de fórmulas em `_csv_cell`, acesso da consulta) |
