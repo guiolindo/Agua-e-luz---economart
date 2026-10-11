@@ -426,6 +426,8 @@ body.drawer-open { overflow: hidden; }
 .searchbox input[type=search] { max-width: 100%; }
 
 /* lançamento em lote: seletor de lojas */
+.storepick .chk[hidden] { display: none; }
+.pickbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 8px; } .pickbar input[type=search] { flex: 1 1 180px; max-width: 260px; height: 32px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--radius); font: inherit; font-size: 13px; }
 .storepicker { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 10px; max-height: 46vh; overflow: auto; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); }
 .storepicker .storeopt { margin: 0; padding: 6px 4px; border-radius: 6px; align-items: flex-start; } .storepicker .storeopt:hover { background: var(--accent-soft); }
 .storepicker .storeopt[hidden] { display: none; } .storepicker input { margin-top: 3px; }

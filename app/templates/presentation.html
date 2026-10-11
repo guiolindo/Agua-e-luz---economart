@@ -46,6 +46,7 @@
       <button type="button" data-chapter="seg">Segurança</button>
     </nav>
     <div class="tools">
+      <button type="button" class="ibtn pill" id="mode" aria-pressed="false" title="Alternar entre resumo (8 slides, cerca de 1 min) e completo (R)">Resumo</button>
       <button type="button" class="ibtn" id="play" title="Passar sozinho (P)" aria-label="Passar os slides sozinho" aria-pressed="false"><svg class="i-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg><svg class="i-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></button>
       <button type="button" class="ibtn" id="fs" title="Tela cheia (F)" aria-label="Tela cheia"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
       <a class="ibtn close" href="/" title="Sair da apresentação (Esc)" aria-label="Sair da apresentação"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a>
@@ -56,19 +57,19 @@
   <main class="slides" id="slides">
 
     {# ============================ CAPA ============================ #}
-    <section class="slide s-cover" data-chapter="intro" aria-label="Capa">
+    <section class="slide s-cover" data-chapter="intro" data-sum aria-label="Capa">
       <div class="energy" aria-hidden="true">{% for h in [34,52,41,66,48,78,60,92,70,100,84,118] %}<i style="--h:{{ h }}%;--k:{{ loop.index0 }}"></i>{% endfor %}</div>
       <div class="cover-in">
         <p class="eyebrow rv" style="--i:0">Economart Atacadista</p>
         <h1 class="mega"><span class="ln"><span style="--i:1">Controle</span></span><span class="ln"><span style="--i:2">de <em>Energia</em></span></span></h1>
-        <p class="lead rv" style="--i:4">Da conta de luz ao painel da diretoria. Sem digitar.</p>
+        <p class="lead rv" style="--i:4">Da conta de luz ao painel da diretoria, com o mínimo de digitação.</p>
         <div class="chips rv" style="--i:5"><span>Funcionário</span><span>Diretoria</span><span>Consulta</span></div>
         <p class="hint rv" style="--i:6">Use <kbd>←</kbd> <kbd>→</kbd> para navegar · <kbd>P</kbd> passa sozinho (cerca de 4 minutos) · <kbd>F</kbd> tela cheia</p>
       </div>
     </section>
 
     {# ============================ ANTES × DEPOIS ============================ #}
-    <section class="slide s-compare" data-chapter="intro" data-enter="cmp" aria-label="Antes e depois">
+    <section class="slide s-compare" data-chapter="intro" data-enter="cmp" data-sum aria-label="Antes e depois">
       <div class="head">
         <p class="eyebrow rv" style="--i:0">A folha de cada loja</p>
         {{ lines(['Antes. <em>Depois.</em>'], 'h2') }}
@@ -87,7 +88,7 @@
     </section>
 
     {# ============================ 4 PASSOS ============================ #}
-    <section class="slide s-steps" data-chapter="intro" aria-label="Como funciona">
+    <section class="slide s-steps" data-chapter="intro" data-sum aria-label="Como funciona">
       <div class="wide">
         <p class="eyebrow rv" style="--i:0">Como funciona</p>
         {{ lines(['Da foto ao painel', 'em <em>quatro passos</em>']) }}
@@ -102,7 +103,7 @@
     </section>
 
     {# ============================ NÚMEROS ============================ #}
-    <section class="slide s-numbers" data-chapter="intro" data-enter="count" aria-label="O sistema em números">
+    <section class="slide s-numbers" data-chapter="intro" data-enter="count" data-sum aria-label="O sistema em números">
       <div class="wide">
         <p class="eyebrow rv" style="--i:0">Em resumo</p>
         {{ lines(['O sistema em <em>números</em>']) }}
@@ -199,11 +200,11 @@
       <div class="div-in">
         <p class="eyebrow rv" style="--i:0">Capítulo 02</p>
         {{ lines(['Quem <em>decide</em>'], 'h2') }}
-        <p class="lead rv" style="--i:2">A empresa inteira numa tela. E no papel.</p>
+        <p class="lead rv" style="--i:2">A visão executiva da empresa, na tela e no papel.</p>
       </div>
     </section>
 
-    <section class="slide s-split" data-chapter="dir" aria-label="Painel da diretoria">
+    <section class="slide s-split" data-chapter="dir" data-sum aria-label="Painel da diretoria">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · painel</p>{{ lines(['Tudo o que importa,', 'em <em>frases</em>']) }}
         <ul class="rv" style="--i:2"><li>O que subiu, o que caiu e quem foge do padrão.</li><li>Total do período, último mês, custo por kWh e pendências.</li><li>Filtro por período e por região.</li></ul></div>
       {{ dev('dir-painel', 'Painel da diretoria com destaques e indicadores', 'Painel da diretoria', [{'x':52,'y':30,'t':'Resumo em frases','side':'l'},{'x':30,'y':74,'t':'Indicadores do mês','side':'r'},{'x':91,'y':21,'t':'Imprime em A4 ou A3','side':'l'}]) }}
@@ -227,7 +228,7 @@
       {{ dev('dir-imprimir', 'Menu de impressão do painel com as opções A4 e A3', 'Imprimir painel') }}
     </section>
 
-    <section class="slide s-hero" data-chapter="dir" aria-label="Painel em A3">
+    <section class="slide s-hero" data-chapter="dir" data-sum aria-label="Painel em A3">
       <div class="copy wide-copy"><p class="eyebrow rv" style="--i:0">Diretoria · A3</p>{{ lines(['O painel inteiro em <em>uma folha</em>']) }}</div>
       {{ dev('dir-a3', 'Painel da diretoria impresso em uma folha A3', 'Impressão A3 · horizontal', [], 'paper') }}
     </section>
@@ -246,7 +247,7 @@
     </section>
 
     {# ============================ SEGURANÇA ============================ #}
-    <section class="slide s-cards" data-chapter="seg" aria-label="Segurança">
+    <section class="slide s-cards" data-chapter="seg" data-sum aria-label="Segurança">
       <div class="wide">
         <p class="eyebrow rv" style="--i:0">Segurança</p>
         {{ lines(['Pensado para os dados', 'da <em>empresa</em>']) }}
@@ -255,14 +256,14 @@
           <article class="rv" style="--i:3"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><h3>Login protegido</h3><p>Bloqueio após tentativas erradas e sessão que expira por inatividade.</p></article>
           <article class="rv" style="--i:4"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span><h3>Arquivos cifrados</h3><p>As imagens das contas ficam cifradas e saem do banco após 6 meses; os dados lidos permanecem.</p></article>
           <article class="rv" style="--i:5"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></span><h3>Histórico de tudo</h3><p>Trilha de auditoria de quem fez o quê, com selo contra adulteração.</p></article>
-          <article class="rv" style="--i:6"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span><h3>Duas etapas</h3><p>Administradores usam verificação em duas etapas.</p></article>
+          <article class="rv" style="--i:6"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span><h3>Duas etapas</h3><p>Verificação em duas etapas disponível para os administradores.</p></article>
           <article class="rv" style="--i:7"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><h3>Conferência humana</h3><p>A leitura automática nunca salva sozinha: o funcionário confere.</p></article>
         </div>
       </div>
     </section>
 
     {# ============================ FIM ============================ #}
-    <section class="slide s-cover end" data-chapter="seg" aria-label="Encerramento">
+    <section class="slide s-cover end" data-chapter="seg" data-sum aria-label="Encerramento">
       <div class="energy" aria-hidden="true">{% for h in [118,84,100,70,92,60,78,48,66,41,52,34] %}<i style="--h:{{ h }}%;--k:{{ loop.index0 }}"></i>{% endfor %}</div>
       <div class="cover-in">
         <p class="eyebrow rv" style="--i:0">Obrigado</p>
@@ -276,7 +277,7 @@
 
   <footer class="nav">
     <button type="button" class="arrow" id="prev" aria-label="Slide anterior"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
-    <div class="dots" id="dots" role="tablist" aria-label="Slides"></div>
+    <div class="dots" id="dots" role="group" aria-label="Slides"></div>
     <span class="counter" id="counter" aria-live="polite">01 / 01</span>
     <button type="button" class="arrow" id="next" aria-label="Próximo slide"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
   </footer>

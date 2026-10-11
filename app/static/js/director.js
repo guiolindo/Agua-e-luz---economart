@@ -61,7 +61,17 @@
   const pick = $('storepick');
   rows.forEach((r, i) => { const l = document.createElement('label'); l.className = 'chk';
     l.innerHTML = '<input type="checkbox"' + (i < 5 ? ' checked' : '') + '><span class="dot" style="background:' + PALETTE[i % PALETTE.length] + '"></span>' + esc(lab(r));
-    l.querySelector('input').addEventListener('change', (e) => { lineChart.setDatasetVisibility(i, e.target.checked); lineChart.update('none'); }); pick.appendChild(l); });
+    l.querySelector('input').addEventListener('change', (e) => { lineChart.setDatasetVisibility(i, e.target.checked); lineChart.update('none'); countPick(); }); pick.appendChild(l); });
+  // com 30+ lojas: busca, Top 5, Todas e Limpar, e contador de selecionadas
+  const boxes = Array.from(pick.querySelectorAll('input'));
+  const bar = document.createElement('div'); bar.className = 'pickbar no-print';
+  bar.innerHTML = '<input type="search" placeholder="Buscar loja…" aria-label="Buscar loja na lista"><button type="button" class="btn sm" data-k="top">Top 5</button><button type="button" class="btn sm" data-k="all">Todas</button><button type="button" class="btn sm" data-k="none">Limpar</button><span class="muted small" id="pickcount" aria-live="polite"></span>';
+  pick.parentNode.insertBefore(bar, pick);
+  function countPick() { $('pickcount').textContent = boxes.filter((b) => b.checked).length + ' de ' + boxes.length + ' lojas no gráfico'; }
+  function setPick(pred) { boxes.forEach((b, i) => { b.checked = pred(i); lineChart.setDatasetVisibility(i, b.checked); }); lineChart.update('none'); countPick(); }
+  bar.addEventListener('click', (e) => { const k = e.target.dataset && e.target.dataset.k; if (k) setPick(k === 'top' ? (i) => i < 5 : k === 'all' ? () => true : () => false); });
+  bar.querySelector('input').addEventListener('input', (e) => { const q = e.target.value.trim().toLowerCase(); Array.from(pick.children).forEach((l) => { l.hidden = !!q && !l.textContent.toLowerCase().includes(q); }); });
+  countPick();
 
   // 6) R$/kWh e 7) uso da demanda
   const ek = rows.filter((r) => r.rs_kwh).sort((a, b) => b.rs_kwh - a.rs_kwh);

@@ -352,3 +352,9 @@ def test_print_menu_is_moved_out_of_the_hero_so_it_is_not_clipped():
     css = open("app/static/css/app.css", encoding="utf-8").read()
     assert ".printmenu-list { display: none !important; }" in css
 
+
+
+def test_evolution_store_picker_has_search_and_quick_actions():
+    """Com 30+ lojas: busca, Top 5, Todas, Limpar e contador na seleção da evolução."""
+    js = open("app/static/js/director.js", encoding="utf-8").read()
+    assert 'data-k="top"' in js and 'data-k="all"' in js and 'data-k="none"' in js and "Buscar loja" in js and "pickcount" in js

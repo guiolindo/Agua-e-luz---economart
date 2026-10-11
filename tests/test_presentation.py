@@ -86,3 +86,22 @@ def test_presentation_uses_only_fictional_names(client, until):
         assert real not in html
     css = open("app/static/css/presentation.css", encoding="utf-8").read()
     assert "http" not in css.replace("http://www.w3.org/2000/svg", "")                  # sem fontes/recursos externos (CSP)
+
+
+def test_claims_in_the_slides_are_precise(client, until):
+    """Revisão externa (11/10): promessas absolutas viraram texto verdadeiro."""
+    until("2999-01-01T00:00:00-03:00")
+    html = client.get("/apresentacao").text
+    assert "Sem digitar" not in html and "inteira numa tela" not in html
+    assert "com o mínimo de digitação" in html and "A visão executiva da empresa" in html
+    assert "Administradores usam verificação" not in html and "disponível para os administradores" in html   # 2FA é opcional por padrão
+
+
+def test_summary_mode_has_eight_slides_and_a_toggle(client, until):
+    until("2999-01-01T00:00:00-03:00")
+    html = client.get("/apresentacao").text
+    assert html.count('<section class="slide') >= 25 and len(re.findall(r'<section class="slide[^>]*data-sum', html)) == 8
+    assert 'id="mode"' in html and 'role="tab"' not in html and 'role="tablist"' not in html          # sem papéis ARIA incompletos
+    assert '<div class="deck" id="deck" aria-hidden' not in html                                       # o deck não é escondido de leitores de tela
+    js = open("app/static/js/presentation.js", encoding="utf-8").read()
+    assert "opener.focus()" in js and "e.key === 'Tab'" in js                                         # zoom devolve e prende o foco

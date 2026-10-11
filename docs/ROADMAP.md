@@ -15,6 +15,14 @@ da decisão da diretoria. A ordem considera benefício, esforço e risco. Itens 
 | Itens da fatura que não fecham com o total | ✅ |
 | XLSX executivo formatado | ✅ |
 
+## Revisão externa de 11/10/2026 (outra IA, sobre o commit `ad41b32`)
+
+**Aplicado na hora:** textos da apresentação mais precisos ("com o mínimo de digitação", "visão executiva da empresa", 2FA "disponível" e não "usado"); modo **Resumo** (8 slides, tecla `R`); zoom devolve e prende o foco; papéis ARIA de aba removidos; busca, *Top 5*, *Todas*, *Limpar* e contador na seleção de lojas do gráfico de evolução. **Não procede:** "o deck inteiro está com `aria-hidden`", pois só os elementos decorativos têm (há um teste que garante isso).
+
+**Medido com 100 lojas e 2 unidades cada (2.297 contas, SQLite local):** painel da diretoria carrega em ~0,5-0,7 s, XLSX em ~1,1 s, CSV em ~0,2 s. Em produção (Postgres) a rede soma algumas dezenas de ms; confirmar no Railway.
+
+**Fica para depois da decisão (precisa de desenho e de dados reais, não é para a apresentação de terça):** fila de pendências com responsável, prazo e status; ciclo de vida de alertas (atribuir, comentar, adiar, resolver, reabrir); investigação de alerta ponta a ponta; importação e conferência em lote; painel de *qualidade dos dados* (lojas completas, contas aguardando conferência); separar a diretoria em abas (resumo, desempenho, custos, qualidade, detalhe); grupos/regiões e escopo de acesso por loja; passkeys/WebAuthn; `REQUIRE_ADMIN_2FA=true` em produção (depois que cada administrador ativar o seu 2FA, para ninguém ficar de fora); pentest externo e teste de impressão A3 com diretores.
+
 ## Próximos passos de baixo risco
 
 1. kWh/dia e R$/dia ao lado da variação mensal (consumo, valor e dias já existem).
