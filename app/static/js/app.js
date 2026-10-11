@@ -1,10 +1,13 @@
 // Comportamentos globais sem JS inline (compatível com CSP sem 'unsafe-inline' em script).
 document.addEventListener('click', (e) => {
+  const sheet = e.target.closest('[data-print-sheet]');       // só a folha da loja (a conta original vai em outro trabalho de impressão)
+  if (sheet) { e.preventDefault(); document.documentElement.classList.add('sheet-only'); window.print(); return; }
   const print = e.target.closest('[data-print]');
   if (print) { e.preventDefault(); window.print(); return; }
   const c = e.target.closest('button[data-confirm], a[data-confirm]');
   if (c && !window.confirm(c.dataset.confirm)) e.preventDefault();
 });
+window.addEventListener('afterprint', () => document.documentElement.classList.remove('sheet-only'));
 document.addEventListener('submit', (e) => {
   const f = e.target;
   const msg = f.dataset && f.dataset.confirm;

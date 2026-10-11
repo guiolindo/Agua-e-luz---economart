@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-head no-print">
   <div><div class="crumbs"><a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div><h1>{{ 'Folha para assinatura' if sign_bill else 'Folha de impressão' }}</h1>
-    <div class="muted">{% if sign_bill %}A folha da loja e, em seguida, a conta original ({{ sign_bill.reference|month_label }}) — para o diretor conferir e assinar.{% else %}Uma folha A4 com resumo, gráfico, informações e dados — pronta para imprimir.{% endif %}</div></div>
+    <div class="muted">{% if sign_bill %}Em dois passos: <strong>1</strong> a folha da loja (horizontal) e <strong>2</strong> a conta original ({{ sign_bill.reference|month_label }}), do jeito que ela é — para o diretor conferir e assinar.{% else %}Uma folha A4 com resumo, gráfico, informações e dados — pronta para imprimir.{% endif %}</div></div>
   <form method="get" class="actions">
     <label for="s" style="margin:0">De</label><input id="s" type="month" name="start" value="{{ start.strftime('%Y-%m') }}" style="width:auto">
     <label for="e" style="margin:0">Até</label><input id="e" type="month" name="end" value="{{ end.strftime('%Y-%m') }}" style="width:auto">
@@ -15,7 +15,9 @@
     <label style="margin:0;font-weight:400"><input type="checkbox" name="all" value="1" {{ 'checked' if all_types }}> um por folha (todos)</label>
     {% if sign_bill %}<input type="hidden" name="bill" value="{{ sign_bill.id }}">
     <label style="margin:0;font-weight:400"><input type="checkbox" name="doc" value="1" {{ 'checked' if include_doc }} {{ 'disabled' if not (sign_bill.document and sign_bill.document.available) }}> Incluir a conta original</label>{% endif %}
-    <button class="btn">Atualizar</button><button class="btn primary" type="button" data-print>Imprimir{{ ' para assinatura' if sign_bill }}</button>
+    <button class="btn">Atualizar</button>{% if sign_bill %}<button class="btn primary" type="button" data-print-sheet>1 · Imprimir a folha da loja</button>
+    {% if orig_href %}<a class="btn primary" href="{{ orig_href }}" target="_blank" rel="noopener" title="Abre a conta original, do jeito que ela é (em pé ou deitada), pronta para imprimir">2 · Imprimir a conta original</a>{% endif %}
+    <button class="btn" type="button" data-print title="Folha e conta no mesmo trabalho de impressão (só funciona se a impressora aceitar páginas em pé e deitadas juntas)">Tudo junto</button>{% else %}<button class="btn primary" type="button" data-print>Imprimir</button>{% endif %}
   </form>
 </div>
 

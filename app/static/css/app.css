@@ -332,6 +332,7 @@ table.dense th, table.dense td { padding: 8px 4px; font-size: 12px; } table.dens
 table.dense th { letter-spacing: 0; font-size: 10.5px; } table.dense td.num { font-size: 11.5px; }
 .stack { display: grid; gap: 16px; align-content: start; min-width: 0; }
 @media screen { .report { overflow-x: auto; } }   /* a folha tem largura de papel: na tela rola dentro do cartão, não a página toda */
+@media print { html.sheet-only .orig-page { display: none !important; } }
 /* cada página da conta original sai na própria orientação, SEM esticar: largura e altura "auto" + limites em mm (a proporção da imagem é preservada) */
 @media print { .orig-page { break-before: page; margin: 0; } .orig-page.p { page: orig-p; } .orig-page.l { page: orig-l; }
   .orig-page .orig { display: block; margin: 0 auto; width: auto; height: auto; object-fit: contain; }

@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import Response
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Document, EnergyBill, User
 from app.security import current_user
+from app.web import render
 from app.services import pdf_pages
 from app.services.crypto_service import CryptoError
 
@@ -48,6 +49,26 @@ def document(doc_id: int, user: User = Depends(current_user), db: Session = Depe
     if doc.content_type != "application/pdf":  # imagem: nada de script/rede mesmo que o conteúdo seja malicioso
         headers["Content-Security-Policy"] = "default-src 'none'; img-src 'self' data:; sandbox"
     return Response(content, media_type=doc.content_type, headers=headers)
+
+
+@router.get("/impressao/original/{doc_id}")
+def print_original(request: Request, doc_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Foto da conta original sozinha numa página da MESMA orientação dela, pronta para imprimir (um trabalho de impressão
+    só, sem misturar com a folha da loja). PDF não passa por aqui: abre direto no leitor do navegador."""
+    doc = db.get(Document, doc_id)
+    if not doc:
+        raise HTTPException(404, "Documento não encontrado.")
+    if doc.content_type == "application/pdf":
+        return RedirectResponse(f"/documents/{doc_id}", status_code=303)
+    if not _visible(doc_id, user, db):
+        raise HTTPException(403, "Documento não disponível para o seu perfil.")
+    if doc.data is None:
+        raise HTTPException(410, "O arquivo original expirou e foi removido.")
+    try:
+        size = pdf_pages.image_display_size(doc.plain())
+    except CryptoError:
+        raise HTTPException(500, "Não foi possível abrir o documento (erro de chave de criptografia).")
+    return render(request, "documents/print_original.html", user=user, doc=doc, land=bool(size and size[0] > size[1]))
 
 
 @router.get("/documents/{doc_id}/pages/{number}.png")

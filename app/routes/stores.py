@@ -208,7 +208,7 @@ def store_report(request: Request, store_id: int, start: str | None = None, end:
         sign_bill = None
     if sign_bill is not None and type_id is None:
         type_id = sign_bill.record_type_id                              # o bloco do imóvel é o do fornecedor da conta
-    include_doc, doc_pages, orig_pages = False, 0, []
+    include_doc, doc_pages, orig_pages, orig_href = False, 0, [], None
     if sign_bill is not None and doc and sign_bill.document and sign_bill.document.available:
         include_doc = True
         from app.services import pdf_pages
@@ -224,7 +224,11 @@ def store_report(request: Request, store_id: int, start: str | None = None, end:
                 orig_pages = [{"src": f"/documents/{sign_bill.document_id}", "land": bool(size and size[0] > size[1]), "n": 1}]
         except Exception:                                               # arquivo ilegível: a folha imprime e o original abre por link
             doc_pages, orig_pages = 0, []
+    if sign_bill is not None and sign_bill.document and sign_bill.document.available:
+        # a conta original em OUTRO trabalho de impressão: PDF abre no leitor do navegador, foto na página própria
+        orig_href = (f"/documents/{sign_bill.document_id}" if sign_bill.document.content_type == "application/pdf"
+                     else f"/impressao/original/{sign_bill.document_id}")
     data = chart_service.report_data(db, store, parse_reference(start), parse_reference(end), by, type_id, bool(all))
     return render(request, "stores/report.html", user=user, store=store, generated=datetime.now(timezone.utc),
-                  sign_bill=sign_bill, include_doc=include_doc, doc_pages=doc_pages, orig_pages=orig_pages,
+                  sign_bill=sign_bill, include_doc=include_doc, doc_pages=doc_pages, orig_pages=orig_pages, orig_href=orig_href,
                   **{**data, "by": by})

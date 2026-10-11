@@ -151,3 +151,33 @@ def test_print_pages_of_a_pdf_use_the_sharper_render():
     sharp = pdf_pages.render_page(buf.getvalue(), 1, pdf_pages.PRINT_SCALE)
     assert width(sharp) > width(normal) * 1.5
     assert "hq=1" in open("app/routes/stores.py", encoding="utf-8").read()
+
+
+def test_sign_page_has_two_separate_print_jobs(client, db, png):
+    """Cada impressão com uma orientação só: 1) a folha da loja; 2) a conta original sozinha (foto ou PDF do jeito que é)."""
+    _, bill = _saved_bill(client, db, _png(600, 900))
+    html = client.get(f"/stores/{bill.unit.store_id}/report?bill={bill.id}&doc=1").text
+    assert "data-print-sheet" in html and "1 · Imprimir a folha da loja" in html and "2 · Imprimir a conta original" in html
+    assert f'href="/impressao/original/{bill.document_id}"' in html and "Tudo junto" in html
+    assert "html.sheet-only .orig-page { display: none" in open("app/static/css/app.css", encoding="utf-8").read()
+    assert "data-print-sheet" in open("app/static/js/app.js", encoding="utf-8").read()
+
+
+def test_original_photo_print_page_matches_the_photo_orientation(client, db):
+    _, bill = _saved_bill(client, db, _png(900, 600))
+    r = client.get(f"/impressao/original/{bill.document_id}")
+    assert r.status_code == 200 and "size: A4 landscape" in r.text and f'src="/documents/{bill.document_id}"' in r.text
+    assert "window.print()" in r.text and "nonce=" in r.text                                      # sem script inline solto (CSP)
+
+
+def test_original_portrait_photo_prints_in_portrait(client, db):
+    _, bill = _saved_bill(client, db, _png(600, 900))
+    assert "size: A4 portrait" in client.get(f"/impressao/original/{bill.document_id}").text
+
+
+def test_original_print_page_needs_login_and_missing_is_404(client):
+    from tests.test_security import _new_client
+
+    assert client.get("/impressao/original/99999").status_code == 404
+    r = _new_client().get("/impressao/original/1")
+    assert "/login" in str(r.url)
