@@ -42,18 +42,18 @@
       <a class="btn sm" href="/manual">Novo lançamento manual</a>
     </div>{% endif %}
   </div>
-  <div class="tablewrap"><table>
+  <div class="tablewrap"><table class="cards">
     <thead><tr><th>Loja</th><th>Unidade / tipo</th><th class="num">Valor</th><th>Vencimento</th><th>Origem</th><th><span class="sr">Ações</span></th></tr></thead>
     <tbody>{% set ns = namespace(m='') %}{% for r in rows %}
       {% set lbl = r.reference|month_label %}
       {% if lbl != ns.m %}{% set ns.m = lbl %}<tr class="group-row"><td colspan="6">{{ lbl }}</td></tr>{% endif %}
       <tr>
-        <td><a href="/stores/{{ r.store_id }}"><strong>{{ r.store_code }}</strong></a></td>
-        <td>{% if r.unit_id %}<a href="/units/{{ r.unit_id }}" class="mono">{{ r.unit_number }}</a>{% else %}<span class="muted">—</span>{% endif %}
+        <td class="c-store"><a href="/stores/{{ r.store_id }}"><strong>{{ r.store_code }}</strong></a></td>
+        <td class="c-unit">{% if r.unit_id %}<a href="/units/{{ r.unit_id }}" class="mono">{{ r.unit_number }}</a>{% else %}<span class="muted">—</span>{% endif %}
           <div class="muted small">{{ r.type_name }}{% if r.invoice_number %} · NF {{ r.invoice_number }}{% endif %}</div></td>
-        <td class="num"><strong>{{ r.value|brl }}</strong></td>
-        <td class="nowrap">{{ r.due_date|date_br if r.due_date else '—' }}</td>
-        <td><span class="badge{% if r.origin == 'bill' %} ok{% endif %}">{{ 'Foto/IA' if r.origin == 'bill' else 'Manual' }}</span></td>
+        <td class="num c-val"><strong>{{ r.value|brl }}</strong></td>
+        <td class="nowrap c-due">{{ r.due_date|date_br if r.due_date else '—' }}</td>
+        <td class="c-orig"><span class="badge{% if r.origin == 'bill' %} ok{% endif %}">{{ 'Foto/IA' if r.origin == 'bill' else 'Manual' }}</span></td>
         <td class="right actcell">
           {% if r.doc_id %}<a class="btn sm" href="/documents/{{ r.doc_id }}" target="_blank" rel="noopener" title="Abre o PDF/foto original em uma aba nova">PDF</a>{% endif %}
           {% if r.bill_id %}<a class="btn sm primary" href="/stores/{{ r.store_id }}/report?bill={{ r.bill_id }}&doc=1" target="_blank" rel="noopener" title="Folha da loja + conta original, para o diretor assinar">Imprimir para assinatura</a>
@@ -61,7 +61,7 @@
           {% if user.can_write %}<a class="btn sm" href="/manual?{{ 'bill=' ~ r.bill_id if r.bill_id else 'record=' ~ r.record_id }}">Editar</a>{% endif %}
         </td>
       </tr>
-    {% else %}<tr><td colspan="6"><div class="empty"><strong>Nenhuma conta encontrada</strong>Ajuste os filtros ou importe uma conta.</div></td></tr>{% endfor %}
+    {% else %}<tr class="empty-row"><td colspan="6"><div class="empty"><strong>Nenhuma conta encontrada</strong>Ajuste os filtros ou importe uma conta.</div></td></tr>{% endfor %}
     </tbody></table></div>
 </section>
 {% endblock %}

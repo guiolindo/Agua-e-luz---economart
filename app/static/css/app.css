@@ -681,3 +681,21 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
 /* mapa de calor (12 meses) no notebook: colunas mais justas para não rolar para o lado (depois das regras base) */
 @media (max-width: 1500px) { table.heat td, table.heat th { padding: 5px 3px; font-size: 11px; letter-spacing: 0; } table.heat th { font-size: 10px; } }
 @media (max-width: 1300px) and (min-width: 801px) { table.dense th, table.dense td { padding-left: 3px; padding-right: 3px; } table.dense td.num { font-size: 11px; } table.dense th { font-size: 10px; } :root { --side: 212px; } }
+/* lista de Contas no celular: cada linha vira um cartão (loja e valor no alto, botões embaixo, sem rolar para o lado) */
+@media (max-width: 800px) {
+  table.cards, table.cards tbody { display: block; width: 100%; }
+  table.cards thead { display: none; }
+  table.cards tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "store val" "unit unit" "due orig" "act act"; gap: 4px 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+  table.cards tr.group-row, table.cards tr.empty-row { display: block; padding: 0; }
+  table.cards td { display: block; padding: 0; border: 0; min-width: 0; }
+  table.cards tr:not(.group-row) td { background: none; }
+  table.cards tr.group-row td { padding: 8px 16px; }
+  table.cards .c-store { grid-area: store; font-size: 15px; }
+  table.cards .c-val { grid-area: val; font-size: 15px; }
+  table.cards .c-unit { grid-area: unit; overflow-wrap: anywhere; }
+  table.cards .c-due { grid-area: due; color: var(--muted); font-size: 13px; }
+  table.cards .c-due::before { content: "Vence "; }
+  table.cards .c-orig { grid-area: orig; text-align: right; }
+  table.cards .actcell { grid-area: act; min-width: 0; max-width: none; text-align: left; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  table.cards .actcell .btn { margin: 0; }
+}

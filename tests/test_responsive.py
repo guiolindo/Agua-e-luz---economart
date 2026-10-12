@@ -30,3 +30,11 @@ def test_wide_tables_fit_the_laptop_without_side_scroll():
     assert 'class="right actcell"' in unit and 'class="num hide-md">Dias' in unit
     assert 'table class="dense"' in open("app/templates/stores/history.html", encoding="utf-8").read()
     assert 'class="right actcell"' in open("app/templates/bills/list.html", encoding="utf-8").read()
+
+
+def test_bills_list_turns_into_cards_on_the_phone(client):
+    """No celular a lista de Contas era uma tabela larga (botões fora da tela); agora cada conta vira um cartão."""
+    assert "@media (max-width: 800px) {\n  table.cards, table.cards tbody { display: block;" in CSS
+    assert 'grid-template-areas: "store val" "unit unit" "due orig" "act act"' in CSS
+    html = client.get("/notas").text
+    assert '<table class="cards">' in html
