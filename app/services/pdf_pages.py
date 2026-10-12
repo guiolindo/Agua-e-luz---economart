@@ -3,6 +3,7 @@ import io
 import threading
 
 import pypdfium2 as pdfium
+from PIL import Image
 
 MAX_PAGES = 6          # uma conta tem 1–2 páginas; mais que isso é arquivo errado, não vale imprimir
 SCALE = 1.6            # ~115 dpi: legível na tela (conferência) sem gerar imagens pesadas
@@ -59,8 +60,14 @@ def image_display_size(data: bytes) -> tuple[int, int] | None:
         return None
 
 
-def render_page(data: bytes, number: int, scale: float = SCALE) -> bytes | None:
-    """PNG da página `number` (1-based), ou None se não existir/ilegível."""
+def _rotated(image, rotate: bool):
+    # Impressão para assinatura: o trabalho inteiro é A4 deitado (uma orientação só, que toda impressora aceita).
+    # A página em pé é girada 90° para ocupar a folha deitada: no papel, virando a folha, ela fica em pé, inteira.
+    return image.transpose(Image.Transpose.ROTATE_90) if rotate else image
+
+
+def render_page(data: bytes, number: int, scale: float = SCALE, rotate: bool = False) -> bytes | None:
+    """PNG da página `number` (1-based), ou None se não existir/ilegível. `rotate` gira 90° (ver `_rotated`)."""
     if not 1 <= number <= MAX_PAGES:
         return None
     try:
@@ -72,8 +79,25 @@ def render_page(data: bytes, number: int, scale: float = SCALE) -> bytes | None:
                 image = pdf[number - 1].render(scale=scale).to_pil().convert("RGB")
             finally:
                 pdf.close()
+        image = _rotated(image, rotate)
         out = io.BytesIO()
         image.save(out, "PNG", optimize=True)
+        return out.getvalue()
+    except Exception:
+        return None
+
+
+def render_photo(data: bytes, rotate: bool = False, max_side: int = 3000) -> bytes | None:
+    """Foto da conta pronta para o papel: aplica a rotação EXIF do celular, limita o tamanho e (opcional) gira 90°."""
+    try:
+        from PIL import ImageOps
+
+        with Image.open(io.BytesIO(data)) as im:
+            image = ImageOps.exif_transpose(im).convert("RGB")
+        image.thumbnail((max_side, max_side))
+        image = _rotated(image, rotate)
+        out = io.BytesIO()
+        image.save(out, "JPEG", quality=90)
         return out.getvalue()
     except Exception:
         return None

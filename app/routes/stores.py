@@ -214,14 +214,20 @@ def store_report(request: Request, store_id: int, start: str | None = None, end:
         from app.services import pdf_pages
         try:
             raw = sign_bill.document.plain()
+            # Um trabalho de impressão só, todo em A4 DEITADO (a folha da loja já é deitada): impressora nenhuma aceita
+            # bem páginas em pé e deitadas no mesmo trabalho. A página da conta que é em pé vai girada 90° (`rot=1`) e
+            # ocupa a folha inteira: no papel, virando a folha, ela fica em pé, na proporção original, sem esticar.
+            # `screen` é a mesma página sem girar, para conferir na tela.
+            base = f"/documents/{sign_bill.document_id}"
             if sign_bill.document.content_type == "application/pdf":
                 sizes = pdf_pages.page_sizes(raw)
                 doc_pages = len(sizes)
-                orig_pages = [{"src": f"/documents/{sign_bill.document_id}/pages/{n}.png?hq=1", "land": w > h, "n": n}
-                              for n, (w, h) in enumerate(sizes, 1)]
-            else:                                                       # foto: a página sai na orientação da própria foto
+                orig_pages = [{"src": f"{base}/pages/{n}.png?hq=1&rot={0 if w > h else 1}", "screen": f"{base}/pages/{n}.png",
+                               "land": w > h, "n": n} for n, (w, h) in enumerate(sizes, 1)]
+            else:
                 size = pdf_pages.image_display_size(raw)
-                orig_pages = [{"src": f"/documents/{sign_bill.document_id}", "land": bool(size and size[0] > size[1]), "n": 1}]
+                land = bool(size and size[0] > size[1])
+                orig_pages = [{"src": f"{base}/pages/1.png?rot={0 if land else 1}", "screen": base, "land": land, "n": 1}]
         except Exception:                                               # arquivo ilegível: a folha imprime e o original abre por link
             doc_pages, orig_pages = 0, []
     if sign_bill is not None and sign_bill.document and sign_bill.document.available:

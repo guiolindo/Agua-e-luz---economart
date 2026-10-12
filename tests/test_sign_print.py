@@ -28,9 +28,11 @@ def test_report_with_bill_prints_the_original_after_the_sheet(client, db, png):
     assert r.status_code == 200
     html = r.text
     assert "Folha para assinatura" in html and 'class="orig-page ' in html
-    assert f'src="/documents/{bill.document_id}"' in html                                   # foto original (não PDF)
+    assert f'src="/documents/{bill.document_id}"' in html                                   # foto original (não PDF), na tela
+    assert f'src="/documents/{bill.document_id}/pages/1.png?rot=' in html                   # e a versão para o papel
     assert html.index('class="sheet') < html.index('class="orig-page ')                      # a conta vem DEPOIS da folha
-    assert "@page orig-p" in client.get("/static/css/app.css").text and "@page orig-l" in client.get("/static/css/app.css").text
+    css = client.get("/static/css/app.css").text
+    assert "@page orig-l { size: A4 landscape" in css and "@page orig-p" not in css             # uma orientação só no trabalho
 
 
 def test_report_without_the_original_when_unchecked_or_no_bill(client, db, png):
@@ -89,12 +91,12 @@ def _png(w, h):
     return buf.getvalue()
 
 
-@pytest.mark.parametrize("w,h,cls", [(600, 900, "orig-page p"), (900, 600, "orig-page l")])
-def test_each_original_page_keeps_its_own_orientation(client, db, w, h, cls):
-    """A conta original sai na proporção e na orientação dela: foto em pé = página em pé, foto deitada = página deitada."""
+@pytest.mark.parametrize("w,h,cls,rot", [(600, 900, "orig-page p", 1), (900, 600, "orig-page l", 0)])
+def test_portrait_pages_are_turned_to_fill_the_landscape_sheet(client, db, w, h, cls, rot):
+    """Tudo sai deitado (um trabalho, uma orientação); a conta em pé vai girada 90° e, virando a folha, fica em pé."""
     _, bill = _saved_bill(client, db, _png(w, h))
     html = client.get(f"/stores/{bill.unit.store_id}/report?bill={bill.id}&doc=1").text
-    assert f'class="{cls}"' in html
+    assert f'class="{cls}"' in html and f'/documents/{bill.document_id}/pages/1.png?rot={rot}"' in html
 
 
 def test_pdf_pages_report_their_real_orientation():
@@ -129,7 +131,7 @@ def test_image_orientation_follows_exif_like_the_browser():
 
 def test_original_images_are_never_stretched_in_print_css():
     css = open("app/static/css/app.css", encoding="utf-8").read()
-    assert "width: auto; height: auto; object-fit: contain" in css and "max-height: 278mm" in css and "max-height: 190mm" in css
+    assert "width: auto; height: auto; max-width: 279mm; max-height: 192mm; object-fit: contain" in css
 
 
 def test_print_pages_of_a_pdf_use_the_sharper_render():
@@ -153,16 +155,41 @@ def test_print_pages_of_a_pdf_use_the_sharper_render():
     assert "hq=1" in open("app/routes/stores.py", encoding="utf-8").read()
 
 
-def test_sign_page_has_two_separate_print_jobs(client, db, png):
-    """Cada impressão com uma orientação só: 1) a folha da loja; 2) a conta original sozinha (foto ou PDF do jeito que é)."""
+def test_sign_page_has_just_two_buttons(client, db, png):
+    """Antes eram cinco botões para a mesma coisa. Agora: relatório + conta (um trabalho) ou só o relatório."""
     _, bill = _saved_bill(client, db, _png(600, 900))
     html = client.get(f"/stores/{bill.unit.store_id}/report?bill={bill.id}&doc=1").text
-    assert "data-print-chain" in html and "Imprimir tudo: folha e depois a conta" in html and "data-print-sheet" in html
-    assert f'data-next="/impressao/original/{bill.document_id}"' in html and f'href="/impressao/original/{bill.document_id}"' in html
-    assert "Tudo no mesmo trabalho" in html
+    assert "Imprimir relatório + conta" in html and "Só o relatório" in html
+    for gone in ("data-print-chain", "Imprimir tudo: folha e depois a conta", "Tudo no mesmo trabalho", "Só a conta original"):
+        assert gone not in html
     assert "html.sheet-only .orig-page { display: none" in open("app/static/css/app.css", encoding="utf-8").read()
-    js = open("app/static/js/app.js", encoding="utf-8").read()
-    assert "data-print-sheet" in js and "data-print-chain" in js and "afterprint" in js and "window.location.href = next" in js
+
+
+def test_page_image_is_turned_on_request_and_keeps_its_proportion(client, db):
+    import io
+
+    from PIL import Image
+
+    _, bill = _saved_bill(client, db, _png(600, 900))
+    upright = Image.open(io.BytesIO(client.get(f"/documents/{bill.document_id}/pages/1.png?rot=0").content))
+    turned = Image.open(io.BytesIO(client.get(f"/documents/{bill.document_id}/pages/1.png?rot=1").content))
+    assert upright.size == (600, 900) and turned.size == (900, 600)                          # só gira, não estica
+    assert client.get(f"/documents/{bill.document_id}/pages/2.png").status_code == 404        # foto tem uma página só
+
+
+def test_pdf_page_render_can_be_turned():
+    import io
+    import struct
+
+    from PIL import Image
+
+    from app.services import pdf_pages
+
+    buf = io.BytesIO()
+    Image.new("RGB", (600, 900), "white").save(buf, "PDF", resolution=72)
+    png = pdf_pages.render_page(buf.getvalue(), 1, rotate=True)
+    w, h = struct.unpack(">II", png[16:24])
+    assert w > h
 
 
 def test_original_photo_print_page_matches_the_photo_orientation(client, db):

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-head no-print">
   <div><div class="crumbs"><a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div><h1>{{ 'Folha para assinatura' if sign_bill else 'Folha de impressão' }}</h1>
-    <div class="muted">{% if sign_bill %}A folha da loja (horizontal) e a conta original ({{ sign_bill.reference|month_label }}), do jeito que ela é — para o diretor conferir e assinar. O botão laranja imprime as duas, uma logo depois da outra.{% else %}Uma folha A4 com resumo, gráfico, informações e dados — pronta para imprimir.{% endif %}</div></div>
+    <div class="muted">{% if sign_bill %}O relatório da loja e, atrás, a conta original ({{ sign_bill.reference|month_label }}), para o diretor conferir e assinar. Tudo sai deitado num trabalho só; a página da conta que é em pé vai girada e ocupa a folha inteira: no papel, é só virar a folha.{% else %}Uma folha A4 com resumo, gráfico, informações e dados — pronta para imprimir.{% endif %}</div></div>
   <form method="get" class="actions">
     <label for="s" style="margin:0">De</label><input id="s" type="month" name="start" value="{{ start.strftime('%Y-%m') }}" style="width:auto">
     <label for="e" style="margin:0">Até</label><input id="e" type="month" name="end" value="{{ end.strftime('%Y-%m') }}" style="width:auto">
@@ -13,12 +13,12 @@
     <label for="t" style="margin:0">Imóvel / fornecedor</label>
     <select id="t" name="type_id" style="width:auto">{% for t in available %}<option value="{{ t.id }}" {{ 'selected' if type_id == t.id }}>{{ t.name }}</option>{% endfor %}</select>
     <label style="margin:0;font-weight:400"><input type="checkbox" name="all" value="1" {{ 'checked' if all_types }}> um por folha (todos)</label>
-    {% if sign_bill %}<input type="hidden" name="bill" value="{{ sign_bill.id }}">
-    <label style="margin:0;font-weight:400"><input type="checkbox" name="doc" value="1" {{ 'checked' if include_doc }} {{ 'disabled' if not (sign_bill.document and sign_bill.document.available) }}> Incluir a conta original</label>{% endif %}
-    <button class="btn">Atualizar</button>{% if sign_bill %}{% if orig_href %}<button class="btn primary" type="button" data-print-chain data-next="{{ orig_href }}" title="Imprime a folha da loja (horizontal) e, logo depois, abre a conta original (do jeito que ela é) já pronta para imprimir">Imprimir tudo: folha e depois a conta</button>
-    <button class="btn" type="button" data-print-sheet>Só a folha</button><a class="btn" href="{{ orig_href }}" target="_blank" rel="noopener">Só a conta original</a>
-    <button class="btn" type="button" data-print title="Folha e conta no MESMO trabalho de impressão (só funciona se a impressora aceitar páginas em pé e deitadas juntas)">Tudo no mesmo trabalho</button>
-    {% else %}<button class="btn primary" type="button" data-print-sheet>Imprimir a folha da loja</button>{% endif %}{% else %}<button class="btn primary" type="button" data-print>Imprimir</button>{% endif %}
+    {% if sign_bill %}<input type="hidden" name="bill" value="{{ sign_bill.id }}"><input type="hidden" name="doc" value="1">{% endif %}
+    <button class="btn">Atualizar</button>
+    {% if sign_bill %}{% if orig_pages %}<button class="btn primary" type="button" data-print title="Relatório da loja e, atrás, a conta original: tudo num trabalho só">Imprimir relatório + conta</button>
+    <button class="btn" type="button" data-print-sheet>Só o relatório</button>
+    {% else %}<button class="btn primary" type="button" data-print-sheet>Imprimir o relatório</button>{% endif %}
+    {% else %}<button class="btn primary" type="button" data-print>Imprimir</button>{% endif %}
   </form>
 </div>
 
@@ -78,8 +78,8 @@
     <span>Variação = mês em relação ao mês anterior (↑ gastou mais, ↓ gastou menos) · barra escura = último mês</span></footer>
 </div>
 {% if sign_bill and include_doc %}
-  {# a conta original sai DEPOIS da folha, cada página na proporção e na orientação originais (retrato ou paisagem) #}
-  {% for pg in orig_pages %}<section class="orig-page {{ 'l' if pg.land else 'p' }}" aria-label="Conta original, página {{ pg.n }}"><img class="orig" src="{{ pg.src }}" alt="Página {{ pg.n }} da conta original"></section>{% endfor %}
+  {# a conta original sai DEPOIS da folha, no mesmo trabalho e na mesma orientação (deitada); página em pé vai girada, sem esticar #}
+  {% for pg in orig_pages %}<section class="orig-page {{ 'l' if pg.land else 'p' }}" aria-label="Conta original, página {{ pg.n }}"><img class="orig orig-screen" src="{{ pg.screen }}" alt="Página {{ pg.n }} da conta original"><img class="orig orig-print" src="{{ pg.src }}" alt=""></section>{% endfor %}
   {% if not orig_pages %}<p class="muted no-print">Não foi possível preparar o arquivo original para a impressão. <a href="/documents/{{ sign_bill.document_id }}" target="_blank" rel="noopener">Abra-o</a> e imprima separado.</p>{% endif %}
 {% endif %}
 {% endblock %}

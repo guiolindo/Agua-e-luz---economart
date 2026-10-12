@@ -5,7 +5,7 @@ testes e o que **não** é coberto.
 
 ## Estado atual
 
-- **367 testes** passando na última execução completa (2026-10-12). Dos 367, 61 estão em
+- **369 testes** passando na última execução completa (2026-10-12). Dos 369, 61 estão em
   `test_security.py`. O número cresce a cada mudança; confira com
   `python -m pytest --collect-only -q | tail -1`.
 - Tempo: cerca de 2 minutos numa execução local com SQLite (a maior

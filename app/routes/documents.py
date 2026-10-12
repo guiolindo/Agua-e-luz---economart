@@ -82,10 +82,13 @@ def print_original(request: Request, doc_id: int, user: User = Depends(current_u
 
 
 @router.get("/documents/{doc_id}/pages/{number}.png")
-def document_page(doc_id: int, number: int, hq: int = 0, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """Página `number` de um PDF original como PNG (usada na impressão da conta)."""
+def document_page(doc_id: int, number: int, hq: int = 0, rot: int = 0, user: User = Depends(current_user),
+                  db: Session = Depends(get_db)):
+    """Página `number` do original como imagem (impressão da conta). PDF: a página; foto: só a página 1.
+    `rot=1` gira 90° (página em pé numa impressão toda deitada)."""
     doc = db.get(Document, doc_id)
-    if not doc or doc.content_type != "application/pdf":
+    is_pdf = bool(doc) and doc.content_type == "application/pdf"
+    if not doc or (not is_pdf and number != 1):
         raise HTTPException(404, "Página não encontrada.")
     if not _visible(doc_id, user, db):
         raise HTTPException(403, "Documento não disponível para o seu perfil.")
@@ -95,9 +98,12 @@ def document_page(doc_id: int, number: int, hq: int = 0, user: User = Depends(cu
         content = doc.plain()
     except CryptoError:
         raise HTTPException(500, "Não foi possível abrir o documento (erro de chave de criptografia).")
-    png = pdf_pages.render_page(content, number, pdf_pages.PRINT_SCALE if hq else pdf_pages.SCALE)
-    if png is None:
+    if is_pdf:
+        img, mime = pdf_pages.render_page(content, number, pdf_pages.PRINT_SCALE if hq else pdf_pages.SCALE, rotate=bool(rot)), "image/png"
+    else:
+        img, mime = pdf_pages.render_photo(content, rotate=bool(rot)), "image/jpeg"
+    if img is None:
         raise HTTPException(404, "Página não encontrada.")
-    return Response(png, media_type="image/png", headers={
+    return Response(img, media_type=mime, headers={
         "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store",
         "Content-Security-Policy": "default-src 'none'; img-src 'self' data:; sandbox"})
