@@ -1,0 +1,9 @@
+{# Gráfico + a mesma informação em tabela (acessibilidade, impressão, quem prefere números). #}
+{% macro viz(cfg, title, height=240, horizontal=false) -%}
+{% set data = dict(cfg, horizontal=horizontal) %}
+<div class="viz" style="height:{{ height }}px"><canvas data-viz='{{ data|tojson }}' role="img" aria-label="{{ title }}"></canvas></div>
+<details class="viz-table"><summary>Ver em tabela</summary>
+  <div class="tablewrap"><table class="dense"><thead><tr><th>{{ cfg.get('axis', '') }}</th>{% for s in cfg.series %}<th class="num">{{ s.label }}</th>{% endfor %}{% if cfg.series|length > 1 %}<th class="num">Total</th>{% endif %}</tr></thead>
+  <tbody>{% for l in cfg.labels %}{% set i = loop.index0 %}<tr><td>{{ l }}</td>{% set ns = namespace(t=0) %}{% for s in cfg.series %}<td class="num">{{ s.data[i] }}</td>{% set ns.t = ns.t + s.data[i] %}{% endfor %}{% if cfg.series|length > 1 %}<td class="num"><strong>{{ ns.t }}</strong></td>{% endif %}</tr>{% endfor %}</tbody></table></div>
+</details>
+{%- endmacro %}

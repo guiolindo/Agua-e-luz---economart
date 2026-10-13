@@ -1,21 +1,44 @@
 {% extends "base.html" %}
 {% from "macros.html" import hero %}
+{% from "admin/_viz.html" import viz %}
 {% block title %}Painel admin · Economart Energia{% endblock %}
 {% block content %}
-{% call hero(greeting_now() ~ ", " ~ user.username, "Painel admin", "Quem está usando o sistema, o que foi feito por último e o que pede atenção") %}
+{% call hero(greeting_now() ~ ", " ~ user.username, "Painel admin", "Quem está usando o sistema, quem lançou o quê e o que pede atenção · métricas de " ~ (month|month_label)) %}
+  <form method="get" class="hero-month" title="Mês das métricas (contas lançadas, ranking, importações)"><label class="sr" for="mes">Mês</label><input id="mes" type="month" name="mes" value="{{ month.strftime('%Y-%m') }}" max="{{ this_month.strftime('%Y-%m') }}" data-autosubmit></form>
   <a class="btn on-dark" href="/admin/users">Usuários</a><a class="btn on-dark" href="/admin/audit">Auditoria completa</a>
 {% endcall %}
 
 <div class="grid cols-4" style="margin-bottom:16px">
   <div class="kpi"><div class="label">On-line agora</div><div class="value">{{ p.online|length }}</div><div class="sub">de {{ p.active_users }} usuário(s) ativo(s)</div></div>
-  <div class="kpi alt"><div class="label">Contas lançadas hoje</div><div class="value">{{ p.entries_today }}</div><div class="sub">{{ p.entries_week }} nos últimos 7 dias</div></div>
-  <div class="kpi"><div class="label">Importações (7 dias)</div><div class="value">{{ p.imports_week }}</div><div class="sub">fotos e PDFs enviados</div></div>
+  <div class="kpi alt"><div class="label">Contas lançadas em {{ month|month_label }}</div><div class="value">{{ r.total }}</div><div class="sub">{% if r.prev_total %}{% set d = (r.total - r.prev_total) / r.prev_total * 100 %}<span class="{{ 'up' if d > 0 else 'down' }}">{{ '↑' if d > 0 else '↓' if d < 0 else '→' }} {{ d|abs|round(0)|int }}%</span> vs. mês anterior ({{ r.prev_total }}){% else %}hoje: {{ p.entries_today }}{% endif %}</div></div>
+  <div class="kpi"><div class="label">Importadas pela IA</div><div class="value">{{ (r.ia / r.total * 100)|round(0)|int if r.total else 0 }}%</div><div class="sub">{{ r.ia }} pela IA · {{ r.mao }} à mão{% if f.saved_pct is not none %} · {{ f.saved_pct|round(0)|int }}% dos envios salvos{% endif %}</div></div>
   <div class="kpi {{ 'alt' if p.failed_logins }}"><div class="label">Senhas erradas (24 h)</div><div class="value">{{ p.failed_logins }}</div><div class="sub">{% if p.failed_logins %}<a href="/admin/audit?action=login_failed">ver quem</a>{% else %}nenhuma tentativa suspeita{% endif %}</div></div>
+</div>
+
+<section class="card adm-rank">
+  <div class="adm-head"><h2>Quem mais lançou contas em {{ month|month_label }}</h2><span class="muted small">{{ r.total }} conta(s){% if r.unassigned %} · {{ r.unassigned }} sem autor (carga inicial){% endif %} · clique num nome para ver tudo o que a pessoa fez</span></div>
+  {% if r.rows %}
+  <div class="adm-rank-body">
+    <ol class="podium">{% for x in r.rows[:3] %}<li class="p{{ loop.index }}"><span class="pos">{{ loop.index }}º</span>
+      <a href="{{ '/admin/usuarios/' ~ x.id if x.id else '#' }}"><strong>{{ x.name }}</strong></a>
+      <span class="big">{{ x.total }}</span><span class="muted small">{{ x.share|round(0)|int }}% do mês · {{ x.ia }} IA · {{ x.mao }} à mão</span></li>{% endfor %}</ol>
+    <div class="adm-rank-chart">{{ viz(dict(r.chart, axis='Usuário'), 'Contas lançadas por usuário em ' ~ (month|month_label), height=[140, 44 * r.rows|length + 70]|max, horizontal=true) }}</div>
+  </div>
+  {% else %}<p class="muted">Nenhuma conta lançada por usuário em {{ month|month_label }}.</p>{% endif %}
+</section>
+
+<div class="grid cols-2 adm-grid">
+  <section class="card"><div class="adm-head"><h2>Contas lançadas por dia</h2><span class="muted small">{{ month|month_label }}</span></div>
+    {{ viz(dict(daily, axis='Dia'), 'Contas lançadas por dia em ' ~ (month|month_label), height=230) }}</section>
+  <section class="card"><div class="adm-head"><h2>Importações (fotos e PDFs)</h2><span class="muted small">{{ f.total }} enviada(s) em {{ month|month_label }}</span></div>
+    {% if f.total %}<ul class="funnel">{% for s in f.stages %}<li class="st-{{ s.key }}"><span class="fl">{{ s.label }}</span><span class="fbar"><i style="width:{{ [s.pct, 0.5 if s.n else 0]|max }}%"></i></span><span class="fn"><strong>{{ s.n }}</strong> <span class="muted small">{{ s.pct|round(0)|int }}%</span></span></li>{% endfor %}</ul>
+    <p class="hint">Barradas = o arquivo não era conta de energia. Descartadas = alguém desistiu na conferência.</p>
+    {% else %}<p class="muted">Nenhuma foto ou PDF enviado neste mês.</p>{% endif %}</section>
 </div>
 
 <div class="grid cols-3 adm-grid">
   <section class="card"><h2>On-line agora</h2>
-    {% if p.online %}<ul class="adm-list">{% for x in p.online %}<li><span class="live" aria-hidden="true"></span><strong>{{ x.user.username }}</strong>{% if x.user.id == user.id %} <span class="muted small">(você)</span>{% endif %}<span class="muted small">{{ x.role }} · ativo {{ ago(x.last_seen) }}</span></li>{% endfor %}</ul>
+    {% if p.online %}<ul class="adm-list">{% for x in p.online %}<li><span class="live" aria-hidden="true"></span><a href="/admin/usuarios/{{ x.user.id }}"><strong>{{ x.user.username }}</strong></a>{% if x.user.id == user.id %} <span class="muted small">(você)</span>{% endif %}<span class="muted small">{{ x.role }} · ativo {{ ago(x.last_seen) }}</span></li>{% endfor %}</ul>
     {% else %}<p class="muted">Ninguém on-line.</p>{% endif %}
     <p class="hint">On-line = usou o sistema nos últimos {{ online_minutes }} minutos.</p></section>
 
@@ -36,6 +59,9 @@
     {% else %}<p class="muted">Ninguém exportou ainda.</p>{% endif %}</section>
 </div>
 
+<section class="card adm-grid"><div class="adm-head"><h2>Acessos por dia</h2><span class="muted small">últimos 30 dias · {{ logins.active_days }} dia(s) com acesso</span></div>
+  {{ viz(dict(logins, axis='Dia'), 'Acessos ao sistema por dia, últimos 30 dias', height=200) }}</section>
+
 <div class="grid cols-2 adm-grid">
   <section class="card"><h2>Apresentação do sistema</h2>
     <p><strong>{{ p.presentation_seen }}</strong> de {{ p.active_users }} usuário(s) já abriram.</p>
@@ -50,14 +76,16 @@
 <section class="card flush">
   <div style="padding:14px 18px 0"><h2>Usuários</h2></div>
   <div class="tablewrap"><table>
-    <thead><tr><th>Usuário</th><th>Perfil</th><th>Situação</th><th>Último login</th><th>Última atividade</th><th>Viu a apresentação</th><th class="hide-md">2FA</th></tr></thead>
+    <thead><tr><th>Usuário</th><th>Perfil</th><th>Situação</th><th>Último login</th><th>Última atividade</th><th>Viu a apresentação</th><th class="hide-md">2FA</th><th><span class="sr">Detalhes</span></th></tr></thead>
     <tbody>{% for x in p.people %}{% set u = x.user %}<tr>
-      <td><strong>{{ u.username }}</strong>{% if u.id == user.id %} <span class="muted small">(você)</span>{% endif %}</td><td>{{ x.role }}</td>
+      <td><a href="/admin/usuarios/{{ u.id }}"><strong>{{ u.username }}</strong></a>{% if u.id == user.id %} <span class="muted small">(você)</span>{% endif %}</td><td>{{ x.role }}</td>
       <td>{% if not u.active %}<span class="badge">Inativo</span>{% elif x.online %}<span class="badge ok">On-line</span>{% else %}<span class="badge">Off-line</span>{% endif %}</td>
       <td class="nowrap">{{ x.last_login|dt_br if x.last_login else 'nunca' }}</td>
       <td class="nowrap">{{ ago(x.last_seen) if x.last_seen else '—' }}</td>
       <td class="nowrap">{{ x.seen_presentation|dt_br if x.seen_presentation else '—' }}</td>
-      <td class="hide-md">{% if u.has_2fa %}<span class="badge ok">ativo</span>{% elif u.is_admin %}<span class="badge warn">falta</span>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+      <td class="hide-md">{% if u.has_2fa %}<span class="badge ok">ativo</span>{% elif u.is_admin %}<span class="badge warn">falta</span>{% else %}—{% endif %}</td>
+      <td class="right"><a class="btn sm" href="/admin/usuarios/{{ u.id }}">Ver atividade</a></td></tr>{% endfor %}</tbody>
   </table></div>
 </section>
 {% endblock %}
+{% block scripts %}<script src="/static/js/vendor/chart.umd.min.js"></script><script src="/static/js/admin.js?v={{ ASSET_VERSION }}"></script>{% endblock %}

@@ -719,3 +719,23 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
 .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22a35a; box-shadow: 0 0 0 0 rgba(34,163,90,.5); animation: live 2s infinite; margin-right: 4px; vertical-align: middle; }
 @keyframes live { 70% { box-shadow: 0 0 0 7px rgba(34,163,90,0); } 100% { box-shadow: 0 0 0 0 rgba(34,163,90,0); } }
 @media (prefers-reduced-motion: reduce) { .live { animation: none; } }
+/* painel admin: ranking, funil, gráficos */
+.adm-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; } .adm-head h2 { margin: 0; }
+.adm-rank { margin-bottom: 16px; } .adm-rank-body { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .adm-rank-body { grid-template-columns: minmax(0, 1fr); } }
+.podium { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.podium li { display: grid; grid-template-columns: 34px 1fr auto; grid-template-areas: "pos name big" "pos sub sub"; align-items: center; column-gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); }
+.podium .pos { grid-area: pos; font-size: 18px; font-weight: 800; color: var(--muted); } .podium a { grid-area: name; } .podium .big { grid-area: big; font-size: 22px; font-weight: 800; } .podium .muted { grid-area: sub; }
+.podium .p1 { border-color: var(--orange); background: var(--orange-soft, #fff4ea); } .podium .p1 .pos { color: var(--orange); }
+.viz { position: relative; width: 100%; } .viz-table { margin-top: 6px; } .viz-table summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+.viz-table[open] summary { margin-bottom: 6px; }
+.funnel { list-style: none; margin: 4px 0 8px; padding: 0; display: grid; gap: 8px; }
+.funnel li { display: grid; grid-template-columns: minmax(120px, 190px) minmax(0, 1fr) 70px; align-items: center; gap: 10px; font-size: 13px; }
+.funnel .fbar { height: 12px; background: var(--surface-2); border-radius: 6px; overflow: hidden; } .funnel .fbar i { display: block; height: 100%; background: #2e6bb0; border-radius: 0 4px 4px 0; }
+.funnel .st-rejected .fbar i, .funnel .st-failed .fbar i { background: #b0605f; } .funnel .st-cancelled .fbar i { background: #8a8f98; } .funnel .st-ready .fbar i, .funnel .st-processing .fbar i { background: #d9661a; }
+.funnel .fn { text-align: right; }
+.kpi .sub .up, .kpi .sub .down { font-weight: 700; color: var(--text); }
+.timeline { list-style: none; margin: 0; padding: 0; } .timeline > li { margin-bottom: 12px; } .timeline .tday { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 4px; }
+.timeline ul { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 2px solid var(--line); } .timeline ul li { position: relative; padding: 4px 0 4px 10px; font-size: 13px; display: flex; gap: 10px; }
+.timeline ul li::before { content: ""; position: absolute; left: -19px; top: 9px; width: 8px; height: 8px; border-radius: 50%; background: #2e6bb0; box-shadow: 0 0 0 2px var(--surface); }
+.timeline ul li.bad::before { background: var(--bad); } .timeline ul li.good::before { background: var(--ok); } .timeline .tt { color: var(--muted); min-width: 42px; font-variant-numeric: tabular-nums; }

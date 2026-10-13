@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "macros.html" import hero %}
+{% from "admin/_viz.html" import viz %}
+{% block title %}{{ u.username }} · Painel admin · Economart Energia{% endblock %}
+{% block content %}
+{% call hero(role ~ (" · on-line agora" if online else ""), u.username, ("Último login " ~ (u.last_login|dt_br) if u.last_login else "Nunca entrou") ~ (" · ativo " ~ ago(u.last_seen_at) if u.last_seen_at else "") ~ (" · inativo" if not u.active else ""), "/admin", "Painel admin") %}
+  <form method="get" class="hero-month" title="Mês das métricas"><label class="sr" for="mes">Mês</label><input id="mes" type="month" name="mes" value="{{ month.strftime('%Y-%m') }}" max="{{ this_month.strftime('%Y-%m') }}" data-autosubmit></form>
+  <a class="btn on-dark" href="/admin/audit">Auditoria</a><a class="btn on-dark" href="/admin/users">Gerenciar usuários</a>
+{% endcall %}
+
+<div class="grid cols-4" style="margin-bottom:16px">
+  <div class="kpi alt"><div class="label">Contas em {{ month|month_label }}</div><div class="value">{{ d.month_n }}</div>
+    <div class="sub">{% if rank_pos %}{{ rank_pos }}º de {{ rank_n }} no mês · {% endif %}{% if d.prev_n %}mês anterior: {{ d.prev_n }}{% else %}{{ d.month_ia }} pela IA{% endif %}</div></div>
+  <div class="kpi"><div class="label">Total já lançado</div><div class="value">{{ d.total_ever }}</div><div class="sub">contas e lançamentos desde o início</div></div>
+  <div class="kpi"><div class="label">Acessos (30 dias)</div><div class="value">{{ d.logins.series[0].data|sum }}</div><div class="sub">em {{ d.logins.active_days }} dia(s){% if d.busiest is not none %} · usa mais por volta das {{ d.busiest }}h{% endif %}</div></div>
+  <div class="kpi"><div class="label">Apresentação do sistema</div><div class="value sm">{{ 'Viu' if d.last_view else 'Não viu' }}</div><div class="sub">{{ d.last_view|dt_br if d.last_view else 'ainda não abriu' }}</div></div>
+</div>
+
+<div class="grid cols-2 adm-grid">
+  <section class="card"><div class="adm-head"><h2>Contas lançadas por mês</h2><span class="muted small">últimos 12 meses</span></div>
+    {{ viz(dict(d.by_month, axis='Mês'), 'Contas lançadas por mês por ' ~ u.username, height=230) }}</section>
+  <section class="card"><div class="adm-head"><h2>Contas lançadas por dia</h2><span class="muted small">{{ month|month_label }}</span></div>
+    {{ viz(dict(daily, axis='Dia'), 'Contas lançadas por dia em ' ~ (month|month_label), height=230) }}</section>
+</div>
+
+<div class="grid cols-3 adm-grid">
+  <section class="card"><div class="adm-head"><h2>Lojas em que mais lançou</h2><span class="muted small">12 meses</span></div>
+    {% if d.stores.labels %}{{ viz(dict(d.stores, axis='Loja'), 'Lojas em que ' ~ u.username ~ ' mais lançou contas', height=[140, 34 * d.stores.labels|length + 40]|max, horizontal=true) }}
+    {% else %}<p class="muted">Nenhuma conta lançada.</p>{% endif %}</section>
+  <section class="card"><div class="adm-head"><h2>Horário de uso</h2><span class="muted small">ações nos últimos 30 dias</span></div>
+    {% if d.busiest is not none %}{{ viz(dict(d.hours, axis='Hora'), 'Ações por hora do dia', height=200) }}{% else %}<p class="muted">Sem atividade nos últimos 30 dias.</p>{% endif %}</section>
+  <section class="card"><div class="adm-head"><h2>Importações</h2><span class="muted small">{{ d.funnel.total }} em {{ month|month_label }}</span></div>
+    {% if d.funnel.total %}<ul class="funnel">{% for s in d.funnel.stages %}<li class="st-{{ s.key }}"><span class="fl">{{ s.label }}</span><span class="fbar"><i style="width:{{ [s.pct, 0.5 if s.n else 0]|max }}%"></i></span><span class="fn"><strong>{{ s.n }}</strong></span></li>{% endfor %}</ul>
+    {% else %}<p class="muted">Nenhuma foto ou PDF enviado neste mês.</p>{% endif %}
+    <p class="small"><strong>Exportações:</strong> {{ d.exports }}{% if d.last_export %} · última: {{ export_label(d.last_export) }}, {{ ago(d.last_export.at) }}{% endif %}</p></section>
+</div>
+
+<section class="card adm-grid"><div class="adm-head"><h2>Acessos por dia</h2><span class="muted small">últimos 30 dias</span></div>
+  {{ viz(dict(d.logins, axis='Dia'), 'Acessos de ' ~ u.username ~ ' por dia', height=180) }}</section>
+
+<div class="grid cols-2 adm-grid">
+  <section class="card flush"><div style="padding:14px 18px 0"><h2>Últimas contas lançadas</h2></div>
+    {% if d.recent_entries %}<div class="tablewrap"><table class="dense"><thead><tr><th>Quando</th><th>Loja</th><th>Mês</th><th class="num">Valor</th><th>Origem</th></tr></thead>
+    <tbody>{% for e in d.recent_entries %}<tr><td class="nowrap"><a href="{{ e.href }}">{{ e.at|dt_br }}</a></td><td>{{ e.store_label }}{% if e.unit %}<div class="muted small mono">{{ e.unit }}</div>{% endif %}</td><td>{{ e.reference|month_label }}</td><td class="num">{{ e.value|brl }}</td>
+      <td><span class="badge{{ ' ok' if e.source == 'ia' }}">{{ 'IA' if e.source == 'ia' else 'À mão' }}</span></td></tr>{% endfor %}</tbody></table></div>
+    {% else %}<p class="muted" style="padding:0 18px 16px">Nenhuma conta lançada nos últimos 12 meses.</p>{% endif %}</section>
+
+  <section class="card"><div class="adm-head"><h2>Linha do tempo</h2><span class="muted small">últimas 120 ações</span></div>
+    {% if d.timeline %}<ol class="timeline">{% for day, items in d.timeline %}<li><div class="tday">{{ day.strftime('%d/%m/%Y') }}</div>
+      <ul>{% for a in items %}<li class="{{ 'bad' if a.action in bad else ('good' if a.action in good else '') }}"><span class="tt">{{ local(a.at).strftime('%H:%M') }}</span><span>{{ ('Exportou: ' ~ export_label(a)) if a.action == 'export' else label(a.action, a.entity) }}{% set t = describe(a.details) %}{% if t and a.action not in ('login', 'login_2fa', 'logout') %} <span class="muted small">· {{ t|truncate(80) }}</span>{% endif %}</span></li>{% endfor %}</ul></li>{% endfor %}</ol>
+    {% else %}<p class="muted">Nenhuma ação registrada.</p>{% endif %}
+    <a class="btn sm" href="/admin/audit">Auditoria completa</a></section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/vendor/chart.umd.min.js"></script><script src="/static/js/admin.js?v={{ ASSET_VERSION }}"></script>{% endblock %}

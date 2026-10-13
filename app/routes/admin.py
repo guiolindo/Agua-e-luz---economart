@@ -260,10 +260,38 @@ def export_label(row: AuditLog) -> str:
 
 
 @router.get("/admin")
-def admin_panel(request: Request, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+def admin_panel(request: Request, mes: str | None = None, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    from app.services import admin_metrics as m
     from app.services import admin_panel as panel
     from app.services import company_stores
+    from app.utils.parsing import parse_reference
 
+    month = min(parse_reference(mes) or m.this_month(), m.this_month())
     return render(request, "admin/panel.html", user=user, p=panel.build(db), ago=panel.ago, export_label=export_label,
+                  month=month, this_month=m.this_month(), r=m.ranking(db, month), daily=m.daily(db, month),
+                  f=m.imports_funnel(db, month), logins=m.logins_by_day(db, 30),
                   online_minutes=panel.ONLINE_MINUTES, label=action_label, bad=BAD_ACTIONS, good=OK_ACTIONS,
                   legacy_count=len(company_stores.legacy_stores(db)))
+
+
+@router.get("/admin/usuarios/{user_id}")
+def admin_user_page(request: Request, user_id: int, mes: str | None = None, user: User = Depends(admin_required),
+                    db: Session = Depends(get_db)):
+    """Tudo o que um usuário fez: contas por mês, lojas, horário de uso, acessos, importações e a linha do tempo."""
+    from fastapi import HTTPException
+
+    from app.services import admin_metrics as m
+    from app.services import admin_panel as panel
+    from app.utils.parsing import parse_reference
+
+    target = db.get(User, user_id)
+    if target is None:
+        raise HTTPException(404, "Usuário não encontrado.")
+    month = min(parse_reference(mes) or m.this_month(), m.this_month())
+    rank = m.ranking(db, month)
+    pos = next((i for i, r in enumerate(rank["rows"], 1) if r["id"] == target.id), None)
+    return render(request, "admin/user.html", user=user, u=target, month=month, this_month=m.this_month(),
+                  d=m.user_profile(db, target, month), daily=m.daily(db, month, target.id), rank_pos=pos,
+                  rank_n=len(rank["rows"]), online=panel.is_online(target), role=panel.ROLE_LABELS.get(target.role, target.role),
+                  ago=panel.ago, local=m.local, export_label=export_label, label=action_label, describe=details_text,
+                  bad=BAD_ACTIONS, good=OK_ACTIONS)

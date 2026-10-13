@@ -72,3 +72,39 @@ def test_ago_is_human():
     assert admin_panel.ago(now - timedelta(hours=2), now) == "há 2 h"
     assert admin_panel.ago(now - timedelta(days=1, hours=1), now) == "ontem"
     assert admin_panel.ago(now - timedelta(days=5), now) == "há 5 dias"
+
+
+def test_month_ranking_counts_ai_and_manual_per_user(client, db):
+    from app.services import admin_metrics as m
+
+    store_id = _make_store(client)
+    func = _user(client, "func4", "operator")
+    _seed_bill(func, db, store_id)                                     # 1 conta à mão do func4
+    r = m.ranking(db, m.this_month())
+    row = next(x for x in r["rows"] if x["name"] == "func4")
+    assert (row["total"], row["mao"], row["ia"]) == (1, 1, 0) and r["total"] == 1
+    assert r["chart"]["links"][0].startswith("/admin/usuarios/")
+    html = client.get("/admin").text
+    assert "Quem mais lançou contas em" in html and "func4" in html and "data-viz=" in html and "Ver em tabela" in html
+    d = m.daily(db, m.this_month())
+    assert sum(d["series"][1]["data"]) == 1                            # o dia de hoje (horário de Brasília)
+
+
+def test_user_page_shows_everything_the_user_did(client, db):
+    store_id = _make_store(client)
+    func = _user(client, "func5", "operator")
+    _seed_bill(func, db, store_id)
+    func.get("/notas/export.xlsx")
+    uid = db.query(User).filter_by(username="func5").one().id
+    html = client.get(f"/admin/usuarios/{uid}").text
+    assert "func5" in html and "Contas lançadas por mês" in html and "Lojas em que mais lançou" in html
+    assert "Horário de uso" in html and "Linha do tempo" in html and "Exportou: Planilha (Excel) da lista de contas" in html
+    assert "1º de 1 no mês" in html and "CD300" in html
+    assert client.get("/admin/usuarios/99999").status_code == 404
+    assert func.get(f"/admin/usuarios/{uid}").status_code == 403
+
+
+def test_admin_panel_month_filter_and_future_month_is_capped(client, db):
+    assert client.get("/admin?mes=2026-01").status_code == 200
+    assert client.get("/admin?mes=2999-01").status_code == 200           # mês futuro vira o mês atual
+    assert client.get("/admin?mes=lixo").status_code == 200
