@@ -5,8 +5,9 @@ A lista vem da planilha da empresa, copiada e colada (colunas separadas por TAB)
     MULTICOM ATACADO E VAREJO - ECONOMART (MINAS GERAIS)          <- título de bloco (sem CNPJ)
     MULTICOM  24  189018  Contagem Colonial  28.548.486/0022-40  003.034.575-1493  72196218  32.044-200  Rua ...
 
-Colunas de uma loja: empresa, número da loja, código interno, nome, CNPJ, inscrição estadual, inscrição municipal,
-CEP e endereço. O CNPJ é a âncora da linha: o que vem antes dele é empresa/número/código/nome, o que vem depois
+Colunas de uma loja: empresa, filial (número da loja), código C5, nome, CNPJ, inscrição estadual, inscrição
+municipal, CEP e endereço. Empresa sem número de filial (a Drogamart) repete o código C5 na coluna da filial: aí a
+loja recebe o nome da empresa como código (ex.: DROGAMART). O CNPJ é a âncora da linha: o que vem antes dele é empresa/número/código/nome, o que vem depois
 são os registros, o CEP e o endereço. A UF sai do CEP (com o endereço e o título do bloco como reserva).
 """
 from __future__ import annotations
@@ -73,7 +74,7 @@ class Row:
     line: int
     company: str = ""
     code: str = ""
-    internal_code: str = ""
+    c5: str = ""
     name: str = ""
     cnpj: str = ""
     state_reg: str = ""
@@ -91,7 +92,7 @@ class Row:
         return f"{self.code} — {self.name}"
 
     def details(self) -> dict:
-        data = {"internal_code": self.internal_code, "state_reg": self.state_reg, "municipal_reg": self.municipal_reg,
+        data = {"c5": self.c5, "state_reg": self.state_reg, "municipal_reg": self.municipal_reg,
                 "cep": self.cep, "address": self.address}
         return {k: v for k, v in data.items() if v}
 
@@ -109,6 +110,10 @@ def _split_before(text: str) -> list[str]:
     return parts
 
 
+def _company_code(company: str) -> str:
+    return re.sub(r"[^A-Z0-9]+", "-", _plain(company)).strip("-")[:40]
+
+
 def parse(text: str) -> Parsed:
     out, group, seen = Parsed(), "", {}
     for n, raw in enumerate((text or "").splitlines()[:MAX_ROWS * 2], 1):
@@ -119,9 +124,15 @@ def parse(text: str) -> Parsed:
             group = re.sub(r"\s+", " ", raw).strip()[:120]           # título de bloco
             continue
         row = Row(line=n, group=group, cnpj=m.group(0))
-        parts = _split_before(raw[:m.start()])
-        if len(parts) >= 4 and parts[2].isdigit():
-            row.company, row.code, row.internal_code, row.name = parts[0], parts[1], parts[2], " ".join(parts[3:])
+        before = raw[:m.start()]
+        cells = [c.strip() for c in before.strip(" ").split("\t")]
+        while cells and not cells[-1]:
+            cells.pop()
+        parts = _split_before(before)
+        if "\t" in before and len(cells) >= 4 and (not cells[2] or cells[2].isdigit()):   # colunas na posição certa (filial vazia vale)
+            row.company, row.code, row.c5, row.name = cells[0], cells[1], cells[2], " ".join(c for c in cells[3:] if c)
+        elif len(parts) >= 4 and parts[2].isdigit():
+            row.company, row.code, row.c5, row.name = parts[0], parts[1], parts[2], " ".join(parts[3:])
         elif len(parts) >= 3:
             row.company, row.code, row.name = parts[0], parts[1], " ".join(parts[2:])
         after = raw[m.end():]
@@ -142,12 +153,17 @@ def parse(text: str) -> Parsed:
         row.company = row.company[:60]
         row.address = re.sub(r"\s+", " ", row.address).strip()[:200]
         row.uf = uf_from_cep(row.cep) or _uf_from_text(row.address) or _uf_from_text(row.group) or ""
-        if not row.code.isdigit():
-            row.error = "Número da loja não encontrado (precisa ser só números)."
+        own = _company_code(row.company)
+        if row.company and (not row.code or row.code == row.c5):   # sem número de filial (vazio ou repete o C5)
+            row.code = own
+            row.note = "sem número de filial: código = nome da empresa"
+        if not row.code or not (row.code.isdigit() or row.code == own):
+            row.error = "Número da filial não encontrado (precisa ser só números)."
         elif not row.name:
             row.error = "Nome da loja não encontrado."
         elif row.code in seen:
-            row.error = f"Número {row.code} repetido (já está na linha {seen[row.code]})."
+            row.error = (f"Número {row.code} repetido (já está na linha {seen[row.code]})." if row.code.isdigit() else
+                         f"Mais de uma loja de {row.company} sem número de filial (linha {seen[row.code]}).")
         if row.error:
             out.errors.append(row)
         else:
@@ -162,14 +178,21 @@ def _by_code(db: Session, code: str) -> Store | None:
     return db.scalar(select(Store).where(func.lower(Store.code) == code.lower()))
 
 
+def _find(db: Session, row: Row) -> Store | None:
+    """A loja da linha: pelo número; se não houver, a loja oficial com o mesmo CNPJ (o número/código mudou)."""
+    return _by_code(db, row.code) or db.scalar(select(Store).where(Store.official.is_(True), Store.cnpj == row.cnpj))
+
+
 def plan(db: Session, parsed: Parsed) -> Parsed:
     """Marca cada linha como loja nova ou atualização de uma loja que já tem esse número."""
     for row in parsed.rows:
-        store = _by_code(db, row.code)
+        store = _find(db, row)
         if store is None:
             row.status = "nova"
         else:
             row.status = "atualiza"
+            if store.code != row.code:
+                row.note = f"código muda de {store.code} para {row.code}"
             if not store.is_official:
                 row.note = f"já existia como {store.label}: passa a ser a loja oficial"
             elif _plain(store.name or "") != _plain(row.name):
@@ -181,7 +204,7 @@ def apply(db: Session, parsed: Parsed) -> tuple[int, int]:
     """Cria ou atualiza as lojas oficiais. Lojas fora da lista não são apagadas nem desativadas."""
     created = updated = 0
     for row in parsed.rows:
-        store = _by_code(db, row.code)
+        store = _find(db, row)
         if store is None:
             store = Store(code=row.code, aliases=[])
             db.add(store)
@@ -190,6 +213,9 @@ def apply(db: Session, parsed: Parsed) -> tuple[int, int]:
             updated += 1
             if store.name and _plain(store.name) != _plain(row.name):
                 store.aliases = _merge_aliases(store, [store.name], row.code, row.name)
+        if store.code != row.code and not _by_code(db, row.code):
+            old_code, store.code = store.code, row.code
+            store.aliases = _merge_aliases(store, [old_code], row.name)
         store.name, store.official, store.cnpj = row.name, True, row.cnpj
         store.company, store.group_name, store.details = row.company or None, row.group or None, row.details()
         store.location = row.address or store.location

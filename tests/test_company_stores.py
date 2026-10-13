@@ -23,16 +23,16 @@ LIST = "\n".join([
 
 def test_parse_reads_every_column_and_the_uf_from_the_cep():
     p = company_stores.parse(LIST)
-    assert not p.errors and [r.code for r in p.rows] == ["6", "24", "32", "22", "200", "300", "501", "246774"]
+    assert not p.errors and [r.code for r in p.rows] == ["6", "24", "32", "22", "200", "300", "501", "DROGAMART"]
     r = {r.code: r for r in p.rows}
     assert r["24"].name == "Contagem Colonial" and r["24"].cnpj == "28.548.486/0022-40"     # nome e CNPJ sem TAB entre eles
-    assert r["6"].internal_code == "72620" and r["6"].state_reg == "003.034.575-0080" and r["6"].municipal_reg == "72090583"
+    assert r["6"].c5 == "72620" and r["6"].state_reg == "003.034.575-0080" and r["6"].municipal_reg == "72090583"
     assert r["6"].cep == "32.210-110" and r["6"].address.startswith("Av General David Sarnoff")
     assert r["32"].municipal_reg == "" and r["32"].cep == "38.300-102"                         # coluna vazia não desloca as outras
     assert r["501"].state_reg == ""                                                             # "-" = vazio
     assert {k: v.uf for k, v in r.items()} == {"6": "MG", "24": "MG", "32": "MG", "22": "BA", "200": "PE", "300": "MG",
-                                                "501": "BA", "246774": "MG"}
-    assert r["22"].group.endswith("(BAHIA)") and r["246774"].company == "DROGAMART"
+                                                "501": "BA", "DROGAMART": "MG"}
+    assert r["22"].group.endswith("(BAHIA)") and r["DROGAMART"].name == "Matriz" and r["DROGAMART"].c5 == "246774"
 
 
 def test_parse_also_works_when_tabs_became_spaces():
@@ -44,7 +44,7 @@ def test_parse_also_works_when_tabs_became_spaces():
 def test_parse_flags_bad_lines():
     p = company_stores.parse("MULTICOM\tXX\t1\tLoja\t28.548.486/0001-16\n"
                              "MULTICOM\t6\t1\tA\t28.548.486/0001-16\nMULTICOM\t6\t2\tB\t28.548.486/0002-16")
-    assert [e.error for e in p.errors][0].startswith("Número da loja") and "repetido" in p.errors[1].error
+    assert [e.error for e in p.errors][0].startswith("Número da filial") and "repetido" in p.errors[1].error
     assert [r.code for r in p.rows] == ["6"]
 
 
@@ -129,3 +129,24 @@ def test_panel_ignores_stores_without_bills(client, db):
     client.post("/admin/lojas/carregar", {"text": LIST})
     html = client.get("/diretoria").text
     assert "Contagem Colonial" not in html
+
+
+def test_company_without_branch_number_uses_the_company_as_code():
+    """A Drogamart não tem número de filial: a coluna vem vazia ou repete o código C5."""
+    for line in ("DROGAMART\t\t246774\tMatriz\t68.380.795/0001-44\t005.609.679-0011\t\t30494-270\tAv. Barão - MG",
+                 "DROGAMART\t246774\t246774\tMatriz\t68.380.795/0001-44\t005.609.679-0011\t\t30494-270\tAv. Barão - MG"):
+        (row,) = company_stores.parse(line).rows
+        assert (row.code, row.c5, row.name, row.uf) == ("DROGAMART", "246774", "Matriz", "MG")
+
+
+def test_reloading_fixes_a_code_by_the_cnpj(client, db):
+    """Lista carregada antes com a Drogamart como 246774: carregar de novo troca o código, sem criar outra loja."""
+    old = LIST.replace("DROGAMART\t246774\t246774", "DROGAMART\t246774\t1")
+    client.post("/admin/lojas/carregar", {"text": old})
+    assert db.query(Store).filter_by(code="246774").one().official
+    preview = client.post("/admin/lojas/conferir", {"text": LIST}).text
+    assert "código muda de 246774 para DROGAMART" in preview
+    client.post("/admin/lojas/carregar", {"text": LIST})
+    db.expire_all()
+    s = db.query(Store).filter_by(cnpj="68.380.795/0001-44").one()
+    assert s.code == "DROGAMART" and "246774" in s.aliases and db.query(Store).count() == 8

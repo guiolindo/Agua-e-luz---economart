@@ -59,7 +59,7 @@ Os apelidos servem para resolver anotações escritas à mão na conta.
 Lista oficial (`official`): o administrador carrega a planilha de lojas da empresa em **Lojas da empresa**
 (`/admin/lojas`, `app/services/company_stores.py`). Cada loja oficial tem o número como `code` (ex.: `24`), o
 nome, `cnpj`, `company` (MULTICOM, DROGAMART), `group_name` (título do bloco na planilha) e `details` (JSON com
-código interno, inscrições, CEP e endereço); a UF vai em `region`, tirada do CEP. Loja criada antes da lista
+código C5, inscrições, CEP e endereço; empresa sem número de filial, como a Drogamart, tem o nome da empresa como `code`); a UF vai em `region`, tirada do CEP. Loja criada antes da lista
 (`official` falso) é vinculada a uma oficial: os pontos de energia, os lançamentos manuais e as importações
 passam para ela, o código e o nome antigos viram apelidos e a loja antiga é apagada.
 
