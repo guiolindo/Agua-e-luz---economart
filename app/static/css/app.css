@@ -45,6 +45,13 @@ h3 { font-size: 13px; margin: 0 0 8px; font-weight: 600; color: var(--muted); te
 .side-foot .present-btn { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.28); border-radius: var(--radius); font-size: 12.5px; font-weight: 600; color: #fff; background: rgba(255,255,255,.06); }
 .side-foot .present-btn:hover { background: var(--orange); border-color: var(--orange); text-decoration: none; }
 .side-foot .present-btn svg { flex-shrink: 0; }
+/* quem ainda não abriu a apresentação neste navegador: borda laranja e um brilho passando de um lado para o outro */
+.side-foot .present-btn { position: relative; overflow: hidden; }
+.side-foot .present-btn.shine { border-color: var(--orange); }
+.side-foot .present-btn.shine::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); transform: skewX(-20deg); animation: present-shine 2.8s ease-in-out infinite; }
+@keyframes present-shine { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+@media (prefers-reduced-motion: reduce) { .side-foot .present-btn.shine::after { animation: none; display: none; } }
 @media print { .present-btn { display: none !important; } }
 /* Notebook / janela baixa: menu mais compacto para o rodapé (Apresentação, usuário, Sair) caber sem rolar. */
 @media (max-height: 820px) and (min-width: 801px) {

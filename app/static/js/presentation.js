@@ -2,6 +2,7 @@
 // tela cheia, zoom nas imagens, comparador antes/depois, contadores e inclinação 3D das telas.
 (function () {
   'use strict';
+  try { localStorage.setItem('apresentacao-vista', '1'); } catch (e) { /* abriu pelo link: conta como vista */ }
   const all = Array.from(document.querySelectorAll('.slide'));
   if (!all.length) return;
   let slides = all;                                   // slides do modo atual (completo ou resumo)

@@ -3,6 +3,10 @@
 Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada item corresponde a commits em
 `ccr-9b4b2f9b-4bk1nd`. O motivo das decisões maiores está em [`DECISIONS.md`](DECISIONS.md).
 
+## 2026-10-13
+
+- **Botão "Apresentação do sistema" brilha até ser aberto.** Quem ainda não abriu a apresentação naquele navegador vê o botão com borda laranja e uma luz passando de um lado para o outro. Depois que clica (ou abre a apresentação pelo link), o brilho some naquele navegador (`localStorage`; sem armazenamento, continua brilhando). Quem pediu menos movimento no sistema operacional vê só a borda laranja.
+
 ## 2026-10-12
 
 - **Imprimir para assinatura: dois botões e um trabalho só, sem esticar.** A tela tinha cinco botões para a mesma coisa (*Imprimir tudo*, *Só a folha*, *Só a conta original*, *Tudo no mesmo trabalho*, a caixa *Incluir a conta original*), tudo por causa do problema da conta esticada. Agora são dois: **Imprimir relatório + conta** e **Só o relatório**. A causa: a impressora aplica UMA orientação a todo o trabalho, então uma conta em pé num trabalho com a folha deitada saía deitada e espremida. A solução: o trabalho inteiro sai em **A4 deitado** (a orientação do relatório) e cada página da conta que é em pé vai **girada 90°** pelo servidor (`/documents/{id}/pages/{n}.png?rot=1`, foto ou PDF), ocupando a folha inteira na proporção original. No papel, é só virar a folha: a conta fica em pé, do jeito que ela é; conta deitada sai deitada. É o mesmo que um leitor de PDF faz com páginas mistas. Na tela, a conta continua aparecendo em pé. Verificado no navegador gerando o PDF da impressão: foto em pé, foto deitada, PDF misto e o PDF real da CEMIG GT; todas as páginas A4 deitadas, nenhuma esticada.

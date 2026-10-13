@@ -429,3 +429,13 @@ document.querySelectorAll('[data-copy-insights]').forEach((btn) => btn.addEventL
   });
   addEventListener('afterprint', reset);
 })();
+
+// Botão "Apresentação do sistema": brilha até a pessoa abrir a apresentação uma vez neste navegador.
+(function () {
+  const b = document.querySelector('.present-btn');
+  if (!b) return;
+  let seen = false;
+  try { seen = localStorage.getItem('apresentacao-vista') === '1'; } catch (e) { /* sem armazenamento: continua brilhando */ }
+  if (!seen) b.classList.add('shine');
+  b.addEventListener('click', () => { try { localStorage.setItem('apresentacao-vista', '1'); } catch (e) { /* ignora */ } });
+})();

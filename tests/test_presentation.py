@@ -115,3 +115,14 @@ def test_two_factor_slide_follows_the_real_setting(client, until, monkeypatch):
     assert "disponível para os administradores" in op.get("/apresentacao").text
     monkeypatch.setattr(get_settings(), "require_admin_2fa", True)
     assert "obrigatória para os administradores" in op.get("/apresentacao").text
+
+
+def test_present_button_shines_until_opened_once():
+    """O botão brilha até a pessoa abrir a apresentação naquele navegador (localStorage, com try/catch)."""
+    css = open("app/static/css/app.css", encoding="utf-8").read()
+    js = open("app/static/js/app.js", encoding="utf-8").read()
+    deck = open("app/static/js/presentation.js", encoding="utf-8").read()
+    assert ".present-btn.shine::after" in css and "@keyframes present-shine" in css
+    assert "prefers-reduced-motion: reduce) { .side-foot .present-btn.shine::after { animation: none" in css
+    assert "classList.add('shine')" in js and "localStorage.getItem('apresentacao-vista')" in js
+    assert "localStorage.setItem('apresentacao-vista', '1')" in deck                     # abrir pelo link também conta
