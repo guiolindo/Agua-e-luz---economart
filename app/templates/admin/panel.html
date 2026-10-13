@@ -75,16 +75,16 @@
 
 <section class="card flush">
   <div style="padding:14px 18px 0"><h2>Usuários</h2></div>
-  <div class="tablewrap"><table>
+  <div class="tablewrap"><table class="stack">
     <thead><tr><th>Usuário</th><th>Perfil</th><th>Situação</th><th>Último login</th><th>Última atividade</th><th>Viu a apresentação</th><th class="hide-md">2FA</th><th><span class="sr">Detalhes</span></th></tr></thead>
     <tbody>{% for x in p.people %}{% set u = x.user %}<tr>
-      <td><a href="/admin/usuarios/{{ u.id }}"><strong>{{ u.username }}</strong></a>{% if u.id == user.id %} <span class="muted small">(você)</span>{% endif %}</td><td>{{ x.role }}</td>
-      <td>{% if not u.active %}<span class="badge">Inativo</span>{% elif x.online %}<span class="badge ok">On-line</span>{% else %}<span class="badge">Off-line</span>{% endif %}</td>
-      <td class="nowrap">{{ x.last_login|dt_br if x.last_login else 'nunca' }}</td>
-      <td class="nowrap">{{ ago(x.last_seen) if x.last_seen else '—' }}</td>
-      <td class="nowrap">{{ x.seen_presentation|dt_br if x.seen_presentation else '—' }}</td>
-      <td class="hide-md">{% if u.has_2fa %}<span class="badge ok">ativo</span>{% elif u.is_admin %}<span class="badge warn">falta</span>{% else %}—{% endif %}</td>
-      <td class="right"><a class="btn sm" href="/admin/usuarios/{{ u.id }}">Ver atividade</a></td></tr>{% endfor %}</tbody>
+      <td data-label="Usuário"><a href="/admin/usuarios/{{ u.id }}"><strong>{{ u.username }}</strong></a>{% if u.id == user.id %} <span class="muted small">(você)</span>{% endif %}</td><td data-label="Perfil">{{ x.role }}</td>
+      <td data-label="Situação">{% if not u.active %}<span class="badge">Inativo</span>{% elif x.online %}<span class="badge ok">On-line</span>{% else %}<span class="badge">Off-line</span>{% endif %}</td>
+      <td class="nowrap" data-label="Último login">{{ x.last_login|dt_br if x.last_login else 'nunca' }}</td>
+      <td class="nowrap" data-label="Última atividade">{{ ago(x.last_seen) if x.last_seen else '—' }}</td>
+      <td class="nowrap" data-label="Viu a apresentação">{{ x.seen_presentation|dt_br if x.seen_presentation else '—' }}</td>
+      <td class="hide-md" data-label="2FA">{% if u.has_2fa %}<span class="badge ok">ativo</span>{% elif u.is_admin %}<span class="badge warn">falta</span>{% else %}—{% endif %}</td>
+      <td class="right cell-actions"><a class="btn sm" href="/admin/usuarios/{{ u.id }}">Ver atividade</a></td></tr>{% endfor %}</tbody>
   </table></div>
 </section>
 {% endblock %}

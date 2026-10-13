@@ -26,14 +26,14 @@
 
 <section class="card flush">
   <div style="padding:14px 18px 0"><h2>Contas</h2></div>
-  <div class="tablewrap"><table>
+  <div class="tablewrap"><table class="stack">
     <thead><tr><th>Referência</th><th class="num">Valor</th><th>Variação</th><th class="num hide-md">Dias</th><th class="num">Consumo (kWh)</th><th class="num hide-sm">Demanda HFP (kW)</th><th>Vencimento</th><th class="hide-md">Origem</th><th><span class="sr">Ações</span></th></tr></thead>
     <tbody>{% for h in history %}{% set b = h.bill %}
-      <tr><td><strong>{{ b.reference|month_label }}</strong></td><td class="num">{{ b.total_value|brl }}</td><td>{{ variation(h.variation) }}</td>
-        <td class="num hide-md">{{ b.days if b.days is not none else '—' }}</td><td class="num">{{ b.consumption_total|num }}</td>
-        <td class="num hide-sm">{{ b.demand_hfp|num }}</td><td>{{ b.due_date|date_br }}</td>
-        <td class="hide-md">{{ 'Foto/IA' if b.source == 'import' else 'Manual' }}</td>
-        <td class="right actcell">{% if b.document and b.document.available %}<a class="btn sm" href="/documents/{{ b.document_id }}" target="_blank" rel="noopener" title="Disponível até {{ b.document.expires_at(retention_days)|date_br }}">Documento original</a>
+      <tr><td data-label="Referência"><strong>{{ b.reference|month_label }}</strong></td><td class="num" data-label="Valor">{{ b.total_value|brl }}</td><td data-label="Variação">{{ variation(h.variation) }}</td>
+        <td class="num hide-md" data-label="Dias">{{ b.days if b.days is not none else '—' }}</td><td class="num" data-label="Consumo (kWh)">{{ b.consumption_total|num }}</td>
+        <td class="num hide-sm" data-label="Demanda HFP (kW)">{{ b.demand_hfp|num }}</td><td data-label="Vencimento">{{ b.due_date|date_br }}</td>
+        <td class="hide-md" data-label="Origem">{{ 'Foto/IA' if b.source == 'import' else 'Manual' }}</td>
+        <td class="right actcell cell-actions">{% if b.document and b.document.available %}<a class="btn sm" href="/documents/{{ b.document_id }}" target="_blank" rel="noopener" title="Disponível até {{ b.document.expires_at(retention_days)|date_br }}">Documento original</a>
           {% elif b.document %}<span class="badge" title="Removido em {{ b.document.purged_at|date_br }}">Original expirado</span> {% endif %}
           <a class="btn sm primary" href="/stores/{{ unit.store_id }}/report?bill={{ b.id }}&doc=1" target="_blank" rel="noopener" title="Folha da loja + conta original, para o diretor assinar">Imprimir para assinatura</a> <a class="btn sm" href="/bills/{{ b.id }}/print" title="Dados e gráficos só desta conta (não é a folha da loja)">Relatório da conta</a> {% if user.can_write %}<a class="btn sm" href="/manual?bill={{ b.id }}">Editar</a>{% endif %}
           {% if user.can_write %}<form method="post" action="/manual/bills/{{ b.id }}/delete" style="display:inline" data-confirm="Excluir a conta de {{ b.reference|month_label }}?">{{ csrf(csrf_token) }}<button class="btn sm danger">Excluir</button></form>{% endif %}</td></tr>

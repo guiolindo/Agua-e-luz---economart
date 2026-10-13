@@ -27,7 +27,7 @@ def test_wide_tables_fit_the_laptop_without_side_scroll():
     assert "@media (max-width: 1320px) { .hide-md { display: none; } }" in CSS               # colunas secundárias somem em tela estreita
     assert "table.dense th, table.dense td" in CSS and "table.heat td, table.heat th { padding: 5px 3px" in CSS
     unit = open("app/templates/units/detail.html", encoding="utf-8").read()
-    assert 'class="right actcell"' in unit and 'class="num hide-md">Dias' in unit
+    assert 'class="right actcell' in unit and 'class="num hide-md" data-label="Dias">' in unit
     assert 'table class="dense"' in open("app/templates/stores/history.html", encoding="utf-8").read()
     assert 'class="right actcell"' in open("app/templates/bills/list.html", encoding="utf-8").read()
 
@@ -38,3 +38,21 @@ def test_bills_list_turns_into_cards_on_the_phone(client):
     assert 'grid-template-areas: "store val" "unit unit" "due orig" "act act"' in CSS
     html = client.get("/notas").text
     assert '<table class="cards">' in html
+
+
+def test_card_stack_class_does_not_break_stacked_tables():
+    """`.stack` (coluna de cartões do painel) virava display:grid também em table.stack (Usuários, Auditoria):
+    o cabeçalho ficava desalinhado das linhas no computador."""
+    assert re.search(r"^\.stack \{ display: grid", CSS, re.M) is None
+    assert "div.stack { display: grid" in CSS
+
+
+def test_lists_turn_into_cards_on_the_phone():
+    """Auditoria de UX 13/10: listas comuns viram cartões no celular (table.stack + data-label), sem rolar para o lado."""
+    for path, label in (("app/templates/dashboard.html", 'data-label="Situação"'),
+                        ("app/templates/stores/settings.html", 'data-label="Distribuidora"'),
+                        ("app/templates/stores/history.html", 'data-label="Vencimento"'),
+                        ("app/templates/units/detail.html", 'data-label="Consumo (kWh)"'),
+                        ("app/templates/admin/panel.html", 'data-label="Última atividade"')):
+        html = open(path, encoding="utf-8").read()
+        assert 'table class="stack"' in html and label in html, path
