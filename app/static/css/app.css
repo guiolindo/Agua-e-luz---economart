@@ -739,3 +739,4 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
 .timeline ul { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 2px solid var(--line); } .timeline ul li { position: relative; padding: 4px 0 4px 10px; font-size: 13px; display: flex; gap: 10px; }
 .timeline ul li::before { content: ""; position: absolute; left: -19px; top: 9px; width: 8px; height: 8px; border-radius: 50%; background: #2e6bb0; box-shadow: 0 0 0 2px var(--surface); }
 .timeline ul li.bad::before { background: var(--bad); } .timeline ul li.good::before { background: var(--ok); } .timeline .tt { color: var(--muted); min-width: 42px; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { table.stores-tbl th, table.stores-tbl td { padding-left: 7px; padding-right: 7px; } table.stores-tbl .btn.sm { padding-left: 8px; padding-right: 8px; } }   /* Lojas no celular sem rolar para o lado */

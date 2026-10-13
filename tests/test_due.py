@@ -186,6 +186,7 @@ def test_unit_can_be_registered_from_the_store_without_a_due_date(client, db):
     assert unit.store_id == store_id and unit.due_day is None
     again = client.post("/points", {"store_id": store_id, "number": "3013868360", "due_date": ""})
     assert again.status_code == 303 and db.query(ConsumerUnit).count() == 1                      # repetido não duplica
+    assert f'data-open-point data-store="{store_id}"' in client.get("/stores").text            # loja com unidade continua com "+ Unidade"
 
 
 def test_changing_the_unit_supplier_moves_its_bills(client, db):
