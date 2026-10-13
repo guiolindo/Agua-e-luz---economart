@@ -3,7 +3,7 @@
 {% block content %}
 {% from "macros.html" import csrf %}
 <div class="page-head"><div><div class="crumbs"><a href="/stores">Lojas</a> / <a href="/stores/{{ store.id }}">{{ store.code }}</a> / <a href="/units/{{ unit.id }}">{{ unit.number }}</a> /</div>
-  <h1>Editar unidade consumidora</h1><div class="muted">Corrija os dados do ponto de energia e defina o dia em que a conta vence.</div></div></div>
+  <h1>Editar unidade consumidora</h1></div></div>
 
 <form class="card" method="post" action="/units/{{ unit.id }}/edit" style="max-width:720px">
   {{ csrf(csrf_token) }}

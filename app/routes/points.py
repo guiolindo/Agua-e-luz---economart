@@ -73,8 +73,7 @@ def point_create(request: Request, store_id: int = Form(...), number: str = Form
         when = "hoje" if due == due_service.local_today() else f"dia {due.day} de cada mês"
         flash(request, f"Unidade consumidora {unit.number} cadastrada em {unit.store.short_label}. Vencimento: {when}.")
     else:
-        flash(request, f"Unidade consumidora {unit.number} cadastrada em {unit.store.short_label}. "
-                       "O vencimento pode ser definido depois (Editar unidade).")
+        flash(request, f"Unidade consumidora {unit.number} cadastrada em {unit.store.short_label}.")
     return RedirectResponse(_safe_next(next), status_code=303)
 
 

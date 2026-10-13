@@ -3,13 +3,13 @@
 {% block title %}Importar lista de lojas · Economart Energia{% endblock %}
 {% block content %}
 <div class="page-head"><div><div class="crumbs"><a href="/stores">Lojas</a> /</div><h1>Importar lista de lojas</h1>
-  <div class="muted">Cole a planilha de lojas da empresa: as lojas entram já cadastradas, com número e nome, e o funcionário só escolhe a loja. Loja sem conta lançada não aparece no Painel executivo.</div></div></div>
+</div></div>
 
 
 {% if preview %}
 <section class="card">
   <h2>Conferência: {{ preview.rows|length }} loja(s){% if preview.errors %} · {{ preview.errors|length }} linha(s) com erro{% endif %}</h2>
-  <p class="muted">Nada foi gravado ainda. Confira número, nome e UF; depois clique em <strong>Carregar a lista</strong>.</p>
+  <p class="muted">Nada foi gravado ainda.</p>
   {% if preview.errors %}<div class="flash error" role="alert"><strong>Linhas ignoradas:</strong>
     <ul>{% for e in preview.errors %}<li>Linha {{ e.line }}: {{ e.error }}</li>{% endfor %}</ul></div>{% endif %}
   <div class="tablewrap"><table class="dense">
@@ -25,7 +25,7 @@
 
 <form class="card" method="post" action="/admin/lojas/conferir">{{ csrf(csrf_token) }}
   <h2>{{ 'Atualizar a lista' if officials else 'Colar a lista' }}</h2>
-  <p class="muted">Copie as linhas da planilha de lojas e cole aqui (pode incluir os títulos dos blocos). Colunas: <strong>empresa, filial (número da loja), código C5, nome e CNPJ</strong>; depois inscrição estadual, inscrição municipal, CEP e endereço. A UF sai do CEP. Empresa sem número de filial (ex.: Drogamart) fica com o nome da empresa como código. Lojas que já existem com o mesmo número são atualizadas; nenhuma loja é apagada.</p>
+  <p class="muted">Colunas da planilha: empresa, filial, código C5, nome, CNPJ, inscrição estadual, inscrição municipal, CEP e endereço (os títulos dos blocos podem vir junto). Loja que já existe é atualizada pelo número; nenhuma é apagada.</p>
   <div class="field"><label for="text">Lista de lojas</label>
     <textarea id="text" name="text" rows="8" required spellcheck="false" style="font-family:var(--mono, monospace);font-size:12px" placeholder="MULTICOM&#9;24&#9;189018&#9;Contagem Colonial&#9;28.548.486/0022-40&#9;…">{{ text or '' }}</textarea></div>
   <button class="btn primary">Conferir</button>

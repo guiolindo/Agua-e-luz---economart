@@ -12,12 +12,12 @@
       {% if errors.number %}<div class="err">{{ errors.number }}</div>{% endif %}</div>
     <div class="field"><label for="pt-type">Tipo de conta</label>
       <select id="pt-type" name="record_type_id">{% for t in types %}<option value="{{ t.id }}" {{ 'selected' if default_type and default_type.id == t.id }}>{{ t.name }}</option>{% endfor %}</select>
-      <div class="hint">Distribuidora que emite a conta. LL Energia, gerador e manutenção não têm unidade: use o <a href="/manual">Lançamento manual</a>.</div></div>
+      <div class="hint">LL Energia, gerador e manutenção não têm unidade: use o <a href="/manual">Lançamento manual</a>.</div></div>
   </div>
   <div class="field"><label for="pt-desc">Descrição (opcional)</label><input id="pt-desc" name="description" type="text" maxlength="200" placeholder="Ex.: Padaria, galpão 2…" value="{{ form.get('description', '') }}"></div>
   <div class="field {{ 'error' if errors.due_date }}"><label for="pt-due">Data de vencimento (opcional)</label>
     <input id="pt-due" name="due_date" type="date" value="{{ form.get('due_date', '') }}">
-    <div class="hint">Com a data, o sistema avisa todo mês nesse dia. Não sabe agora? Deixe em branco e defina depois.</div>
+    <div class="hint">Gera o aviso mensal de vencimento.</div>
     {% if errors.due_date %}<div class="err">{{ errors.due_date }}</div>{% endif %}</div>
   <div class="actions"><button class="btn primary">Cadastrar unidade</button><a class="btn" href="{{ next }}" data-close-dialog>Cancelar</a></div>
 </form>

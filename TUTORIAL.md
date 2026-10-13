@@ -125,7 +125,7 @@ O funcionário é o responsável por manter tudo de energia da empresa, então �
 - **Região/UF** (ex.: `MG`, `BA`): é usada para comparar regiões no painel executivo;
 - **Apelidos** (ex.: `CD 300, CD Rib Neves`): ajudam a ler anotações escritas à mão nas contas.
 
-**2. Unidades consumidoras (pontos de energia).** Dentro da loja, **Cadastro → Adicionar unidade** (com o **dia de vencimento da conta**, opcional), ou, de qualquer tela, **+ Novo ponto de energia** (veja B4). Cada unidade tem o **número da unidade consumidora** exatamente como está na conta (ex.: `12.060.073.018-19`).
+**2. Unidades consumidoras (pontos de energia).** Dentro da loja, **Cadastro → Adicionar unidade** (com o **dia de vencimento da conta**, opcional), ou, de qualquer tela, **+ Unidade consumidora** (veja B4). Cada unidade tem o **número da unidade consumidora** exatamente como está na conta (ex.: `12.060.073.018-19`).
 
 **Para editar uma unidade já criada** (número, descrição, distribuidora, dia de vencimento, situação): abra a unidade e clique em **Editar unidade**, ou use **Editar** na lista de unidades da loja. Unidades criadas sem vencimento **continuam funcionando normalmente**; apenas não geram aviso até você definir o dia (o painel do funcionário lista quais ainda estão sem vencimento).
 
@@ -167,11 +167,11 @@ Para os demais fornecedores sem foto (Câmara, combustível, manutenção) e par
 
 Para corrigir uma conta: **Lojas → (loja) → (unidade) → Contas → Editar**. O funcionário também pode **excluir** uma conta ou lançamento errado (a exclusão fica registrada na Auditoria).
 
-## B4. Novo ponto de energia e aviso de vencimento
+## B4. Nova unidade consumidora e aviso de vencimento
 
 Mais rápido, pela loja: em **Lojas**, clique em **+ Unidade** na linha da loja (ou, na página da loja, em **+ Unidade consumidora**). A loja já vem escolhida: digite o número da conta de luz e clique em **Cadastrar unidade**.
 
-De **qualquer tela**, também dá pelo **+ Novo ponto de energia** (canto superior direito):
+De **qualquer tela**, também dá pelo **+ Unidade consumidora** (canto superior direito):
 
 1. Escolha a **loja**.
 2. Digite o **número da unidade consumidora** e, se quiser, uma descrição.

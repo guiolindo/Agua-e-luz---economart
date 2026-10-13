@@ -1,7 +1,7 @@
 {% if legacy %}
 <section class="card" id="vincular" style="border-left:4px solid var(--orange)">
   <h2>Vincule {{ legacy|length }} loja(s) criada(s) antes da lista</h2>
-  <p class="muted">Estas lojas foram cadastradas à mão antes da lista. Escolha a loja da lista que é a mesma: os pontos de energia, as contas e os lançamentos passam para ela e a loja antiga deixa de existir (o código e o nome antigos viram apelidos, para a leitura das contas continuar reconhecendo).</p>
+  <p class="muted">Unidades, contas e lançamentos passam para a loja escolhida, e a antiga deixa de existir.</p>
   <div class="tablewrap"><table>
     <thead><tr><th>Loja antiga</th><th class="num">Pontos</th><th class="num">Contas</th><th>Loja oficial</th><th><span class="sr">Ação</span></th></tr></thead>
     <tbody>{% for s in legacy %}{% set sg = suggestions.get(s.id) %}{% set sm = summaries[s.id] %}

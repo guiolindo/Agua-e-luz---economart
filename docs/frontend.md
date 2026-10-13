@@ -109,7 +109,7 @@ O que a casca monta para o usuário logado:
 - `m-topbar` (menu, logo, sino) e `m-bottomnav` (rodapé mobile), visíveis só em ≤ 800 px;
 - `<aside class="side">` com `nav` (itens por perfil), nome do usuário, *Alterar senha*, *2FA* (admin) e o
   formulário de *Sair*;
-- `.topbar` com o botão **+ Novo ponto de energia** (escondido nas telas de importação, lançamento, administração,
+- `.topbar` com o botão **+ Unidade consumidora** (escondido nas telas de importação, lançamento, administração,
   tipos, conta e notas) e o sino de vencimentos (só `operator`);
 - aviso para o administrador sem 2FA em `/` e `/admin/users`;
 - `#toasts` (região `aria-live`) e o `<dialog id="point-dialog">` (para quem pode escrever).

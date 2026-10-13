@@ -3,7 +3,7 @@
 {% block title %}Auditoria · Economart Energia{% endblock %}
 {% block content %}
 <div class="page-head"><div><div class="crumbs"><a href="/admin/users">Usuários</a> /</div><h1>Auditoria</h1>
-  <div class="muted">Últimos 300 eventos: acessos, bloqueios, trocas de senha e alterações de dados, com o IP de origem nos eventos de segurança.</div></div>
+  <div class="muted">Últimos 300 eventos.</div></div>
   <div class="actions">
     <form method="post" action="/admin/audit/verify" style="display:inline">{{ csrf(csrf_token) }}<button class="btn">Verificar integridade</button></form>
     <a class="btn" href="/admin/audit/export.csv{{ '?action=' ~ action if action }}">Baixar CSV</a>

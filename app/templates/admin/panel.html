@@ -3,7 +3,7 @@
 {% from "admin/_viz.html" import viz %}
 {% block title %}Painel admin · Economart Energia{% endblock %}
 {% block content %}
-{% call hero(greeting_now() ~ ", " ~ user.username, "Painel admin", "Quem está usando o sistema, quem lançou o quê e o que pede atenção · métricas de " ~ (month|month_label)) %}
+{% call hero(greeting_now() ~ ", " ~ user.username, "Painel admin", "Métricas de " ~ (month|month_label)) %}
   <form method="get" class="hero-month" title="Mês das métricas (contas lançadas, ranking, importações)"><label class="sr" for="mes">Mês</label><input id="mes" type="month" name="mes" value="{{ month.strftime('%Y-%m') }}" max="{{ this_month.strftime('%Y-%m') }}" data-autosubmit></form>
   <a class="btn on-dark" href="/admin/users">Usuários</a><a class="btn on-dark" href="/admin/audit">Auditoria completa</a>
 {% endcall %}
@@ -16,7 +16,7 @@
 </div>
 
 <section class="card adm-rank">
-  <div class="adm-head"><h2>Quem mais lançou contas em {{ month|month_label }}</h2><span class="muted small">{{ r.total }} conta(s){% if r.unassigned %} · {{ r.unassigned }} sem autor (carga inicial){% endif %} · clique num nome para ver tudo o que a pessoa fez</span></div>
+  <div class="adm-head"><h2>Quem mais lançou contas em {{ month|month_label }}</h2><span class="muted small">{{ r.total }} conta(s){% if r.unassigned %} · {{ r.unassigned }} sem autor (carga inicial){% endif %}</span></div>
   {% if r.rows %}
   <div class="adm-rank-body">
     <ol class="podium">{% for x in r.rows[:3] %}<li class="p{{ loop.index }}"><span class="pos">{{ loop.index }}º</span>
@@ -32,15 +32,14 @@
     {{ viz(dict(daily, axis='Dia'), 'Contas lançadas por dia em ' ~ (month|month_label), height=230) }}</section>
   <section class="card"><div class="adm-head"><h2>Importações (fotos e PDFs)</h2><span class="muted small">{{ f.total }} enviada(s) em {{ month|month_label }}</span></div>
     {% if f.total %}<ul class="funnel">{% for s in f.stages %}<li class="st-{{ s.key }}"><span class="fl">{{ s.label }}</span><span class="fbar"><i style="width:{{ [s.pct, 0.5 if s.n else 0]|max }}%"></i></span><span class="fn"><strong>{{ s.n }}</strong> <span class="muted small">{{ s.pct|round(0)|int }}%</span></span></li>{% endfor %}</ul>
-    <p class="hint">Barradas = o arquivo não era conta de energia. Descartadas = alguém desistiu na conferência.</p>
     {% else %}<p class="muted">Nenhuma foto ou PDF enviado neste mês.</p>{% endif %}</section>
 </div>
 
 <div class="grid cols-3 adm-grid">
-  <section class="card"><h2>On-line agora</h2>
+  <section class="card"><h2 title="Usou o sistema nos últimos {{ online_minutes }} minutos">On-line agora</h2>
     {% if p.online %}<ul class="adm-list">{% for x in p.online %}<li><span class="live" aria-hidden="true"></span><a href="/admin/usuarios/{{ x.user.id }}"><strong>{{ x.user.username }}</strong></a>{% if x.user.id == user.id %} <span class="muted small">(você)</span>{% endif %}<span class="muted small">{{ x.role }} · ativo {{ ago(x.last_seen) }}</span></li>{% endfor %}</ul>
     {% else %}<p class="muted">Ninguém on-line.</p>{% endif %}
-    <p class="hint">On-line = usou o sistema nos últimos {{ online_minutes }} minutos.</p></section>
+</section>
 
   <section class="card"><h2>Última conta lançada</h2>
     {% set e = p.last_entry %}{% if e %}

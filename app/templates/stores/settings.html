@@ -39,7 +39,7 @@
       <div class="field"><label for="add-type">Distribuidora</label><select id="add-type" name="record_type_id">{% for t in types %}{% if t.is_bill %}<option value="{{ t.id }}">{{ t.name }}</option>{% endif %}{% endfor %}</select></div>
     </div>
     <div class="row row-4"><div class="field"><label for="due_day">Dia de vencimento da conta</label>{% set due_value = None %}{% include "units/_dueday.html" %}
-      <div class="hint" id="due-hint">Opcional. Com o dia definido, o funcionário é avisado todo mês.</div></div></div>
+      <div class="hint" id="due-hint">Opcional; gera o aviso mensal.</div></div></div>
     <button class="btn primary">Adicionar unidade</button>
   </form>
 </div>

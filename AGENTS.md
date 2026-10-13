@@ -50,6 +50,18 @@ O índice completo está em [`docs/README.md`](docs/README.md).
 - **Não derrube a validação de configuração.** Com `DEBUG=false`, o servidor recusa subir sem `SECRET_KEY` e `DOCUMENT_ENCRYPTION_KEY` fortes.
 - **Não use textos genéricos ou condescendentes nas telas.** O sistema é profissional e simplificado; mensagens curtas, específicas e sem tom de assistente.
 
+## Textos na interface
+
+O sistema tem que ser óbvio pelo desenho, não por legendas. Não trate o usuário como quem não sabe ler um botão.
+
+- **Não escreva** frase que repete o título, o rótulo ou o botão ("Clique em Salvar para salvar", "Busque e edite contas").
+- **Escreva só o que a pessoa não tem como adivinhar**: regra de negócio (o que conta, o que é ignorado), limite
+  (tamanho, prazo), consequência irreversível, ou um dado que muda a decisão.
+- **Um nome por coisa.** Se duas telas chamam a mesma coisa por nomes diferentes, unifique o nome em vez de
+  escrever uma frase explicando (ex.: "unidade consumidora" em todo lugar).
+- Explicação longa vai na **Ajuda** ou num `title` (aparece ao passar o mouse), não no meio da tela.
+- Legenda de gráfico (o que é a barra, o que é a linha, a cor) é informação, não é óbvia: fica.
+
 ## Antes de commitar
 
 ```bash

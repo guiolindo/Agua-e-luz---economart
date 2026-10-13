@@ -4,7 +4,7 @@
 {% block content %}
 {% set e = extraction %}
 <div class="page-head"><div><div class="crumbs"><a href="/import">Importar conta</a> /</div><h1>Conferir conta identificada</h1>
-  <div class="muted">Confira os dados lidos antes de salvar.</div></div></div>
+</div></div>
 
 <div class="review">
 <form method="post" action="/import/{{ job.id }}/confirm" id="confirm">
@@ -75,7 +75,7 @@
   {% if not job.document.available %}<div class="flash info">O arquivo original expirou e foi removido ({{ job.document.purged_at|date_br }}).</div>
   {% elif job.document.content_type == 'application/pdf' %}<iframe src="/documents/{{ job.document_id }}" title="Documento original"></iframe>
   {% else %}<a href="/documents/{{ job.document_id }}" target="_blank" rel="noopener"><img src="/documents/{{ job.document_id }}" alt="Foto da conta enviada"></a>
-  <div class="muted small">Clique na imagem para abrir em tamanho real.</div>{% endif %}
+{% endif %}
   {% if job.document.available and retention_days %}<div class="muted small">O arquivo fica guardado por {{ (retention_days / 30.5)|round|int }} meses e depois é apagado; os dados lidos permanecem.</div>{% endif %}
 </aside>
 </div>

@@ -11,7 +11,7 @@
 
 {% if stores == 0 %}<section class="card"><h2>Primeiros passos</h2>
   <ol class="steps-help"><li>{% if user.can_write %}<a href="/stores/new">Cadastre a primeira loja</a>{% else %}Peça a um funcionário para cadastrar as lojas{% endif %} (código, nome e região).</li>
-    <li>{% if user.can_write %}Adicione as unidades consumidoras da loja{% else %}Aguarde o cadastro das unidades consumidoras pelo funcionário{% endif %}, ou use <strong>+ Novo ponto de energia</strong>.</li>
+    <li>{% if user.can_write %}Adicione as unidades consumidoras da loja{% else %}Aguarde o cadastro das unidades consumidoras pelo funcionário{% endif %}, ou use <strong>+ Unidade consumidora</strong>.</li>
     <li>Clique em <strong>Importar conta</strong> e envie a foto ou o PDF da primeira conta.</li></ol></section>{% endif %}
 <div class="grid cols-4" style="margin-bottom:16px">
   <div class="kpi"><div class="label">Lojas ativas</div><div class="value">{{ stores }}</div></div>
@@ -39,7 +39,7 @@
   <div class="stack">
   {% if recent_bills %}
   <section class="card flush" id="recentes">
-    <div style="padding:14px 18px 0"><h2>Últimas contas lançadas</h2><p class="muted small" style="margin:2px 0 6px">Terminou de lançar? Imprima a folha da loja com a conta original para o diretor assinar.</p></div>
+    <div style="padding:14px 18px 0"><h2>Últimas contas lançadas</h2></div>
     <div class="tablewrap"><table><tbody>{% for b in recent_bills %}<tr>
       <td><a href="/stores/{{ b.unit.store_id }}"><strong>{{ b.unit.store.short_label }}</strong></a><div class="muted small">{{ b.reference|month_label }} · {{ b.total_value|brl }}</div></td>
       <td class="right nowrap"><a class="btn sm primary" href="/stores/{{ b.unit.store_id }}/report?bill={{ b.id }}&doc=1" target="_blank" rel="noopener" title="Folha da loja + conta original, para o diretor assinar">Imprimir p/ assinatura</a></td></tr>{% endfor %}</tbody></table></div>
@@ -57,8 +57,7 @@
   </div>
 </div>
 {% if user.can_write and units_no_due_total %}
-<section class="card" aria-labelledby="nodue"><div class="card-head"><h2 id="nodue" style="margin:0">Pontos de energia sem dia de vencimento ({{ units_no_due_total }})</h2></div>
-  <p class="muted" style="margin:0 0 8px">Sem o dia de vencimento, o sistema não gera o aviso mensal desses pontos.</p>
+<section class="card" aria-labelledby="nodue"><div class="card-head"><h2 id="nodue" style="margin:0">Unidades sem dia de vencimento ({{ units_no_due_total }})</h2></div>
   <div class="tablewrap"><table class="stack"><tbody>
     {% for u in units_no_due %}<tr><td data-label="Loja"><a href="/stores/{{ u.store_id }}"><strong>{{ u.store.short_label }}</strong></a></td><td class="mono" data-label="Unidade">{{ u.number }}</td><td class="muted hide-sm">{{ u.description or '' }}</td>
       <td class="right cell-actions"><a class="btn sm" href="/units/{{ u.id }}/edit">Definir vencimento</a></td></tr>{% endfor %}
