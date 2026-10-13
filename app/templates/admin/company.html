@@ -1,29 +1,10 @@
 {% extends "base.html" %}
 {% from "macros.html" import csrf %}
-{% block title %}Lojas da empresa · Economart Energia{% endblock %}
+{% block title %}Importar lista de lojas · Economart Energia{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Lojas da empresa</h1>
-  <div class="muted">A lista oficial de lojas (número e nome). O funcionário escolhe a loja nela; loja sem conta lançada não aparece no Painel executivo.</div></div>
-  <a class="btn" href="/stores">Ver lojas</a></div>
+<div class="page-head"><div><div class="crumbs"><a href="/stores">Lojas</a> /</div><h1>Importar lista de lojas</h1>
+  <div class="muted">Cole a planilha de lojas da empresa: as lojas entram já cadastradas, com número e nome, e o funcionário só escolhe a loja. Loja sem conta lançada não aparece no Painel executivo.</div></div></div>
 
-{% if legacy %}
-<section class="card" id="vincular" style="border-left:4px solid var(--orange)">
-  <h2>Vincule as lojas criadas antes da lista ({{ legacy|length }})</h2>
-  <p class="muted">Estas lojas foram cadastradas à mão antes da lista oficial. Escolha a loja oficial correspondente: os pontos de energia, as contas e os lançamentos passam para ela e a loja antiga deixa de existir (o código e o nome antigos viram apelidos, para a leitura das contas continuar reconhecendo).</p>
-  <div class="tablewrap"><table>
-    <thead><tr><th>Loja antiga</th><th class="num">Pontos</th><th class="num">Contas</th><th>Loja oficial</th><th><span class="sr">Ação</span></th></tr></thead>
-    <tbody>{% for s in legacy %}{% set sg = suggestions.get(s.id) %}{% set sm = summaries[s.id] %}
-      <tr><td><a href="/stores/{{ s.id }}"><strong>{{ s.code }}</strong></a> {{ s.name or '' }}</td>
-        <td class="num">{{ sm.units }}</td><td class="num">{{ sm.bills }}</td>
-        <td><form method="get" action="/admin/lojas/vincular" class="actions" id="lk-{{ s.id }}"><input type="hidden" name="legacy" value="{{ s.id }}">
-          <label class="sr" for="of-{{ s.id }}">Loja oficial para {{ s.code }}</label>
-          <select id="of-{{ s.id }}" name="official" required style="width:auto;max-width:320px"><option value="">Escolha…</option>
-            {% for o in officials %}<option value="{{ o.id }}" {{ 'selected' if sg and sg.id == o.id }}>{{ o.label }}{% if o.region %} · {{ o.region }}{% endif %}</option>{% endfor %}</select>
-          {% if sg %}<span class="badge ok" title="Sugestão pelo código ou pelo nome">sugestão</span>{% endif %}</form></td>
-        <td class="right"><button class="btn sm primary" form="lk-{{ s.id }}">Vincular…</button></td></tr>
-    {% endfor %}</tbody></table></div>
-</section>
-{% endif %}
 
 {% if preview %}
 <section class="card">
@@ -38,25 +19,16 @@
       <td>{% if r.status == 'nova' %}<span class="badge ok">nova</span>{% else %}<span class="badge">atualiza</span>{% endif %}{% if r.note %}<div class="muted small">{{ r.note }}</div>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
   <form method="post" action="/admin/lojas/carregar" class="actions" style="margin-top:12px">{{ csrf(csrf_token) }}
     <textarea name="text" hidden>{{ text }}</textarea>
-    <button class="btn primary">Carregar a lista ({{ preview.rows|length }} lojas)</button><a class="btn" href="/admin/lojas">Cancelar</a></form>
+    <button class="btn primary">Carregar a lista ({{ preview.rows|length }} lojas)</button><a class="btn" href="/stores">Cancelar</a></form>
 </section>
 {% endif %}
 
 <form class="card" method="post" action="/admin/lojas/conferir">{{ csrf(csrf_token) }}
-  <h2>{{ 'Atualizar a lista' if officials else 'Carregar a lista oficial' }}</h2>
+  <h2>{{ 'Atualizar a lista' if officials else 'Colar a lista' }}</h2>
   <p class="muted">Copie as linhas da planilha de lojas e cole aqui (pode incluir os títulos dos blocos). Colunas: <strong>empresa, filial (número da loja), código C5, nome e CNPJ</strong>; depois inscrição estadual, inscrição municipal, CEP e endereço. A UF sai do CEP. Empresa sem número de filial (ex.: Drogamart) fica com o nome da empresa como código. Lojas que já existem com o mesmo número são atualizadas; nenhuma loja é apagada.</p>
   <div class="field"><label for="text">Lista de lojas</label>
     <textarea id="text" name="text" rows="8" required spellcheck="false" style="font-family:var(--mono, monospace);font-size:12px" placeholder="MULTICOM&#9;24&#9;189018&#9;Contagem Colonial&#9;28.548.486/0022-40&#9;…">{{ text or '' }}</textarea></div>
   <button class="btn primary">Conferir</button>
 </form>
 
-{% if officials %}
-<section class="card flush">
-  <div style="padding:14px 18px 0"><h2 style="margin:0">Lista oficial · {{ officials|length }} lojas</h2></div>
-  <div class="tablewrap"><table class="dense">
-    <thead><tr><th>Nº</th><th>Nome</th><th>UF</th><th>CNPJ</th><th class="num">Pontos</th><th>Grupo</th></tr></thead>
-    <tbody>{% for o in officials %}<tr><td><a href="/stores/{{ o.id }}"><strong>{{ o.code }}</strong></a></td><td>{{ o.name }}</td><td>{{ o.region or '—' }}</td>
-      <td class="mono nowrap">{{ o.cnpj or '—' }}</td><td class="num">{{ o.units|length }}</td><td class="muted small">{{ o.group_name or '' }}</td></tr>{% endfor %}</tbody></table></div>
-</section>
-{% endif %}
 {% endblock %}

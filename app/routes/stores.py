@@ -38,9 +38,11 @@ def _store_or_404(db: Session, store_id: int) -> Store:
 
 @router.get("/stores")
 def stores_list(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    legacy_count = len(company_stores.legacy_stores(db)) if user.is_admin else 0
-    return render(request, "stores/list.html", user=user, stores=list_stores(db), legacy_count=legacy_count,
-                  has_official=company_stores.has_official(db))
+    from app.routes.company import link_context
+
+    ctx = link_context(db) if user.is_admin else {"legacy": []}
+    return render(request, "stores/list.html", user=user, stores=list_stores(db),
+                  has_official=company_stores.has_official(db), **ctx)
 
 
 def _official_only(request: Request, db: Session, user: User):

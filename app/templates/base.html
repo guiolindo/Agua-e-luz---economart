@@ -71,9 +71,6 @@
       <a href="/admin/audit" class="{{ 'active' if path.startswith('/admin/audit') }}" {% if path.startswith('/admin/audit') %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
         <span>Auditoria</span></a>
-      <a href="/admin/lojas" class="{{ 'active' if path.startswith('/admin/lojas') }}" {% if path.startswith('/admin/lojas') %}aria-current="page"{% endif %}>
-        <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9h18"/><path d="M9 20v-6h6v6"/></svg>
-        <span>Lojas da empresa</span></a>
       <a href="/admin/users" class="{{ 'active' if path.startswith('/admin/users') }}" {% if path.startswith('/admin/users') %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>Usuários</span></a>{% endif %}
@@ -102,7 +99,7 @@
       </div>
       {% endif %}
     </div>{% endif %}
-    {% if legacy_count %}<div class="flash warn" role="status"><strong>{{ legacy_count }} loja(s) criada(s) antes da lista oficial.</strong> Vincule cada uma à loja da lista para juntar as contas. <a href="/admin/lojas#vincular"><strong>Vincular agora</strong></a></div>{% endif %}
+    {% if legacy_count %}<div class="flash warn" role="status"><strong>{{ legacy_count }} loja(s) criada(s) antes da lista oficial.</strong> Vincule cada uma à loja da lista para juntar as contas. <a href="/stores#vincular"><strong>Vincular agora</strong></a></div>{% endif %}
     {% if user and user.is_admin and not user.has_2fa and path in ('/', '/admin/users') and not user.must_change_password %}<div class="flash warn" role="status">Ative a verificação em duas etapas da sua conta de administrador. <a href="/account/2fa"><strong>Ativar</strong></a></div>{% endif %}
     {% for f in flashes %}<div class="flash {{ f.level }}" role="{{ 'alert' if f.level == 'error' else 'status' }}" data-flash="{{ f.level }}">{{ f.text }}</div>{% endfor %}
     {% block content %}{% endblock %}

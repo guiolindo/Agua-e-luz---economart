@@ -56,7 +56,7 @@ Observações verificadas no código:
 (UF, usada para comparar na diretoria), observações, apelidos (lista de textos, como "CD 300") e flag de ativa.
 Os apelidos servem para resolver anotações escritas à mão na conta.
 
-Lista oficial (`official`): o administrador carrega a planilha de lojas da empresa em **Lojas da empresa**
+Lista oficial (`official`): o administrador importa a planilha de lojas da empresa em **Lojas → Importar lista de lojas**
 (`/admin/lojas`, `app/services/company_stores.py`). Cada loja oficial tem o número como `code` (ex.: `24`), o
 nome, `cnpj`, `company` (MULTICOM, DROGAMART), `group_name` (título do bloco na planilha) e `details` (JSON com
 código C5, inscrições, CEP e endereço; empresa sem número de filial, como a Drogamart, tem o nome da empresa como `code`); a UF vai em `region`, tirada do CEP. Loja criada antes da lista

@@ -2,10 +2,10 @@
 {% from "macros.html" import csrf %}
 {% block title %}Vincular loja · Economart Energia{% endblock %}
 {% block content %}
-<div class="page-head"><div><div class="crumbs"><a href="/admin/lojas">Lojas da empresa</a> /</div><h1>Vincular loja</h1></div></div>
+<div class="page-head"><div><div class="crumbs"><a href="/stores">Lojas</a> /</div><h1>Vincular loja</h1></div></div>
 <form class="card" method="post" action="/admin/lojas/vincular" style="max-width:720px">{{ csrf(csrf_token) }}
   <input type="hidden" name="legacy_id" value="{{ old.id }}"><input type="hidden" name="official_id" value="{{ new.id }}">
-  <p style="font-size:16px"><strong>{{ old.label }}</strong> (loja antiga) → <strong>{{ new.label }}</strong>{% if new.region %} · {{ new.region }}{% endif %} (lista oficial)</p>
+  <p style="font-size:16px"><strong>{{ old.label }}</strong> (loja antiga) → <strong>{{ new.label }}</strong>{% if new.region %} · {{ new.region }}{% endif %} (lista da empresa)</p>
   <ul>
     <li><strong>{{ summary.units }}</strong> ponto(s) de energia e <strong>{{ summary.bills }}</strong> conta(s) passam para {{ new.code }}.</li>
     <li><strong>{{ summary.records }}</strong> lançamento(s) manual(is) passam para {{ new.code }}.</li>
@@ -13,6 +13,6 @@
     <li>A loja antiga <strong>{{ old.code }}</strong> deixa de existir.</li>
   </ul>
   <div class="flash warn" role="note">Não dá para desfazer pelo sistema. Confira se é mesmo a mesma loja.</div>
-  <div class="actions"><button class="btn primary">Vincular</button><a class="btn" href="/admin/lojas#vincular">Cancelar</a></div>
+  <div class="actions"><button class="btn primary">Vincular</button><a class="btn" href="/stores#vincular">Cancelar</a></div>
 </form>
 {% endblock %}

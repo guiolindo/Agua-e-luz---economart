@@ -13,13 +13,19 @@ router = APIRouter()
 MAX_TEXT = 200_000
 
 
-def _page(request: Request, db: Session, user: User, **extra):
-    officials = company_stores.official_stores(db)
+def link_context(db: Session) -> dict:
+    """Lojas antigas a vincular (cartão no topo da tela Lojas, só para o administrador)."""
     legacy = company_stores.legacy_stores(db)
-    suggestions = {s.id: (company_stores.suggest(s, officials) or None) for s in legacy}
-    summaries = {s.id: company_stores.link_summary(s, db) for s in legacy}
-    return render(request, "admin/company.html", user=user, officials=officials, legacy=legacy,
-                  suggestions=suggestions, summaries=summaries, **extra)
+    if not legacy:
+        return {"legacy": []}
+    officials = company_stores.official_stores(db)
+    return {"legacy": legacy, "officials": officials,
+            "suggestions": {s.id: company_stores.suggest(s, officials) for s in legacy},
+            "summaries": {s.id: company_stores.link_summary(s, db) for s in legacy}}
+
+
+def _page(request: Request, db: Session, user: User, **extra):
+    return render(request, "admin/company.html", user=user, officials=company_stores.official_stores(db), **extra)
 
 
 @router.get("/admin/lojas")
@@ -52,7 +58,7 @@ def company_import(request: Request, text: str = Form("", max_length=MAX_TEXT), 
     if parsed.errors:
         msg += f" {len(parsed.errors)} linha(s) ignorada(s) por erro."
     flash(request, msg)
-    return RedirectResponse("/admin/lojas", status_code=303)
+    return RedirectResponse("/stores#vincular" if company_stores.legacy_stores(db) else "/stores", status_code=303)
 
 
 def _pair(db: Session, legacy_id: int, official_id: int) -> tuple[Store, Store]:
@@ -67,11 +73,11 @@ def link_confirm(request: Request, legacy: int, official: int | None = None, use
                  db: Session = Depends(get_db)):
     if not official:
         flash(request, "Escolha a loja da lista oficial.", "error")
-        return RedirectResponse("/admin/lojas#vincular", status_code=303)
+        return RedirectResponse("/stores#vincular", status_code=303)
     old, new = _pair(db, legacy, official)
     if old.is_official or not new.is_official or old.id == new.id:
         flash(request, "Escolha uma loja antiga e uma loja da lista oficial.", "error")
-        return RedirectResponse("/admin/lojas#vincular", status_code=303)
+        return RedirectResponse("/stores#vincular", status_code=303)
     return render(request, "admin/company_link.html", user=user, old=old, new=new,
                   summary=company_stores.link_summary(old, db))
 
@@ -86,11 +92,11 @@ def link_store(request: Request, legacy_id: int = Form(...), official_id: int = 
     except company_stores.LinkError as exc:
         db.rollback()
         flash(request, str(exc), "error")
-        return RedirectResponse("/admin/lojas#vincular", status_code=303)
+        return RedirectResponse("/stores#vincular", status_code=303)
     audit_service.log(db, user.id, "link", "store", new.id,
                       {"from_id": old_id, "from": old_label, "units": summary.units, "bills": summary.bills,
                        "records": summary.records})
     db.commit()
     flash(request, f"{old_label} vinculada a {new.label}: {summary.units} ponto(s) de energia, {summary.bills} conta(s) "
                    f"e {summary.records} lançamento(s) passaram para a loja oficial.")
-    return RedirectResponse("/admin/lojas#vincular", status_code=303)
+    return RedirectResponse("/stores#vincular", status_code=303)

@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Lojas · Economart Energia{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Lojas</h1>{% if stores %}<div class="field searchbox" style="margin:8px 0 0"><label for="q" class="sr">Buscar loja</label><input id="q" type="search" placeholder="Buscar loja…" data-filter="#stores-body tr" data-count="q-count" autocomplete="off"><span id="q-count" class="muted small" aria-live="polite"></span></div>{% endif %}</div>{% if user.is_admin and has_official %}<a class="btn" href="/admin/lojas">Lojas da empresa</a> <a class="btn primary" href="/stores/new">Nova loja</a>{% elif user.can_write and not has_official %}<a class="btn primary" href="/stores/new">Nova loja</a>{% endif %}</div>
+<div class="page-head"><div><h1>Lojas</h1>{% if stores %}<div class="field searchbox" style="margin:8px 0 0"><label for="q" class="sr">Buscar loja</label><input id="q" type="search" placeholder="Buscar loja…" data-filter="#stores-body tr" data-count="q-count" autocomplete="off"><span id="q-count" class="muted small" aria-live="polite"></span></div>{% endif %}</div><div class="actions">{% if user.is_admin %}<a class="btn{{ " primary" if not has_official }}" href="/admin/lojas" title="Cole a planilha de lojas da empresa: as lojas entram já cadastradas">{{ "Atualizar lista de lojas" if has_official else "Importar lista de lojas" }}</a>{% endif %}{% if user.is_admin or (user.can_write and not has_official) %}<a class="btn{{ " primary" if has_official or not user.is_admin }}" href="/stores/new">Nova loja</a>{% endif %}</div></div>
+{% if legacy %}{% include "stores/_link.html" %}{% endif %}
 <div class="card flush"><div class="tablewrap"><table>
   <thead><tr><th>Código</th><th>Nome</th><th>Localização</th><th class="num">Unidades</th><th>Situação</th><th><span class="sr">Ações</span></th></tr></thead>
   <tbody id="stores-body">{% for s in stores %}

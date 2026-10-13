@@ -1,0 +1,18 @@
+{% if legacy %}
+<section class="card" id="vincular" style="border-left:4px solid var(--orange)">
+  <h2>Vincule {{ legacy|length }} loja(s) criada(s) antes da lista</h2>
+  <p class="muted">Estas lojas foram cadastradas à mão antes da lista. Escolha a loja da lista que é a mesma: os pontos de energia, as contas e os lançamentos passam para ela e a loja antiga deixa de existir (o código e o nome antigos viram apelidos, para a leitura das contas continuar reconhecendo).</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Loja antiga</th><th class="num">Pontos</th><th class="num">Contas</th><th>Loja oficial</th><th><span class="sr">Ação</span></th></tr></thead>
+    <tbody>{% for s in legacy %}{% set sg = suggestions.get(s.id) %}{% set sm = summaries[s.id] %}
+      <tr><td><a href="/stores/{{ s.id }}"><strong>{{ s.code }}</strong></a> {{ s.name or '' }}</td>
+        <td class="num">{{ sm.units }}</td><td class="num">{{ sm.bills }}</td>
+        <td><form method="get" action="/admin/lojas/vincular" class="actions" id="lk-{{ s.id }}"><input type="hidden" name="legacy" value="{{ s.id }}">
+          <label class="sr" for="of-{{ s.id }}">Loja oficial para {{ s.code }}</label>
+          <select id="of-{{ s.id }}" name="official" required style="width:auto;max-width:320px"><option value="">Escolha…</option>
+            {% for o in officials %}<option value="{{ o.id }}" {{ 'selected' if sg and sg.id == o.id }}>{{ o.label }}{% if o.region %} · {{ o.region }}{% endif %}</option>{% endfor %}</select>
+          {% if sg %}<span class="badge ok" title="Sugestão pelo código ou pelo nome">sugestão</span>{% endif %}</form></td>
+        <td class="right"><button class="btn sm primary" form="lk-{{ s.id }}">Vincular…</button></td></tr>
+    {% endfor %}</tbody></table></div>
+</section>
+{% endif %}

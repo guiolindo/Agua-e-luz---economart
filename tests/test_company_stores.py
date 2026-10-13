@@ -74,7 +74,8 @@ def test_old_store_shows_up_to_be_linked_and_links_with_everything(client, db):
     assert "Vincule" not in client.get("/").text                                                 # sem lista ainda: sem aviso
     client.post("/admin/lojas/carregar", {"text": LIST})
     assert "1 loja(s) criada(s) antes da lista oficial" in client.get("/").text
-    page = client.get("/admin/lojas").text
+    page = client.get("/stores").text
+    assert "Vincule 1 loja(s) criada(s) antes da lista" in page                                   # na própria tela Lojas
     official = db.query(Store).filter_by(code="300").one()
     assert f'<option value="{official.id}" selected>' in page                                    # sugestão: CD300 -> 300
     confirm = client.get(f"/admin/lojas/vincular?legacy={old_id}&official={official.id}")
@@ -150,3 +151,14 @@ def test_reloading_fixes_a_code_by_the_cnpj(client, db):
     db.expire_all()
     s = db.query(Store).filter_by(cnpj="68.380.795/0001-44").one()
     assert s.code == "DROGAMART" and "246774" in s.aliases and db.query(Store).count() == 8
+
+
+def test_one_stores_screen_no_separate_menu(client, db):
+    """Boas práticas: uma tela só de Lojas. Importar a lista é um botão nela; não há item de menu separado."""
+    html = client.get("/stores").text
+    assert 'href="/admin/lojas"' in html and "Importar lista de lojas" in html and "Lojas da empresa" not in html
+    func = _user(client, "func10", "operator")
+    assert "Importar lista de lojas" not in func.get("/stores").text
+    r = client.post("/admin/lojas/carregar", {"text": LIST})
+    assert r.headers["location"] == "/stores"
+    assert "Atualizar lista de lojas" in client.get("/stores").text
