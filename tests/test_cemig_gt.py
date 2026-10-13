@@ -3,6 +3,8 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
+import pytest
+
 from sqlalchemy import select
 
 from app.models import ConsumerUnit, EnergyBill, ManualRecord, RecordType, Store
@@ -111,7 +113,7 @@ def test_no_false_pending_when_bill_replaces_manual_entry(db):
     assert not [i for i in items if i["type"].code == "cemig-geracao" and "mês anterior" in i["text"]]
 
 
-def test_rs_per_kwh_ignores_gt_bill_so_kwh_is_not_counted_twice(db):
+def test_rs_per_kwh_counts_the_gt_value_but_not_its_kwh_twice(db):
     from app.services import executive_service
     store, unit, rt, old = _legacy_setup(db)
     dist = db.scalar(select(RecordType).where(RecordType.code == "cemig"))
@@ -122,4 +124,14 @@ def test_rs_per_kwh_ignores_gt_bill_so_kwh_is_not_counted_twice(db):
                       consumption_hp=Decimal("10000"), consumption_hfp=Decimal("30000"), source="import", line_items=[]))
     db.commit()
     data = executive_service.build(db, date(2026, 8, 1), date(2026, 8, 1))
-    assert data["kpi"]["rs_kwh"] == 0.5          # 20.000 / 40.000 kWh só da distribuição; a G&T (128.783 kWh) fica fora
+    # custo efetivo = tudo o que a loja pagou de energia (distribuição + G&T) ÷ kWh da distribuição (a G&T não soma kWh de novo)
+    assert data["kpi"]["rs_kwh"] == pytest.approx((20000 + 53376.83) / 40000, abs=1e-3)
+
+
+def test_store_with_only_the_gt_bill_still_has_rs_per_kwh(db):
+    """Loja que só tem a conta da Cemig GT (unidade trocada de CEMIG para GT): o custo por kWh usa os kWh da GT."""
+    from app.services import executive_service
+    _legacy_setup(db)
+    data = executive_service.build(db, date(2026, 8, 1), date(2026, 8, 1))
+    assert data["kpi"]["rs_kwh"] == pytest.approx(53376.83 / (12159 + 116624), abs=1e-3)
+    assert data["rows"][0]["rs_kwh"] == pytest.approx(53376.83 / 128783, abs=1e-3)

@@ -76,6 +76,10 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
     by_type_month = defaultdict(lambda: [Decimal(0)] * n)
     mix = defaultdict(lambda: defaultdict(Decimal))      # store -> tipo -> valor
     eff = defaultdict(lambda: {"value": Decimal(0), "kwh": Decimal(0)})
+    # custo efetivo por loja e mês: valor de TODAS as contas de energia ÷ kWh da distribuidora (se no mês só houver a
+    # conta de geração, os kWh dela). A conta de geração (Cemig GT) entra no valor, mas os kWh dela não se somam aos
+    # da distribuidora: são a mesma energia.
+    energy_month = defaultdict(lambda: {"value": Decimal(0), "kwh_dist": Decimal(0), "kwh_gen": Decimal(0)})
     util = defaultdict(list)                             # store -> [demanda / contratada]
 
     def add(store_id: int, type_id: int, month: date, value: Decimal) -> None:
@@ -95,15 +99,21 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
         add(b.unit.store_id, b.record_type_id, m, b.total_value)
         if m in idx and b.unit.store_id in store_ids and b.record_type_id in use_types:
             kwh = b.consumption_total
-            if kwh and kwh > 0 and type_code.get(b.record_type_id) not in NO_OWN_KWH_TYPES:
-                eff[b.unit.store_id]["value"] += b.total_value
-                eff[b.unit.store_id]["kwh"] += kwh
+            cell = energy_month[(b.unit.store_id, m)]
+            cell["value"] += b.total_value
+            if kwh and kwh > 0:
+                cell["kwh_gen" if type_code.get(b.record_type_id) in NO_OWN_KWH_TYPES else "kwh_dist"] += kwh
             if b.contracted_demand and b.contracted_demand > 0:
                 measured = max(b.demand_hp or Decimal(0), b.demand_hfp or Decimal(0))
                 if measured > 0:
                     util[b.unit.store_id].append(measured / b.contracted_demand)
     for r in manual:
         add(r.store_id, r.record_type_id, month_of(r.reference, None, by), r.value)
+    for (store_id, _m), cell in energy_month.items():
+        kwh = cell["kwh_dist"] or cell["kwh_gen"]
+        if kwh > 0:                                  # mês sem kWh em nenhuma conta não entra no custo efetivo
+            eff[store_id]["value"] += cell["value"]
+            eff[store_id]["kwh"] += kwh
 
     # --- empresa por mês
     month_totals = [sum((cur[s.id].get(m, Decimal(0)) for s in stores), Decimal(0)) for m in months]
