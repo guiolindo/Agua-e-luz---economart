@@ -8,7 +8,12 @@ def list_stores(db: Session, only_active: bool = False) -> list[Store]:
     stmt = select(Store).options(selectinload(Store.units)).order_by(Store.code)
     if only_active:
         stmt = stmt.where(Store.active.is_(True))
-    return list(db.scalars(stmt))
+    return sorted(db.scalars(stmt), key=store_sort_key)
+
+
+def store_sort_key(s: Store):
+    """Número da loja em ordem numérica (6, 7, 10, 24...), depois os códigos com letras (CD300, L01...)."""
+    return (not s.code.isdigit(), int(s.code) if s.code.isdigit() else 0, s.code)
 
 
 def get_store_by_code(db: Session, code: str) -> Store | None:

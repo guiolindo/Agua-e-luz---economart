@@ -111,11 +111,13 @@ Sobre a senha provisória de 4 dígitos:
 - Se a pessoa não entrou a tempo ou esqueceu a senha: **Usuários → Redefinir senha** gera outra de 4 dígitos.
 - Para desligar alguém que saiu da empresa: **Usuários → Desativar** (as sessões abertas caem na hora).
 
+**Lojas da empresa (lista oficial).** Menu **Lojas da empresa**: cole as linhas da planilha de lojas (empresa, número, código, nome, CNPJ, inscrições, CEP, endereço; os títulos dos blocos podem vir junto), clique em **Conferir**, confira número, nome e UF (a UF sai do CEP) e clique em **Carregar a lista**. Carregar de novo atualiza pelo número, sem duplicar e sem apagar nada. Lojas cadastradas à mão antes da lista aparecem num aviso laranja: escolha a loja oficial correspondente e clique em **Vincular…** (o sistema sugere quando reconhece o número ou o nome); pontos de energia, contas e lançamentos passam para a loja oficial e o código antigo vira apelido. Com a lista carregada, o funcionário só escolhe a loja; loja nova, só o administrador inclui.
+
 ### Passo 2 — O funcionário faz os cadastros
 
 O funcionário é o responsável por manter tudo de energia da empresa, então é ele quem cadastra:
 
-**1. Lojas/filiais.** Menu **Lojas → Nova loja**. Informe:
+**1. Lojas/filiais.** Se o administrador já carregou a **lista oficial**, as lojas já existem: pule para o item 2 e escolha a loja na lista. Sem a lista, menu **Lojas → Nova loja**. Informe:
 
 - **Código** (ex.: `CD300`) e **nome**;
 - **Região/UF** (ex.: `MG`, `BA`): é usada para comparar regiões no painel executivo;

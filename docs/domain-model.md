@@ -56,6 +56,13 @@ Observações verificadas no código:
 (UF, usada para comparar na diretoria), observações, apelidos (lista de textos, como "CD 300") e flag de ativa.
 Os apelidos servem para resolver anotações escritas à mão na conta.
 
+Lista oficial (`official`): o administrador carrega a planilha de lojas da empresa em **Lojas da empresa**
+(`/admin/lojas`, `app/services/company_stores.py`). Cada loja oficial tem o número como `code` (ex.: `24`), o
+nome, `cnpj`, `company` (MULTICOM, DROGAMART), `group_name` (título do bloco na planilha) e `details` (JSON com
+código interno, inscrições, CEP e endereço); a UF vai em `region`, tirada do CEP. Loja criada antes da lista
+(`official` falso) é vinculada a uma oficial: os pontos de energia, os lançamentos manuais e as importações
+passam para ela, o código e o nome antigos viram apelidos e a loja antiga é apagada.
+
 **Unidade consumidora** (`consumer_units`), chamada na interface de **ponto de energia**. É a instalação
 que a distribuidora fatura. Pertence a uma loja; uma loja pode ter várias. O número é guardado como impresso
 (`number`) e também normalizado, só com dígitos (`number_normalized`, único em todo o sistema): "12.060.073.018-19" e

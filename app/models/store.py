@@ -20,10 +20,21 @@ class Store(TimestampMixin, Base):
     # Apelidos usados em anotações à mão/relatórios (ex.: "CD 300", "CD Rib Neves")
     aliases: Mapped[list | None] = mapped_column(JSON, default=list, nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Lista oficial de lojas da empresa (carregada pelo administrador). Loja criada antes da lista fica com
+    # official=False até ser vinculada a uma loja oficial (as contas e os pontos de energia passam para ela).
+    official: Mapped[bool | None] = mapped_column(Boolean, default=False, nullable=True)
+    cnpj: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    company: Mapped[str | None] = mapped_column(String(60), nullable=True)       # MULTICOM, DROGAMART...
+    group_name: Mapped[str | None] = mapped_column(String(120), nullable=True)   # título do bloco na lista (estado, CDs...)
+    details: Mapped[dict | None] = mapped_column(JSON, nullable=True)           # código interno, IE, IM, CEP, endereço
 
     units: Mapped[list["ConsumerUnit"]] = relationship(
         back_populates="store", order_by="ConsumerUnit.number", cascade="all, delete-orphan"
     )
+
+    @property
+    def is_official(self) -> bool:
+        return bool(self.official)
 
     @property
     def label(self) -> str:

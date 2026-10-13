@@ -65,7 +65,8 @@
     <p class="hint">Os avisos são só do funcionário. Administrador, diretoria e consulta não recebem.</p></section>
 
   <section class="card" id="func-cadastros"><h2>Cadastros: lojas, unidades e tipos</h2>
-    <ul><li><strong>Nova loja:</strong> menu <em>Lojas → Nova loja</em>. Informe código, nome, região e, se quiser, apelidos (como “CD 300”) — ajudam o sistema a reconhecer a loja na conta.</li>
+    <ul><li><strong>Lojas da empresa:</strong> quando o administrador carrega a lista oficial, as lojas já ficam cadastradas (número e nome, ex.: <em>24 — Contagem Colonial</em>): é só escolher a loja ao cadastrar o ponto de energia. Faltou alguma? Peça ao administrador.</li>
+      <li><strong>Nova loja (antes da lista oficial):</strong> menu <em>Lojas → Nova loja</em>. Informe código, nome, região e, se quiser, apelidos (como “CD 300”) — ajudam o sistema a reconhecer a loja na conta.</li>
       <li><strong>Nova unidade (instalação):</strong> clique em <strong>+ Novo ponto de energia</strong>, escolha a loja, digite o número da unidade consumidora e a <strong>Distribuidora</strong> (CEMIG, CEMIG Geração e Transmissão, COELBA ou Energisa). Escolher a distribuidora certa faz o sistema ler a conta do jeito certo.</li>
       <li><strong>Mudar algo:</strong> abra a unidade e clique em <strong>Editar unidade</strong> (número, descrição, vencimento, ativa ou inativa).</li>
       <li><strong>Outros custos</strong> (outro fornecedor, nova despesa): menu <em>Tipos de registro</em>.</li></ul></section>
@@ -104,6 +105,14 @@
       <li>Alguém errou a senha várias vezes e foi bloqueado (15 min)? Clique em <strong>Desbloquear</strong>.</li>
       <li>Pessoa saiu da empresa? Clique em <strong>Desativar</strong>: ela perde o acesso na hora.</li>
     </ol></section>
+  <section class="card" id="admin-lojas"><h2>Lojas da empresa (lista oficial)</h2>
+    <ol class="steps-help">
+      <li>Menu <strong>Lojas da empresa</strong>. Copie as linhas da planilha de lojas (empresa, número, código, nome, CNPJ, inscrições, CEP e endereço) e cole no quadro. Pode colar junto os títulos dos blocos.</li>
+      <li>Clique em <strong>Conferir</strong>: aparece a lista com número, nome, UF (tirada do CEP) e se a loja é nova ou atualizada. Nada é gravado ainda.</li>
+      <li>Confira e clique em <strong>Carregar a lista</strong>. Carregar de novo atualiza as lojas pelo número, sem duplicar; nenhuma loja é apagada.</li>
+      <li>Lojas criadas antes da lista aparecem no aviso laranja. Escolha a loja oficial correspondente (o sistema sugere quando reconhece o número ou o nome) e clique em <strong>Vincular…</strong>: confira o resumo e confirme. Pontos de energia, contas e lançamentos passam para a loja oficial; o código e o nome antigos viram apelidos.</li>
+    </ol>
+    <p class="hint">Depois que a lista existe, o funcionário escolhe a loja na lista e não cria loja nova; se faltar alguma, o administrador inclui. Loja sem conta lançada não aparece no Painel executivo.</p></section>
   <section class="card" id="admin-2fa"><h2>Proteger sua conta com Google Authenticator (2FA)</h2>
     <p>O 2FA pede, além da senha, um código de 6 dígitos que muda a cada 30 segundos no celular. Mesmo que descubram a sua senha, o código adicional dificulta muito o acesso à sua conta.</p>
     <ol class="steps-help">

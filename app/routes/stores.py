@@ -11,7 +11,7 @@ from app.repositories.stores import (
     list_stores,
 )
 from app.security import current_user, verify_csrf, writer_required
-from app.services import audit_service, chart_service, due_service
+from app.services import audit_service, chart_service, company_stores, due_service
 from app.services.import_service import UnitConflict, create_unit
 from app.utils.parsing import clean_str, normalize_uc, parse_due_day, parse_reference
 from app.web import flash, render
@@ -38,11 +38,24 @@ def _store_or_404(db: Session, store_id: int) -> Store:
 
 @router.get("/stores")
 def stores_list(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    return render(request, "stores/list.html", user=user, stores=list_stores(db))
+    legacy_count = len(company_stores.legacy_stores(db)) if user.is_admin else 0
+    return render(request, "stores/list.html", user=user, stores=list_stores(db), legacy_count=legacy_count,
+                  has_official=company_stores.has_official(db))
+
+
+def _official_only(request: Request, db: Session, user: User):
+    """Com a lista oficial carregada, loja nova só pelo administrador (o funcionário escolhe a loja na lista)."""
+    if not user.is_admin and company_stores.has_official(db):
+        flash(request, "As lojas da empresa já estão cadastradas: escolha a loja na lista. Se faltar alguma, "
+                       "peça ao administrador para incluí-la.", "info")
+        return RedirectResponse("/stores", status_code=303)
+    return None
 
 
 @router.get("/stores/new")
-def store_new(request: Request, user: User = Depends(writer_required)):
+def store_new(request: Request, user: User = Depends(writer_required), db: Session = Depends(get_db)):
+    if (blocked := _official_only(request, db, user)) is not None:
+        return blocked
     return render(request, "stores/form.html", user=user, store=None)
 
 
@@ -50,6 +63,8 @@ def store_new(request: Request, user: User = Depends(writer_required)):
 def store_create(request: Request, code: str = Form(...), name: str = Form(""), location: str = Form(""),
                  aliases: str = Form(""), notes: str = Form(""), region: str = Form(""),
                  user: User = Depends(writer_required), db: Session = Depends(get_db)):
+    if (blocked := _official_only(request, db, user)) is not None:
+        return blocked
     code = code.strip().upper()
     if not code:
         flash(request, "Informe o código da loja.", "error")
@@ -60,7 +75,8 @@ def store_create(request: Request, code: str = Form(...), name: str = Form(""), 
                       form={"code": code, "name": name, "location": location, "aliases": aliases,
                                           "notes": notes})
     store = Store(code=code, name=clean_str(name, 200), location=clean_str(location, 200), notes=clean_str(notes),
-                  aliases=parse_aliases(aliases), region=(clean_str(region, 20) or "").upper() or None)
+                  aliases=parse_aliases(aliases), region=(clean_str(region, 20) or "").upper() or None,
+                  official=company_stores.has_official(db))           # criada pelo administrador com a lista já carregada
     db.add(store)
     db.flush()
     audit_service.log(db, user.id, "create", "store", store.id, {"code": code})
