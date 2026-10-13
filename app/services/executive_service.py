@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import ConsumerUnit, EnergyBill, ManualRecord, RecordType, Store
+from app.models.store import short_label
 from app.services import dashboard_service
 from app.services.calculation_service import add_months, month_range, variation
 from app.services.chart_service import _fetch_range, month_of
@@ -146,7 +147,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
         avg_cur = stotal / n_cur if n_cur else None
         avg_prev = prev_total[s.id] / n_prev if comparable else None
         rows.append({
-            "id": s.id, "n_months": n_cur, "avg_prev": _f(avg_prev), "code": s.code, "name": s.name or "", "region": s.region or "", "values": [_f(v) for v in vals],
+            "id": s.id, "n_months": n_cur, "avg_prev": _f(avg_prev), "code": s.code, "label": short_label(s.code, s.name), "name": s.name or "", "region": s.region or "", "values": [_f(v) for v in vals],
             "total": _f(stotal), "share": _f(stotal / total * 100) if total else 0.0,
             "avg": _f(stotal / max(1, len([v for v in vals if v]))),
             "prev_total": _f(prev_total.get(s.id)) if prev_total.get(s.id) else None,
@@ -233,32 +234,32 @@ def insights(data: dict) -> list[dict]:
         tone = "bad" if y["var"]["pct"] > 5 else "good" if y["var"]["pct"] < -5 else "info"
         out.append({"tone": tone, "text": f"Contra {y['label']} (mesmo mês do ano anterior, {y['stores']} {'loja com dado' if y['stores'] == 1 else 'lojas com dado'} nos dois): {fmt.pct(abs(y['var']['pct']))} {verb}."})
     if k["top"]:
-        out.append({"tone": "info", "text": f"Maior participação no gasto do período: {k['top']['code']}, com {fmt.pct(k['top']['share'])} do total."})
+        out.append({"tone": "info", "text": f"Maior participação no gasto do período: {k['top']['label']}, com {fmt.pct(k['top']['share'])} do total."})
     for key, word, tone in (("rise", "alta", "bad"), ("fall", "queda", "good")):
         r = k.get(key)
         if r and r["vs_last_month"]["pct"] is not None and abs(r["vs_last_month"]["pct"]) >= 5:
-            out.append({"tone": tone, "text": f"Maior {word} em {focus}: {r['code']} ({fmt.pct(r['vs_last_month']['pct'], signed=True)})."
+            out.append({"tone": tone, "text": f"Maior {word} em {focus}: {r['label']} ({fmt.pct(r['vs_last_month']['pct'], signed=True)})."
                         + (" Vale conferir o motivo: consumo, demanda ou tarifa." if key == "rise" else "")})
     fi, part = data.get("focus_idx"), data.get("partial") or []
     odd = []
     for r in rows:
         dev = _own_deviation(r, fi, part)
         if dev is not None and abs(dev) >= 25:
-            odd.append((abs(dev), r["code"], dev))
+            odd.append((abs(dev), r["label"], dev))
     if odd:
         odd.sort(reverse=True)
         out.append({"tone": "bad" if any(d > 0 for _, _, d in odd[:3]) else "info",
                     "text": f"Fora do próprio padrão em {focus} (contra a média dos meses anteriores da loja): "
                             + ", ".join(f"{c} {fmt.pct(d, signed=True)}" for _, c, d in odd[:3]) + "."})
-    over = [r["code"] for r in rows if (r.get("demand_over") or 0) > 0]
+    over = [r["label"] for r in rows if (r.get("demand_over") or 0) > 0]
     if over:
         out.append({"tone": "bad", "text": f"{len(over)} {'loja ultrapassou' if len(over) == 1 else 'lojas ultrapassaram'} a demanda contratada em algum mês do período (pode gerar cobrança por ultrapassagem): {names(over)}."})
-    low = [r["code"] for r in rows if r.get("demand_use") is not None and r["demand_use"] < 60]
+    low = [r["label"] for r in rows if r.get("demand_use") is not None and r["demand_use"] < 60]
     if low:
         out.append({"tone": "info", "text": f"Usam menos de 60% da demanda contratada (pode haver contrato maior que o necessário): {names(low)}."})
     avg = k.get("rs_kwh")
     if avg:
-        dear = [r["code"] for r in rows if r.get("rs_kwh") and r["rs_kwh"] > avg * 1.15]
+        dear = [r["label"] for r in rows if r.get("rs_kwh") and r["rs_kwh"] > avg * 1.15]
         if dear:
             out.append({"tone": "bad", "text": f"Custo por kWh acima da média da empresa ({fmt.brl(avg, 3)}) em mais de 15%: {names(dear)}."})
     if k["pending"]:

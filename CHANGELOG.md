@@ -5,6 +5,8 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-13
 
+- **Loja numerada aparece pelo nome.** Com a lista oficial, o código da loja é o número ("24"), que sozinho não diz nada: nos destaques, indicadores (maior gasto, maior alta/queda), mapa de calor, comparativo, pendências, alertas, lista de contas, painel do funcionário, conferência da importação, planilha e PowerPoint aparece o nome ("Contagem Colonial"). Código com letras (CD300) continua aparecendo como antes. Nos gráficos, o rótulo deixa de repetir o número.
+
 - **Lojas numa tela só (UX).** O item de menu separado "Lojas da empresa" deixava duas telas de lojas. Agora tudo fica em **Lojas**: o administrador vê o botão **Importar lista de lojas** (que vira *Atualizar lista de lojas* depois da primeira carga) e, no topo da mesma tela, o cartão laranja para vincular as lojas criadas antes da lista, com a sugestão já marcada. Importar e vincular voltam para Lojas. O aviso no Painel leva para lá.
 
 - **Lojas da empresa: colunas com os nomes certos e Drogamart sem número de filial.** As colunas são empresa, filial (número da loja), código C5, nome, CNPJ, inscrição estadual, inscrição municipal, CEP e endereço; o código C5 fica guardado como `c5`. A Drogamart não tem número de filial: com a coluna vazia ou repetindo o C5, a loja recebe o nome da empresa como código (`DROGAMART — Matriz`). Carregar a lista de novo acha a loja oficial pelo CNPJ quando o código mudou (a Drogamart carregada antes como 246774 vira DROGAMART, com 246774 como apelido), sem criar loja duplicada.

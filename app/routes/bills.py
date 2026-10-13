@@ -56,7 +56,7 @@ def _collect(db: Session, store_id, type_id, start, end, q, origin):
     for b in bills:
         store = b.unit.store if b.unit else None
         rows.append({
-            "reference": b.reference, "store_code": store.code if store else "—",
+            "reference": b.reference, "store_code": store.short_label if store else "—",
             "store_id": store.id if store else None,
             "unit_number": b.unit.number if b.unit else "—",
             "unit_id": b.unit_id, "bill_id": b.id, "record_id": None,
@@ -67,7 +67,7 @@ def _collect(db: Session, store_id, type_id, start, end, q, origin):
         })
     for r in manuals:
         rows.append({
-            "reference": r.reference, "store_code": r.store.code if r.store else "—",
+            "reference": r.reference, "store_code": r.store.short_label if r.store else "—",
             "store_id": r.store_id, "unit_number": (r.unit.number if r.unit else "—"),
             "unit_id": r.unit_id, "bill_id": None, "record_id": r.id,
             "type_name": types_by_id[r.record_type_id].name if r.record_type_id in types_by_id else "Lançamento",

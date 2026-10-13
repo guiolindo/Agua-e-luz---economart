@@ -40,6 +40,16 @@ class Store(TimestampMixin, Base):
     def label(self) -> str:
         return f"{self.code} — {self.name}" if self.name else self.code
 
+    @property
+    def short_label(self) -> str:
+        return short_label(self.code, self.name)
+
+
+def short_label(code: str, name: str | None) -> str:
+    """Como a loja aparece sozinha num texto ou indicador. Loja da lista oficial tem número como código ("24"),
+    que sozinho não diz nada: aparece o nome ("Contagem Colonial"). Código com letras (CD300) continua o código."""
+    return name.strip() if name and name.strip() and str(code).isdigit() else str(code)
+
 
 class ConsumerUnit(TimestampMixin, Base):
     __tablename__ = "consumer_units"

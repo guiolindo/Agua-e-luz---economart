@@ -12,7 +12,7 @@
   const arrow = (p) => p == null ? '—' : (p > 0 ? '↑ ' : p < 0 ? '↓ ' : '→ ') + nfN.format(Math.abs(p)) + '%';
   const $ = (id) => document.getElementById(id);
   // Rótulo da loja nos gráficos: "CD300 · CD Ribeirão das Neves" (só o código, se não houver nome); sem isso, o leitor não sabe qual loja é qual.
-  const lab = (r) => (r.name && r.name.trim().toLowerCase() !== String(r.code).toLowerCase()) ? r.code + ' · ' + (r.name.length > 26 ? r.name.slice(0, 25) + '…' : r.name) : r.code;
+  const lab = (r) => (r.name && r.name.trim().toLowerCase() !== String(r.code).toLowerCase()) ? (/^\d+$/.test(r.code) ? '' : r.code + ' · ') + (r.name.length > 26 ? r.name.slice(0, 25) + '…' : r.name) : r.code;
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const refLine = (value, color, label) => ({ id: 'ref' + label, afterDatasetsDraw(c) {
     const x = c.scales.x.getPixelForValue(value); if (!isFinite(x)) return;
@@ -92,15 +92,15 @@
       plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (i) => i.dataset.label + ': ' + nfBRL0.format(i.raw) } } } } });
   function drawPair() {
     const a = rows[A.value], b = rows[B.value];
-    pairChart.data.datasets[0].label = a.code; pairChart.data.datasets[0].data = a.values;
-    pairChart.data.datasets[1].label = b.code; pairChart.data.datasets[1].data = b.values; pairChart.update('none');
+    pairChart.data.datasets[0].label = a.label || a.code; pairChart.data.datasets[0].data = a.values;
+    pairChart.data.datasets[1].label = b.label || b.code; pairChart.data.datasets[1].data = b.values; pairChart.update('none');
     const cell = (v) => '<td class="num">' + (v == null ? '' : nfBRL0.format(v)) + '</td>';
     const diff = a.values.map((v, i) => (v == null || b.values[i] == null) ? null : v - b.values[i]);
     const pct = a.values.map((v, i) => (v == null || !b.values[i]) ? null : ((v - b.values[i]) / b.values[i]) * 100);
     const th = D.labels.map((l) => '<th class="num">' + l + '</th>').join('');
     $('pair-table').innerHTML = '<thead><tr><th><span class="sr">Loja</span></th>' + th + '<th class="num">Total</th></tr></thead><tbody>' +
-      '<tr><td><strong>' + esc(a.code) + '</strong></td>' + a.values.map(cell).join('') + '<td class="num"><strong>' + nfBRL0.format(a.total) + '</strong></td></tr>' +
-      '<tr><td><strong>' + esc(b.code) + '</strong></td>' + b.values.map(cell).join('') + '<td class="num"><strong>' + nfBRL0.format(b.total) + '</strong></td></tr>' +
+      '<tr><td><strong>' + esc(a.label || a.code) + '</strong></td>' + a.values.map(cell).join('') + '<td class="num"><strong>' + nfBRL0.format(a.total) + '</strong></td></tr>' +
+      '<tr><td><strong>' + esc(b.label || b.code) + '</strong></td>' + b.values.map(cell).join('') + '<td class="num"><strong>' + nfBRL0.format(b.total) + '</strong></td></tr>' +
       '<tr class="sub"><td>Diferença (R$)</td>' + diff.map(cell).join('') + '<td class="num">' + nfBRL0.format(a.total - b.total) + '</td></tr>' +
       '<tr class="sub"><td>Diferença (%)</td>' + pct.map((p) => '<td class="num">' + (p == null ? '' : arrow(p)) + '</td>').join('') + '<td class="num">' + (b.total ? arrow(((a.total - b.total) / b.total) * 100) : '') + '</td></tr></tbody>';
   }
@@ -113,7 +113,7 @@
   // No A3 a composição é a coluna mais estreita: só o código na vertical (o nome está na "Legenda das lojas" e nos outros gráficos).
   const mixNames = mixChart.data.labels.slice();
   const setMixLegend = (on, narrow) => {
-    mixChart.options.plugins.legend.display = on; mixChart.data.labels = narrow ? top.map((r) => r.code) : mixNames; mixChart.update('none');
+    mixChart.options.plugins.legend.display = on; mixChart.data.labels = narrow ? top.map((r) => r.label || r.code) : mixNames; mixChart.update('none');
   };
   // Evolução das lojas: na tela a legenda é a lista de caixas de seleção; no papel não existe, então as linhas ficariam sem nome.
   const setLineLegend = (on) => {

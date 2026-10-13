@@ -139,7 +139,7 @@ def executive_workbook(data: dict, insights: list[dict], pending: list[dict], fi
             extra = ""
         else:
             extra = ("+" if absolute > 0 else "−" if absolute < 0 else "") + fmt.brl(abs(absolute), 0) + " · "
-        return f"{row['code']} ({extra}{row['vs_last_month']['text']})"
+        return f"{row['label']} ({extra}{row['vs_last_month']['text']})"
 
     items = [
         ("Total no período", k["total"], BRL0),
@@ -147,7 +147,7 @@ def executive_workbook(data: dict, insights: list[dict], pending: list[dict], fi
         ("Média mensal", k["avg_month"], BRL0),
         ("Custo efetivo por kWh (total da conta ÷ kWh)", k["rs_kwh"], KWH),
         ("Lojas com dados", k["stores"], "0"),
-        ("Maior gasto", f"{k['top']['code']} ({fmt.pct(k['top']['share'])} do total)" if k["top"] else "—", None),
+        ("Maior gasto", f"{k['top']['label']} ({fmt.pct(k['top']['share'])} do total)" if k["top"] else "—", None),
         (f"Maior alta em {focus}", lead(rise), None),
         (f"Maior queda em {focus}", lead(fall), None),
         (f"Pendências de {focus}", len(pending), "0"),

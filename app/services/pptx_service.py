@@ -182,7 +182,7 @@ def _color_points(series, colors):
 
 
 def _short(code, name, limit=26):
-    label = f"{code} · {name}" if name else code
+    label = name if name and str(code).isdigit() else (f"{code} · {name}" if name else code)   # loja numerada: o nome
     return label if len(label) <= limit else label[: limit - 1] + "…"
 
 
@@ -431,7 +431,7 @@ def _pending(prs, data, pending):
             _cell(tbl.cell(0, ci), head_txt, bold=True, color=AMBER, fill=NAVY_2)
         for ri, p in enumerate(rows, 1):
             store = p["store"]
-            _cell(tbl.cell(ri, 0), f"{store.code}" + (f" · {store.name}" if store.name else ""), fill=CARD)
+            _cell(tbl.cell(ri, 0), store.short_label if str(store.code).isdigit() else f"{store.code}" + (f" · {store.name}" if store.name else ""), fill=CARD)
             _cell(tbl.cell(ri, 1), p["type"].name, fill=CARD)
             _cell(tbl.cell(ri, 2), p["text"], color=MUTED, fill=CARD)
         ids.append([gf.shape_id])

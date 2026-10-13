@@ -162,3 +162,17 @@ def test_one_stores_screen_no_separate_menu(client, db):
     r = client.post("/admin/lojas/carregar", {"text": LIST})
     assert r.headers["location"] == "/stores"
     assert "Atualizar lista de lojas" in client.get("/stores").text
+
+
+def test_numbered_stores_show_their_name_not_the_number(client, db):
+    """Loja da lista tem número como código: nos destaques e indicadores aparece "Contagem Colonial", não "24"."""
+    from app.models.store import short_label
+
+    assert short_label("24", "Contagem Colonial") == "Contagem Colonial" and short_label("CD300", "CD Ribeirão") == "CD300"
+    client.post("/admin/lojas/carregar", {"text": LIST})
+    store = db.query(Store).filter_by(code="24").one()
+    assert client.post(f"/stores/{store.id}/units", {"number": "3013868360", "description": "Principal"}).status_code == 303
+    _seed_bill(client, db, store.id)
+    html = client.get("/diretoria").text
+    assert "Maior participação no gasto do período: Contagem Colonial" in html
+    assert '<div class="value sm">Contagem Colonial</div>' in html

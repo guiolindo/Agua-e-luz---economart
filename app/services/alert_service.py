@@ -68,7 +68,7 @@ def _unit_alerts(unit: ConsumerUnit, bills: list[EnergyBill], cutoff: date) -> l
     ref = fmt.month_label(latest.reference)
 
     def mk(kind, severity, title, detail):
-        out.append(Alert(f"{kind}:{latest.id}", severity, kind, title, detail, unit.store.code, unit.id, unit.number,
+        out.append(Alert(f"{kind}:{latest.id}", severity, kind, title, detail, unit.store.short_label, unit.id, unit.number,
                          latest.id, latest.reference))
 
     total = latest.total_value or Decimal(0)
@@ -129,7 +129,7 @@ def _duplicate_invoices(bills: list[EnergyBill], units: dict[int, ConsumerUnit])
         u = units[newest.unit_id]
         out.append(Alert(f"nota:{newest.id}", "alta", "nota", f"Nota fiscal {nf} aparece em {len(group)} contas",
                          "A mesma nota fiscal em mais de uma conta indica duplicidade ou erro de leitura.",
-                         u.store.code, u.id, u.number, newest.id, newest.reference))
+                         u.store.short_label, u.id, u.number, newest.id, newest.reference))
     return out
 
 

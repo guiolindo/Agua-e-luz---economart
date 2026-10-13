@@ -37,9 +37,9 @@
   {% if kpi.yoy %}<div class="kpi"><div class="label">Contra {{ kpi.yoy.label }}</div><div class="value">{{ kpi.yoy.cur|brl(0) }}</div><div class="sub">{{ delta(kpi.yoy.var) }} <span class="muted">mesmo mês, ano anterior ({{ plural(kpi.yoy.stores, 'loja', 'lojas') }})</span></div></div>
   {% else %}<div class="kpi"><div class="label">Média mensal</div><div class="value">{{ kpi.avg_month|brl(0) }}</div><div class="sub muted">{{ kpi.stores }} lojas com dados</div></div>{% endif %}
   <div class="kpi"><div class="label" title="Valor total das contas de distribuidora ÷ kWh consumidos. Inclui demanda, impostos e multas da fatura.">Custo efetivo por kWh</div><div class="value">{{ kpi.rs_kwh|brl(3) if kpi.rs_kwh else '—' }}<span class="unit">/kWh</span></div><div class="sub muted">total da conta ÷ kWh</div></div>
-  <div class="kpi"><div class="label">Maior gasto</div><div class="value sm">{{ kpi.top.code if kpi.top else '—' }}</div><div class="sub muted">{{ kpi.top.share|num(1) ~ '% do total' if kpi.top else '' }}</div></div>
-  <div class="kpi"><div class="label">Maior alta em {{ focus_label }}</div><div class="value sm">{{ kpi.rise.code if kpi.rise else '—' }}</div><div class="sub">{% if kpi.rise %}{% if kpi.rise.abs_last_month is not none %}+{{ kpi.rise.abs_last_month|brl(0) }} · {% endif %}{{ delta(kpi.rise.vs_last_month) }}{% endif %}</div></div>
-  <div class="kpi"><div class="label">Maior queda em {{ focus_label }}</div><div class="value sm">{{ kpi.fall.code if kpi.fall else '—' }}</div><div class="sub">{% if kpi.fall %}{% if kpi.fall.abs_last_month is not none %}{{ kpi.fall.abs_last_month|brl(0) }} · {% endif %}{{ delta(kpi.fall.vs_last_month) }}{% endif %}</div></div>
+  <div class="kpi"><div class="label">Maior gasto</div><div class="value sm">{{ kpi.top.label if kpi.top else '—' }}</div><div class="sub muted">{{ kpi.top.share|num(1) ~ '% do total' if kpi.top else '' }}</div></div>
+  <div class="kpi"><div class="label">Maior alta em {{ focus_label }}</div><div class="value sm">{{ kpi.rise.label if kpi.rise else '—' }}</div><div class="sub">{% if kpi.rise %}{% if kpi.rise.abs_last_month is not none %}+{{ kpi.rise.abs_last_month|brl(0) }} · {% endif %}{{ delta(kpi.rise.vs_last_month) }}{% endif %}</div></div>
+  <div class="kpi"><div class="label">Maior queda em {{ focus_label }}</div><div class="value sm">{{ kpi.fall.label if kpi.fall else '—' }}</div><div class="sub">{% if kpi.fall %}{% if kpi.fall.abs_last_month is not none %}{{ kpi.fall.abs_last_month|brl(0) }} · {% endif %}{{ delta(kpi.fall.vs_last_month) }}{% endif %}</div></div>
   <div class="kpi"><div class="label">Pendências de {{ focus_label }}</div><div class="value">{{ kpi.pending }}</div><div class="sub muted">{{ 'conta ou lançamento' if kpi.pending == 1 else 'contas ou lançamentos' }} do mês</div></div>
 </div>
 
@@ -86,7 +86,7 @@
   <div style="padding:14px 18px 0"><h2>Mapa de calor — gasto mensal por loja (R$)</h2><div class="muted small">cor mais forte = mês mais caro <em>daquela loja</em></div></div>
   <div class="tablewrap"><table class="heat">
     <thead><tr><th>Loja</th>{% for l in labels %}<th class="num">{{ l }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
-    <tbody>{% for r in rows %}<tr><td class="nowrap"><a href="/stores/{{ r.id }}" title="{{ r.name }}"><strong>{{ r.code }}</strong></a>{% if r.region %} <span class="badge">{{ r.region }}</span>{% endif %}</td>
+    <tbody>{% for r in rows %}<tr><td class="nowrap"><a href="/stores/{{ r.id }}" title="Loja {{ r.code }}"><strong>{{ r.label }}</strong></a>{% if r.region %} <span class="badge">{{ r.region }}</span>{% endif %}</td>
       {% for v in r['values'] %}<td class="num" {% if v is not none %}style="background: rgba(47,111,159,{{ (0.06 + 0.5 * r.heat[loop.index0])|round(2) }})"{% endif %}>{{ v|num(0) if v is not none else '' }}</td>{% endfor %}
       <td class="num"><strong>{{ r.total|num(0) }}</strong></td></tr>{% endfor %}</tbody>
     <tfoot><tr><td>Total</td>{% for t in month_totals %}<td class="num">{{ t|num(0) if t is not none else '' }}</td>{% endfor %}<td class="num">{{ kpi.total|num(0) }}</td></tr>
@@ -99,7 +99,7 @@
   {% set ns = namespace(prev=false) %}{% for r in rows %}{% if r.vs_prev_period and r.vs_prev_period.pct is not none %}{% set ns.prev = true %}{% endif %}{% endfor %}
   <div class="tablewrap"><table class="dense">
     <thead><tr><th>Loja</th><th>Região</th><th class="num">Total no período</th><th class="num">% da empresa</th><th class="num">Média/mês</th>{% if ns.prev %}<th class="num" title="média mensal vs. média do período anterior">vs. período anterior</th>{% endif %}<th class="num">{{ focus_label }}</th><th class="num">vs. {{ prev_label }}</th><th class="num">R$/kWh</th><th class="num">Demanda usada</th></tr></thead>
-    <tbody>{% for r in rows %}<tr><td><a href="/stores/{{ r.id }}"><strong>{{ r.code }}</strong></a><div class="muted small">{{ r.name }}</div></td><td>{{ r.region or '—' }}</td>
+    <tbody>{% for r in rows %}<tr><td><a href="/stores/{{ r.id }}"><strong>{{ r.label }}</strong></a><div class="muted small">{{ "loja " ~ r.code if r.label != r.code else r.name }}</div></td><td>{{ r.region or '—' }}</td>
       <td class="num">{{ r.total|brl(0) }}</td><td class="num">{{ r.share|num(1) }}%</td><td class="num">{{ r.avg|brl(0) }}</td>{% if ns.prev %}<td class="num">{{ delta(r.vs_prev_period) }}</td>{% endif %}
       <td class="num">{{ r.last|brl(0) if r.last is not none else '—' }}</td><td class="num">{{ delta(r.vs_last_month) }}</td>
       <td class="num">{{ r.rs_kwh|brl(3) if r.rs_kwh else '—' }}</td>
@@ -109,7 +109,7 @@
 
 {% if pending_items %}<section class="card flush a3-7"><div style="padding:14px 18px 0"><h2>Pendências de {{ focus_label }}</h2></div>
   <div class="tablewrap"><table class="dense"><thead><tr><th>Loja</th><th>Fornecedor</th><th>Situação</th></tr></thead><tbody>
-    {% for p in pending_items %}<tr><td><a href="/stores/{{ p.store.id }}">{{ p.store.code }}</a></td><td>{{ p.type.name }}{% if p.unit %} · <span class="mono">{{ p.unit.number }}</span>{% endif %}</td><td class="muted">{{ p.text }}</td></tr>{% endfor %}
+    {% for p in pending_items %}<tr><td><a href="/stores/{{ p.store.id }}">{{ p.store.short_label }}</a></td><td>{{ p.type.name }}{% if p.unit %} · <span class="mono">{{ p.unit.number }}</span>{% endif %}</td><td class="muted">{{ p.text }}</td></tr>{% endfor %}
   </tbody></table></div></section>{% endif %}
 {% endif %}
 <aside class="card method a3-5" aria-label="Nota metodológica"><h2>Como ler estes números</h2>

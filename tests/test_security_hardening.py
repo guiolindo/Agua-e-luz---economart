@@ -223,7 +223,7 @@ def test_username_uniqueness_is_case_insensitive(client, db):
 # ---------------------------------------------------------- HTML injection via código da loja (sink no JS)
 def test_store_code_is_escaped_in_director_js_sinks():
     js = open("app/static/js/director.js", encoding="utf-8").read()
-    assert "esc(lab(r))" in js and "esc(a.code)" in js and "esc(b.code)" in js     # lab(r) = código + nome: o resultado inteiro passa por esc()
+    assert "esc(lab(r))" in js and "esc(a.label || a.code)" in js and "esc(b.label || b.code)" in js   # nome/código da loja sempre por esc()
 
 
 # ---------------------------------------------------------- filename com acento não derruba o download

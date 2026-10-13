@@ -13,7 +13,7 @@
   {% if errors %}<div class="flash error" role="alert">Corrija os campos destacados.</div>{% endif %}
   {% if dups %}
   <div class="flash warn" role="alert"><strong>{{ dups|length }} {{ 'loja já tem' if dups|length == 1 else 'lojas já têm' }} lançamento desse tipo neste mês:</strong>
-    <ul class="notice-list">{% for d in dups %}<li><strong>{{ d.store.code }}</strong> · {{ d.record.value|brl }}</li>{% endfor %}</ul>
+    <ul class="notice-list">{% for d in dups %}<li><strong>{{ d.store.short_label }}</strong> · {{ d.record.value|brl }}</li>{% endfor %}</ul>
     <div class="field" style="margin:10px 0 0"><label for="dup">O que fazer com elas?</label>
       <select id="dup" name="duplicate_action" required><option value="">Escolha…</option>
         <option value="skip">Manter o que já existe (lançar só nas outras)</option>

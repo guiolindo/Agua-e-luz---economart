@@ -24,11 +24,11 @@
 
     {% if unit %}
     <div class="unit-choice"><label class="radio"><input type="radio" name="unit_mode" value="matched" {{ 'checked' if unit_mode == 'matched' }}> Unidade encontrada no cadastro</label>
-      <div class="body"><strong>{{ unit.store.code }}</strong> · <span class="mono">{{ unit.number }}</span>{% if unit.description %} · {{ unit.description }}{% endif %}</div></div>
+      <div class="body"><strong>{{ unit.store.short_label }}</strong> · <span class="mono">{{ unit.number }}</span>{% if unit.description %} · {{ unit.description }}{% endif %}</div></div>
     {% else %}
     <div class="flash warn"><strong>Unidade consumidora não cadastrada.</strong> Cadastre a unidade ou associe a uma já existente.
       {% if similar %}<br>Unidades parecidas no cadastro:
-        <ul class="notice-list">{% for u in similar %}<li>{{ u.store.code }} · <span class="mono">{{ u.number }}</span></li>{% endfor %}</ul>{% endif %}</div>
+        <ul class="notice-list">{% for u in similar %}<li>{{ u.store.short_label }} · <span class="mono">{{ u.number }}</span></li>{% endfor %}</ul>{% endif %}</div>
     {% endif %}
 
     <div class="unit-choice"><label class="radio"><input type="radio" name="unit_mode" value="existing" {{ 'checked' if unit_mode == 'existing' }}> Associar a uma unidade existente</label>
