@@ -5,6 +5,8 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-13
 
+- **Cadastrar unidade consumidora ficou mais fácil.** Em **Lojas**, loja sem unidade mostra o botão **+ Unidade** na própria linha; a página da loja tem **+ Unidade consumidora** no título da seção e no aviso de loja vazia. A janela abre com a loja já escolhida e o cursor no número; a data de vencimento passou a ser opcional (sem ela não há aviso; dá para definir depois). Número repetido não duplica. Corrigido: para o administrador, a janela de cadastro não abria (o código dela ficava dentro do bloco dos avisos de vencimento, que o administrador não tem).
+
 - **Loja numerada aparece pelo nome.** Com a lista oficial, o código da loja é o número ("24"), que sozinho não diz nada: nos destaques, indicadores (maior gasto, maior alta/queda), mapa de calor, comparativo, pendências, alertas, lista de contas, painel do funcionário, conferência da importação, planilha e PowerPoint aparece o nome ("Contagem Colonial"). Código com letras (CD300) continua aparecendo como antes. Nos gráficos, o rótulo deixa de repetir o número.
 
 - **Lojas numa tela só (UX).** O item de menu separado "Lojas da empresa" deixava duas telas de lojas. Agora tudo fica em **Lojas**: o administrador vê o botão **Importar lista de lojas** (que vira *Atualizar lista de lojas* depois da primeira carga) e, no topo da mesma tela, o cartão laranja para vincular as lojas criadas antes da lista, com a sugestão já marcada. Importar e vincular voltam para Lojas. O aviso no Painel leva para lá.

@@ -108,7 +108,7 @@ def test_quick_add_existing_unit_only_updates_due_day(client, db):
 def test_quick_add_validation_and_open_redirect_protection(client, db):
     store_id = _make_store(client, unit=None)
     bad = client.post("/points", {"store_id": store_id, "number": "--", "due_date": "31/31/2026"})
-    assert bad.status_code == 400 and "Informe a data de vencimento" in bad.text and "Informe o número" in bad.text
+    assert bad.status_code == 400 and "Data de vencimento inválida" in bad.text and "Informe o número" in bad.text
     ok = client.post("/points", {"store_id": store_id, "number": "55", "due_date": "2026-11-05", "next": "https://evil.example/"})
     assert ok.headers["location"] == "/"                                            # next externo é descartado
     assert client.post("/points", {"store_id": "9999", "number": "6", "due_date": "2026-11-05"}).status_code == 400
@@ -171,3 +171,18 @@ def test_help_page_is_role_aware(client):
     assert "Novo ponto de energia" in html and "Usuários e acessos" in html and "Painel executivo" in html
     assert "Ir para o conteúdo" in client.get("/").text                                  # link de acessibilidade
     assert timedelta(0) is not None
+
+
+def test_unit_can_be_registered_from_the_store_without_a_due_date(client, db):
+    """Facilita o cadastro: botão na loja (já vem escolhida) e vencimento opcional, definido depois."""
+    store_id = _make_store(client, unit=None)
+    assert f'data-open-point data-store="{store_id}"' in client.get("/stores").text            # "+ Unidade" na lista de lojas
+    assert f'data-open-point data-store="{store_id}"' in client.get(f"/stores/{store_id}").text  # e na página da loja
+    frag = client.get(f"/points/new?fragment=1&store_id={store_id}").text
+    assert f'<option value="{store_id}" selected>' in frag and "Data de vencimento (opcional)" in frag
+    r = client.post("/points", {"store_id": store_id, "number": "3013868360", "due_date": "", "next": f"/stores/{store_id}"})
+    assert r.status_code == 303 and r.headers["location"] == f"/stores/{store_id}"
+    unit = db.query(ConsumerUnit).one()
+    assert unit.store_id == store_id and unit.due_day is None
+    again = client.post("/points", {"store_id": store_id, "number": "3013868360", "due_date": ""})
+    assert again.status_code == 303 and db.query(ConsumerUnit).count() == 1                      # repetido não duplica

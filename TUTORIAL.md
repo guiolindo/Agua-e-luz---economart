@@ -167,11 +167,13 @@ Para corrigir uma conta: **Lojas → (loja) → (unidade) → Contas → Editar*
 
 ## B4. Novo ponto de energia e aviso de vencimento
 
-De **qualquer tela**, clique em **+ Novo ponto de energia** (canto superior direito):
+Mais rápido, pela loja: em **Lojas**, clique em **+ Unidade** na linha da loja (ou, na página da loja, em **+ Unidade consumidora**). A loja já vem escolhida: digite o número da conta de luz e clique em **Cadastrar unidade**.
+
+De **qualquer tela**, também dá pelo **+ Novo ponto de energia** (canto superior direito):
 
 1. Escolha a **loja**.
 2. Digite o **número da unidade consumidora** e, se quiser, uma descrição.
-3. Informe a **data de vencimento**.
+3. Se souber, informe a **data de vencimento** (opcional: sem ela não há aviso, e dá para definir depois em **Editar unidade**).
 4. **Cadastrar.** O sistema passa a considerar que a conta vence **todo mês nesse dia**.
 
 **Como funciona o aviso:**

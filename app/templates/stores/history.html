@@ -42,14 +42,15 @@
 </section>
 
 <section class="card flush">
-  <div style="padding:14px 18px 0"><h2>Unidades consumidoras</h2></div>
+  <div style="padding:14px 18px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">Unidades consumidoras</h2>
+    {% if user.can_write %}<button class="btn sm primary" type="button" data-open-point data-store="{{ store.id }}">+ Unidade consumidora</button>{% endif %}</div>
   <div class="tablewrap"><table>
     <thead><tr><th>Número</th><th>Descrição</th><th>Vencimento</th><th><span class="sr">Ações</span></th></tr></thead>
     <tbody>{% for u in store.units %}<tr class="{{ 'hl' if highlight == u.id }}"><td class="mono"><a href="/units/{{ u.id }}">{{ u.number }}</a></td>
       <td>{{ u.description or '—' }}{% if not u.active %} <span class="badge">Inativa</span>{% endif %}</td>
       <td>{% if u.due_day %}todo dia {{ u.due_day }}{% elif user.can_write %}<a class="badge warn" href="/units/{{ u.id }}/edit">definir</a>{% else %}—{% endif %}</td>
       <td class="right">{% if user.can_write %}<a class="btn sm" href="/units/{{ u.id }}/edit">Editar</a> {% endif %}<a class="btn sm" href="/units/{{ u.id }}">Ver unidade</a></td></tr>
-    {% else %}<tr><td colspan="4" class="muted">Nenhuma unidade cadastrada.{% if user.can_write %} <a href="/stores/{{ store.id }}/settings">Cadastrar</a>.{% endif %}</td></tr>{% endfor %}
+    {% else %}<tr><td colspan="4"><div class="empty"><strong>Nenhuma unidade consumidora nesta loja</strong>Cadastre o número que vem na conta de luz: assim a conta é reconhecida sozinha na importação.{% if user.can_write %}<br><button class="btn primary" type="button" style="margin-top:10px" data-open-point data-store="{{ store.id }}">+ Unidade consumidora</button>{% endif %}</div></td></tr>{% endfor %}
   </tbody></table></div>
 </section>
 {% endblock %}

@@ -135,19 +135,25 @@ window.addEventListener('beforeprint', fitSheets);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('bell-panel').hidden = true; bell.setAttribute('aria-expanded', 'false'); } });
   document.addEventListener('submit', (e) => { if (e.target.action && e.target.action.endsWith('/logout')) { try { sessionStorage.removeItem('due-shown'); } catch (x) { /* ok */ } } });
 
-  // ponto de energia de qualquer tela
+  init();
+})();
+
+// Unidade consumidora (ponto de energia) de qualquer tela, numa janela. Fica fora do bloco dos avisos de vencimento:
+// o administrador não tem o sino, mas também cadastra unidades.
+(function () {
+  const $ = (id) => document.getElementById(id);
   const dlg = $('point-dialog');
   document.addEventListener('click', async (e) => {
     if (e.target.closest('[data-close-dialog]') && dlg) { e.preventDefault(); dlg.close(); return; }
     const open = e.target.closest('[data-open-point]');
     if (!open || !dlg) return;
     try {
-      const r = await fetch('/points/new?fragment=1&next=' + encodeURIComponent(location.pathname + location.search), { headers: { Accept: 'text/html' } });
+      const store = /^\d+$/.test(open.dataset.store || '') ? '&store_id=' + open.dataset.store : '';     // aberto de uma loja: já vem escolhida
+      const r = await fetch('/points/new?fragment=1' + store + '&next=' + encodeURIComponent(location.pathname + location.search), { headers: { Accept: 'text/html' } });
       if (!r.ok) throw new Error(r.status);
-      $('point-dialog-body').innerHTML = await r.text(); dlg.showModal(); const f = dlg.querySelector('select, input'); if (f) f.focus();
-    } catch (err) { location.href = '/points/new'; }
+      $('point-dialog-body').innerHTML = await r.text(); dlg.showModal(); const f = open.dataset.store ? dlg.querySelector('#pt-num') : dlg.querySelector('select, input'); if (f) f.focus();
+    } catch (err) { location.href = '/points/new' + (open.dataset.store ? '?store_id=' + encodeURIComponent(open.dataset.store) : ''); }
   });
-  init();
 })();
 
 // ---------------------------------------------------------------- UX geral

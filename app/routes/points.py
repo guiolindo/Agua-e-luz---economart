@@ -31,13 +31,13 @@ def point_form(request: Request, next: str = "/", fragment: int = 0, store_id: i
 
 @router.post("/points", dependencies=[Depends(verify_csrf)])
 def point_create(request: Request, store_id: int = Form(...), number: str = Form(..., max_length=40),
-                 due_date: str = Form(...), description: str = Form("", max_length=200),
+                 due_date: str = Form(""), description: str = Form("", max_length=200),
                  record_type_id: int | None = Form(None), next: str = Form("/"),
                  user: User = Depends(writer_required), db: Session = Depends(get_db)):
     errors: dict[str, str] = {}
-    due = parse_date(due_date)
-    if due is None:
-        errors["due_date"] = "Informe a data de vencimento."
+    due = parse_date(due_date) if (due_date or "").strip() else None          # vencimento é opcional (dá para definir depois)
+    if (due_date or "").strip() and due is None:
+        errors["due_date"] = "Data de vencimento inválida."
     if not normalize_uc(number):
         errors["number"] = "Informe o número da unidade consumidora."
     stores = list_stores(db, only_active=True)
@@ -50,6 +50,9 @@ def point_create(request: Request, store_id: int = Form(...), number: str = Form
                       store_id=store_id, form={"number": number, "description": description, "due_date": due_date},
                       errors=errors)
     existing = db.scalar(select(ConsumerUnit).where(ConsumerUnit.number_normalized == normalize_uc(number)))
+    if existing is not None and due is None:
+        flash(request, f"A unidade {existing.number} já está cadastrada em {existing.store.short_label}.", "info")
+        return RedirectResponse(_safe_next(next), status_code=303)
     if existing is not None:
         # já cadastrado: só atualiza o dia de vencimento (e reabre o lembrete)
         existing.due_day, existing.due_ack = due.day, None
@@ -63,11 +66,15 @@ def point_create(request: Request, store_id: int = Form(...), number: str = Form
         db.rollback()
         flash(request, str(exc), "error")
         return RedirectResponse("/points/new", status_code=303)
-    unit.due_day = due.day
-    audit_service.log(db, user.id, "create", "consumer_unit", unit.id, {"due_day": due.day, "quick": True})
+    unit.due_day = due.day if due else None
+    audit_service.log(db, user.id, "create", "consumer_unit", unit.id, {"due_day": unit.due_day, "quick": True})
     db.commit()
-    when = "hoje" if due == due_service.local_today() else f"dia {due.day} de cada mês"
-    flash(request, f"Ponto de energia {unit.number} cadastrado em {unit.store.code}. Vencimento: {when}.")
+    if due:
+        when = "hoje" if due == due_service.local_today() else f"dia {due.day} de cada mês"
+        flash(request, f"Unidade consumidora {unit.number} cadastrada em {unit.store.short_label}. Vencimento: {when}.")
+    else:
+        flash(request, f"Unidade consumidora {unit.number} cadastrada em {unit.store.short_label}. "
+                       "O vencimento pode ser definido depois (Editar unidade).")
     return RedirectResponse(_safe_next(next), status_code=303)
 
 
