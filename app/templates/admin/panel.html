@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "macros.html" import hero %}
+{% block title %}Painel admin · Economart Energia{% endblock %}
+{% block content %}
+{% call hero(greeting_now() ~ ", " ~ user.username, "Painel admin", "Quem está usando o sistema, o que foi feito por último e o que pede atenção") %}
+  <a class="btn on-dark" href="/admin/users">Usuários</a><a class="btn on-dark" href="/admin/audit">Auditoria completa</a>
+{% endcall %}
+
+<div class="grid cols-4" style="margin-bottom:16px">
+  <div class="kpi"><div class="label">On-line agora</div><div class="value">{{ p.online|length }}</div><div class="sub">de {{ p.active_users }} usuário(s) ativo(s)</div></div>
+  <div class="kpi alt"><div class="label">Contas lançadas hoje</div><div class="value">{{ p.entries_today }}</div><div class="sub">{{ p.entries_week }} nos últimos 7 dias</div></div>
+  <div class="kpi"><div class="label">Importações (7 dias)</div><div class="value">{{ p.imports_week }}</div><div class="sub">fotos e PDFs enviados</div></div>
+  <div class="kpi {{ 'alt' if p.failed_logins }}"><div class="label">Senhas erradas (24 h)</div><div class="value">{{ p.failed_logins }}</div><div class="sub">{% if p.failed_logins %}<a href="/admin/audit?action=login_failed">ver quem</a>{% else %}nenhuma tentativa suspeita{% endif %}</div></div>
+</div>
+
+<div class="grid cols-3 adm-grid">
+  <section class="card"><h2>On-line agora</h2>
+    {% if p.online %}<ul class="adm-list">{% for x in p.online %}<li><span class="live" aria-hidden="true"></span><strong>{{ x.user.username }}</strong>{% if x.user.id == user.id %} <span class="muted small">(você)</span>{% endif %}<span class="muted small">{{ x.role }} · ativo {{ ago(x.last_seen) }}</span></li>{% endfor %}</ul>
+    {% else %}<p class="muted">Ninguém on-line.</p>{% endif %}
+    <p class="hint">On-line = usou o sistema nos últimos {{ online_minutes }} minutos.</p></section>
+
+  <section class="card"><h2>Última conta lançada</h2>
+    {% set e = p.last_entry %}{% if e %}
+    <p class="adm-big"><strong>{{ p.names.get(e.by, 'sistema') }}</strong> <span class="muted">{{ ago(e.at) }}</span></p>
+    <p>{{ e.what }} de <a href="/stores/{{ e.store.id }}"><strong>{{ e.store.short_label }}</strong></a>{% if e.unit %} · <span class="mono">{{ e.unit }}</span>{% endif %}<br>
+      {{ e.reference|month_label }} · <strong>{{ e.value|brl }}</strong></p>
+    <p class="muted small">{{ e.at|dt_br }}</p>
+    <a class="btn sm" href="/notas">Ver contas</a>
+    {% else %}<p class="muted">Nenhuma conta lançada ainda.</p>{% endif %}</section>
+
+  <section class="card"><h2>Exportações</h2>
+    {% if p.exports %}{% set x = p.exports[0] %}
+    <p class="adm-big"><strong>{{ p.names.get(x.user_id, '—') }}</strong> <span class="muted">{{ ago(x.at) }}</span></p>
+    <p>{{ export_label(x) }}</p>
+    {% if p.exports|length > 1 %}<ul class="adm-list sm">{% for x in p.exports[1:] %}<li><strong>{{ p.names.get(x.user_id, '—') }}</strong><span class="muted small">{{ export_label(x) }} · {{ ago(x.at) }}</span></li>{% endfor %}</ul>{% endif %}
+    {% else %}<p class="muted">Ninguém exportou ainda.</p>{% endif %}</section>
+</div>
+
+<div class="grid cols-2 adm-grid">
+  <section class="card"><h2>Apresentação do sistema</h2>
+    <p><strong>{{ p.presentation_seen }}</strong> de {{ p.active_users }} usuário(s) já abriram.</p>
+    {% if p.presentation_views %}<ul class="adm-list">{% for v in p.presentation_views %}<li><strong>{{ p.names.get(v.user_id, '—') }}</strong><span class="muted small">{{ v.at|dt_br }} · {{ ago(v.at) }}</span></li>{% endfor %}</ul>{% endif %}
+    {% if p.presentation_missing %}<p class="muted small">Ainda não abriram: {{ p.presentation_missing|map(attribute='username')|join(', ') }}</p>{% endif %}</section>
+
+  <section class="card"><h2>Atividade recente</h2>
+    <ul class="adm-list">{% for r in p.recent %}<li class="{{ 'bad' if r.action in bad else ('good' if r.action in good else '') }}"><strong>{{ p.names.get(r.user_id, 'sistema') }}</strong><span class="muted small">{{ ('Exportou: ' ~ export_label(r)) if r.action == 'export' else label(r.action, r.entity) }} · {{ ago(r.at) }}</span></li>{% endfor %}</ul>
+    <a class="btn sm" href="/admin/audit">Ver auditoria completa</a></section>
+</div>
+
+<section class="card flush">
+  <div style="padding:14px 18px 0"><h2>Usuários</h2></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Usuário</th><th>Perfil</th><th>Situação</th><th>Último login</th><th>Última atividade</th><th>Viu a apresentação</th><th class="hide-md">2FA</th></tr></thead>
+    <tbody>{% for x in p.people %}{% set u = x.user %}<tr>
+      <td><strong>{{ u.username }}</strong>{% if u.id == user.id %} <span class="muted small">(você)</span>{% endif %}</td><td>{{ x.role }}</td>
+      <td>{% if not u.active %}<span class="badge">Inativo</span>{% elif x.online %}<span class="badge ok">On-line</span>{% else %}<span class="badge">Off-line</span>{% endif %}</td>
+      <td class="nowrap">{{ x.last_login|dt_br if x.last_login else 'nunca' }}</td>
+      <td class="nowrap">{{ ago(x.last_seen) if x.last_seen else '—' }}</td>
+      <td class="nowrap">{{ x.seen_presentation|dt_br if x.seen_presentation else '—' }}</td>
+      <td class="hide-md">{% if u.has_2fa %}<span class="badge ok">ativo</span>{% elif u.is_admin %}<span class="badge warn">falta</span>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

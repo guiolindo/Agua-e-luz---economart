@@ -68,6 +68,9 @@
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
         <span>Tipos de registro</span></a>{% endif %}
       {% if user.is_admin %}<hr>
+      <a href="/admin" class="{{ 'active' if path == '/admin' }}" {% if path == '/admin' %}aria-current="page"{% endif %}>
+        <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <span>Painel admin</span></a>
       <a href="/admin/audit" class="{{ 'active' if path.startswith('/admin/audit') }}" {% if path.startswith('/admin/audit') %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
         <span>Auditoria</span></a>

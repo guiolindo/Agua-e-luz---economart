@@ -86,6 +86,7 @@ def logout(request: Request, db: Session = Depends(get_db)):
     if user is not None:
         auth_service.revoke_sessions(user)  # derruba também cookies copiados antes do logout
         auth_service.security_event(db, request, "logout", user.id)
+        user.last_seen_at = None                                 # saiu: deixa de aparecer como on-line
         db.commit()
     request.session.clear()
     return RedirectResponse("/login", status_code=303)

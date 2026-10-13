@@ -157,14 +157,15 @@ ACTION_LABELS = {
     "password_reset": "Senha redefinida pelo administrador", "2fa_enabled": "2FA ativado", "2fa_disabled": "2FA desativado",
     "2fa_disable_failed": "Falha ao desativar o 2FA", "2fa_setup_failed": "Código incorreto ao ativar o 2FA",
     "2fa_reset": "2FA redefinido pelo administrador", "audit_verified": "Integridade da auditoria verificada",
-    "export": "Planilha exportada", "extract": "Conta lida pela IA", "import_rejected": "Arquivo barrado (não é conta)",
+    "export": "Exportação", "extract": "Conta lida pela IA", "import_rejected": "Arquivo barrado (não é conta)",
     "import": "Conta importada", "cancel": "Importação descartada", "purge": "Arquivos antigos apagados",
     "role_change": "Perfil alterado", "activate": "Usuário reativado", "deactivate": "Usuário desativado",
-    "due_ack": "Marcada como paga", "alert_ack": "Alerta conferido", "replace": "Conta substituída", "create": "Criação", "update": "Alteração", "delete": "Exclusão",
+    "view": "Abriu a apresentação do sistema", "link": "Loja vinculada à lista", "due_ack": "Marcada como paga", "alert_ack": "Alerta conferido", "replace": "Conta substituída", "create": "Criação", "update": "Alteração", "delete": "Exclusão",
 }
 ENTITY_LABELS = {"store": "loja", "consumer_unit": "unidade", "energy_bill": "conta", "manual_record": "lançamento",
                  "record_type": "tipo de registro", "user": "usuário", "import": "importação", "document": "documento",
-                 "bills": "contas", "audit": "auditoria", "auth": "", "alert": "alerta"}
+                 "bills": "contas", "audit": "auditoria", "auth": "", "alert": "alerta",
+                 "presentation": "apresentação", "company_stores": "lista de lojas"}
 BAD_ACTIONS = {"login_failed", "login_2fa_failed", "2fa_disable_failed", "2fa_setup_failed", "login_blocked", "account_locked",
                "password_change_failed", "import_rejected", "login_temp_expired", "delete", "deactivate"}
 OK_ACTIONS = {"login", "login_2fa", "password_changed", "account_unlocked", "2fa_enabled"}
@@ -247,3 +248,22 @@ def audit_page(request: Request, action: str | None = None, user: User = Depends
                db: Session = Depends(get_db)):
     return _audit_context(request, db, user, action)
 
+
+
+def export_label(row: AuditLog) -> str:
+    d = row.details or {}
+    if row.entity == "audit":
+        return "Auditoria (CSV)"
+    what = {"pptx": "Apresentação (PowerPoint)", "xlsx": "Planilha (Excel)"}.get(d.get("formato"), "CSV")
+    src = "do Painel executivo" if d.get("painel") else "da lista de contas"
+    return f"{what} {src}"
+
+
+@router.get("/admin")
+def admin_panel(request: Request, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    from app.services import admin_panel as panel
+    from app.services import company_stores
+
+    return render(request, "admin/panel.html", user=user, p=panel.build(db), ago=panel.ago, export_label=export_label,
+                  online_minutes=panel.ONLINE_MINUTES, label=action_label, bad=BAD_ACTIONS, good=OK_ACTIONS,
+                  legacy_count=len(company_stores.legacy_stores(db)))

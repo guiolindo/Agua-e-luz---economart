@@ -150,6 +150,25 @@ def start_session(request: Request, user: User) -> None:
     request.session.update(uid=user.id, epoch=user.epoch, iat=now, seen=now)
 
 
+SEEN_EVERY_SECONDS = 60
+
+
+def _touch(db: Session, user: User) -> None:
+    """Marca a última atividade do usuário (no máximo uma escrita por minuto)."""
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc)
+    last = user.last_seen_at
+    if last is not None and last.tzinfo is None:                 # SQLite devolve sem fuso
+        last = last.replace(tzinfo=timezone.utc)
+    if last is None or (now - last).total_seconds() >= SEEN_EVERY_SECONDS:
+        user.last_seen_at = now
+        try:
+            db.commit()
+        except Exception:                                        # nunca derruba a requisição por causa disso
+            db.rollback()
+
+
 def current_user(request: Request, db: Session = Depends(get_db)) -> User:
     s = get_settings()
     sess = request.session
@@ -166,6 +185,7 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> User:
         sess.clear()
         raise LoginRequired()
     sess["seen"] = now
+    _touch(db, user)
     if user.must_change_password and request.url.path not in ("/account/password", "/logout"):
         raise MustChangePassword()
     if (s.require_admin_2fa and user.is_admin and not user.has_2fa

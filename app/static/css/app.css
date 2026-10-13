@@ -710,3 +710,12 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
   table.cards .actcell { grid-area: act; min-width: 0; max-width: none; text-align: left; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
   table.cards .actcell .btn { margin: 0; }
 }
+/* painel do administrador */
+.adm-grid { margin-bottom: 16px; }
+.adm-list { list-style: none; margin: 0 0 10px; padding: 0; } .adm-list li { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding: 7px 0; border-bottom: 1px solid var(--line-soft, var(--line)); }
+.adm-list li:last-child { border-bottom: 0; } .adm-list li .muted { margin-left: auto; } .adm-list.sm li { padding: 5px 0; font-size: 13px; }
+.adm-list li.bad strong { color: var(--bad); } .adm-list li.good strong { color: var(--ok); }
+.adm-big { font-size: 18px; margin: 4px 0 6px; }
+.live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22a35a; box-shadow: 0 0 0 0 rgba(34,163,90,.5); animation: live 2s infinite; margin-right: 4px; vertical-align: middle; }
+@keyframes live { 70% { box-shadow: 0 0 0 7px rgba(34,163,90,0); } 100% { box-shadow: 0 0 0 0 rgba(34,163,90,0); } }
+@media (prefers-reduced-motion: reduce) { .live { animation: none; } }

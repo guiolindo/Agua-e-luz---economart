@@ -111,6 +111,8 @@ Sobre a senha provisória de 4 dígitos:
 - Se a pessoa não entrou a tempo ou esqueceu a senha: **Usuários → Redefinir senha** gera outra de 4 dígitos.
 - Para desligar alguém que saiu da empresa: **Usuários → Desativar** (as sessões abertas caem na hora).
 
+**Painel admin.** Menu **Painel admin**: quem está on-line agora (usou o sistema nos últimos 5 minutos), quem lançou a última conta e quando, quem exportou por último (planilha, PowerPoint ou CSV), quem já abriu a apresentação do sistema e quem ainda não, e a tabela de usuários com último login, última atividade e 2FA. A Auditoria continua com o histórico completo.
+
 **Lista de lojas da empresa.** Menu **Lojas → Importar lista de lojas**: cole as linhas da planilha de lojas (empresa, filial, código C5, nome, CNPJ, inscrição estadual e municipal, CEP, endereço; empresa sem filial, como a Drogamart, fica com o nome da empresa como código; os títulos dos blocos podem vir junto), clique em **Conferir**, confira número, nome e UF (a UF sai do CEP) e clique em **Carregar a lista**. Carregar de novo atualiza pelo número, sem duplicar e sem apagar nada. Lojas cadastradas à mão antes da lista aparecem num cartão laranja no topo da tela **Lojas**: escolha a loja oficial correspondente e clique em **Vincular…** (o sistema sugere quando reconhece o número ou o nome); pontos de energia, contas e lançamentos passam para a loja oficial e o código antigo vira apelido. Com a lista carregada, o funcionário só escolhe a loja; loja nova, só o administrador inclui.
 
 ### Passo 2 — O funcionário faz os cadastros
