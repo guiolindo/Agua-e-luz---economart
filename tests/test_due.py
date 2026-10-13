@@ -186,3 +186,54 @@ def test_unit_can_be_registered_from_the_store_without_a_due_date(client, db):
     assert unit.store_id == store_id and unit.due_day is None
     again = client.post("/points", {"store_id": store_id, "number": "3013868360", "due_date": ""})
     assert again.status_code == 303 and db.query(ConsumerUnit).count() == 1                      # repetido não duplica
+
+
+def test_changing_the_unit_supplier_moves_its_bills(client, db):
+    """Trocar a unidade de CEMIG para CEMIG GT leva junto as contas já lançadas (os painéis somam pela conta)."""
+    store_id = _make_store(client)
+    unit = db.query(ConsumerUnit).one()
+    cemig = db.query(RecordType).filter_by(code="cemig").one()
+    gt = db.query(RecordType).filter(RecordType.name.ilike("%gera%")).first()
+    for ref in ("2026-07", "2026-08"):
+        client.post("/manual", {"store_id": store_id, "unit_id": unit.id, "type_id": cemig.id, "reference": ref,
+                                "total_value": "1000", "days": "30"})
+    assert db.query(EnergyBill).filter_by(record_type_id=cemig.id).count() == 2
+    r = client.post(f"/units/{unit.id}/edit", {"number": unit.number, "record_type_id": gt.id, "active": "1"})
+    assert r.status_code == 303
+    db.expire_all()
+    assert {b.record_type_id for b in db.query(EnergyBill)} == {gt.id}
+    assert gt.name in client.get(f"/stores/{store_id}?type_id={gt.id}").text
+
+
+def test_unit_page_offers_to_fix_bills_with_another_supplier(client, db):
+    store_id = _make_store(client)
+    unit = db.query(ConsumerUnit).one()
+    cemig = db.query(RecordType).filter_by(code="cemig").one()
+    gt = db.query(RecordType).filter(RecordType.name.ilike("%gera%")).first()
+    client.post("/manual", {"store_id": store_id, "unit_id": unit.id, "type_id": cemig.id, "reference": "2026-08",
+                            "total_value": "1000", "days": "30"})
+    unit.record_type_id = gt.id                                            # mudou antes desta correção: contas ficaram como CEMIG
+    db.commit()
+    page = client.get(f"/units/{unit.id}").text
+    assert "1 conta(s) desta unidade estão com outro fornecedor" in page
+    assert client.post(f"/units/{unit.id}/align-type", {}).status_code == 303
+    db.expire_all()
+    assert db.query(EnergyBill).one().record_type_id == gt.id
+    assert "estão com outro fornecedor" not in client.get(f"/units/{unit.id}").text
+
+
+def test_align_keeps_a_bill_that_would_become_a_duplicate(db):
+    from app.services import unit_type_service
+
+    store = Store(code="X", name="X", aliases=[])
+    db.add(store)
+    db.flush()
+    cemig = db.query(RecordType).filter_by(code="cemig").one()
+    gt = db.query(RecordType).filter(RecordType.name.ilike("%gera%")).first()
+    unit = ConsumerUnit(store_id=store.id, number="1", number_normalized="1", record_type_id=gt.id)
+    db.add(unit)
+    db.flush()
+    for t in (cemig, gt):
+        db.add(EnergyBill(unit_id=unit.id, record_type_id=t.id, source="manual", reference=date(2026, 8, 1), total_value=D("10")))
+    db.flush()
+    assert unit_type_service.align(db, unit) == (0, 1)

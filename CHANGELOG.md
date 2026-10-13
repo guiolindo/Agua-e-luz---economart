@@ -5,6 +5,8 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-13
 
+- **Trocar o fornecedor da unidade leva junto as contas já lançadas.** Cada conta guarda o próprio fornecedor e os painéis somam por ele: ao mudar uma unidade de CEMIG para CEMIG Geração e Transmissão, só as contas novas mudavam. Agora, ao salvar a unidade, as contas dela passam para o fornecedor do cadastro (a que viraria duplicada, por já existir conta do novo fornecedor no mesmo mês, fica como está e é avisada); fica registrado na auditoria. Unidade que já tinha sido trocada antes desta correção mostra o aviso "N conta(s) desta unidade estão com outro fornecedor" com o botão **Passar para ...** (`POST /units/{id}/align-type`).
+
 - **Cadastrar unidade consumidora ficou mais fácil.** Em **Lojas**, loja sem unidade mostra o botão **+ Unidade** na própria linha; a página da loja tem **+ Unidade consumidora** no título da seção e no aviso de loja vazia. A janela abre com a loja já escolhida e o cursor no número; a data de vencimento passou a ser opcional (sem ela não há aviso; dá para definir depois). Número repetido não duplica. Corrigido: para o administrador, a janela de cadastro não abria (o código dela ficava dentro do bloco dos avisos de vencimento, que o administrador não tem).
 
 - **Loja numerada aparece pelo nome.** Com a lista oficial, o código da loja é o número ("24"), que sozinho não diz nada: nos destaques, indicadores (maior gasto, maior alta/queda), mapa de calor, comparativo, pendências, alertas, lista de contas, painel do funcionário, conferência da importação, planilha e PowerPoint aparece o nome ("Contagem Colonial"). Código com letras (CD300) continua aparecendo como antes. Nos gráficos, o rótulo deixa de repetir o número.

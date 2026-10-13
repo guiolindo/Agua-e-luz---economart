@@ -11,7 +11,7 @@ from app.repositories.stores import (
     list_stores,
 )
 from app.security import current_user, verify_csrf, writer_required
-from app.services import audit_service, chart_service, company_stores, due_service
+from app.services import audit_service, chart_service, company_stores, due_service, unit_type_service
 from app.services.import_service import UnitConflict, create_unit
 from app.utils.parsing import clean_str, normalize_uc, parse_due_day, parse_reference
 from app.web import flash, render
@@ -179,7 +179,8 @@ async def unit_edit(request: Request, unit_id: int, number: str = Form(...), des
         flash(request, "Dia de vencimento inválido (use de 1 a 31)." if not day_ok else
               "Número de unidade inválido ou já cadastrado.", "error")
         return RedirectResponse(f"/units/{unit.id}/edit", status_code=303)
-    before = {"number": unit.number, "due_day": unit.due_day, "active": unit.active, "store_id": unit.store_id}
+    before = {"number": unit.number, "due_day": unit.due_day, "active": unit.active, "store_id": unit.store_id,
+              "record_type_id": unit.record_type_id}
     unit.number, unit.number_normalized = number.strip(), key
     unit.description, unit.internal_code, unit.notes = (clean_str(description, 200), clean_str(internal_code, 60),
                                                        clean_str(notes))
@@ -189,11 +190,34 @@ async def unit_edit(request: Request, unit_id: int, number: str = Form(...), des
     if day != unit.due_day:
         unit.due_ack = None          # mudou o dia: o aviso do novo vencimento volta a valer
     unit.due_day = day
+    moved, kept = unit_type_service.align(db, unit)       # trocou o fornecedor: as contas já lançadas passam junto
     audit_service.log(db, user.id, "update", "consumer_unit", unit.id,
                       {"before": before, "after": {"number": unit.number, "due_day": day, "active": unit.active,
-                                                   "store_id": unit.store_id}})
+                                                   "store_id": unit.store_id, "record_type_id": unit.record_type_id},
+                       "bills_moved": moved, "bills_kept": kept})
     db.commit()
-    flash(request, "Unidade atualizada." + (f" Vence todo dia {day}." if day else " Sem dia de vencimento (não gera aviso)."))
+    msg = "Unidade atualizada." + (f" Vence todo dia {day}." if day else " Sem dia de vencimento (não gera aviso).")
+    if moved:
+        msg += f" {moved} conta(s) já lançada(s) passaram para {unit.record_type.name}."
+    if kept:
+        msg += f" {kept} conta(s) ficaram como estavam: já existe conta de {unit.record_type.name} no mesmo mês."
+    flash(request, msg, "warn" if kept else "ok")
+    return RedirectResponse(f"/units/{unit.id}", status_code=303)
+
+
+@router.post("/units/{unit_id}/align-type", dependencies=[Depends(verify_csrf)])
+def unit_align_type(request: Request, unit_id: int, user: User = Depends(writer_required), db: Session = Depends(get_db)):
+    """Passa as contas já lançadas da unidade para o fornecedor do cadastro dela."""
+    unit = db.get(ConsumerUnit, unit_id)
+    if not unit:
+        raise HTTPException(404, "Unidade não encontrada.")
+    moved, kept = unit_type_service.align(db, unit)
+    audit_service.log(db, user.id, "update", "consumer_unit", unit.id,
+                      {"align_bills_to": unit.record_type_id, "bills_moved": moved, "bills_kept": kept})
+    db.commit()
+    name = unit.record_type.name if unit.record_type else "o fornecedor da unidade"
+    flash(request, f"{moved} conta(s) passaram para {name}." + (f" {kept} ficaram como estavam: já existe conta de {name} no mesmo mês." if kept else ""),
+          "warn" if kept else "ok")
     return RedirectResponse(f"/units/{unit.id}", status_code=303)
 
 
@@ -205,7 +229,8 @@ def unit_page(request: Request, unit_id: int, indicator: str | None = None, user
         raise HTTPException(404, "Unidade não encontrada.")
     rtype = unit.record_type or default_bill_type(db)
     overview = chart_service.unit_overview(db, unit)
-    return render(request, "units/detail.html", user=user, unit=unit, store=unit.store, rtype=rtype,
+    off_type = len(unit_type_service.mismatched(db, unit))
+    return render(request, "units/detail.html", user=user, unit=unit, store=unit.store, rtype=rtype, off_type=off_type,
                   indicators=chart_service.indicators_for_type(rtype) if rtype else [], indicator=indicator,
                   **overview)
 
