@@ -8,6 +8,8 @@
   <link rel="apple-touch-icon" href="/static/img/favicon.png">
   <meta name="theme-color" content="#1B4F8A">
   {% if user %}<meta name="csrf-token" content="{{ csrf_token }}">{% endif %}
+  {# Primeiro quadro já com as cores do sistema (sem piscar branco entre as telas enquanto o CSS carrega). #}
+  <style>html{background:#f4f5f7;color-scheme:light}{% if user %}@media (min-width:801px){body{background:linear-gradient(90deg,#1b4f8a 232px,#f4f5f7 232px)}}{% endif %}</style>
   <link rel="stylesheet" href="/static/css/app.css?v={{ ASSET_VERSION }}">
   {% if user %}<script nonce="{{ csp_nonce }}">try{if(sessionStorage.getItem('economart_splash')==='{{ login_stamp }}'||matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('no-splash')}catch(e){}</script>{% endif %}
 </head>

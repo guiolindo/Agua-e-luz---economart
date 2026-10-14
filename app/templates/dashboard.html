@@ -42,7 +42,7 @@
     <div style="padding:14px 18px 0"><h2>Últimas contas lançadas</h2></div>
     <div class="tablewrap"><table><tbody>{% for b in recent_bills %}<tr>
       <td><a href="/stores/{{ b.unit.store_id }}"><strong>{{ b.unit.store.short_label }}</strong></a><div class="muted small">{{ b.reference|month_label }} · {{ b.total_value|brl }}</div></td>
-      <td class="right nowrap"><a class="btn sm primary" href="/stores/{{ b.unit.store_id }}/report?bill={{ b.id }}&doc=1" target="_blank" rel="noopener" title="Folha da loja + conta original, para o diretor assinar">Imprimir p/ assinatura</a></td></tr>{% endfor %}</tbody></table></div>
+      <td class="right nowrap"><a class="btn sm primary" href="/stores/{{ b.unit.store_id }}/report?bill={{ b.id }}&doc=1" title="Folha da loja + conta original, para o diretor assinar">Imprimir p/ assinatura</a></td></tr>{% endfor %}</tbody></table></div>
   </section>
   {% endif %}
   <section class="card flush">

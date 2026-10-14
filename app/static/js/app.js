@@ -62,7 +62,7 @@ document.addEventListener('change', (e) => {
   const t = e.target;
   if (t.id === 'doc' && t.type === 'checkbox' && t.form && !t.hidden) {   // imprimir conta: incluir o original
     const u = new URL(location.href); if (t.checked) u.searchParams.set('doc', '1'); else u.searchParams.delete('doc');
-    u.hash = t.checked ? 'original' : ''; location.href = u.toString(); return;
+    u.hash = t.checked ? 'original' : ''; location.replace(u.toString()); return;   // replace: o Voltar leva para a tela anterior, não ao mesmo relatório
   }
   if (t.id === 'new-role') {   // criar usuário como admin: mostra o campo de confirmação de senha
     const f = document.getElementById('new-role-confirm'); if (f) f.hidden = t.value !== 'admin';
@@ -78,7 +78,7 @@ document.addEventListener('change', (e) => {
   }
   if (t.matches('select[data-bill-switch]')) {
     const doc = document.getElementById('doc');
-    location.href = '/bills/' + t.value + '/print' + (doc && doc.checked ? '?doc=1' : '');
+    location.replace('/bills/' + t.value + '/print' + (doc && doc.checked ? '?doc=1' : ''));
   }
 });
 

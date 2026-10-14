@@ -4,7 +4,7 @@
 {% block content %}
 {% call hero("Loja" ~ (" · " ~ store.region if store.region else ""), store.code ~ (" — " ~ store.name if store.name else ""), (store.location or "Histórico de custos e contas"), "/stores", "Lojas") %}
   {% if user.can_write %}<a class="btn {{ 'on-dark' if bill else 'cta' }}" href="/import?store_id={{ store.id }}">{{ 'Importar outra' if bill else 'Importar conta' }}</a>{% endif %}
-  {% if bill %}<a class="btn cta" id="sign-link" href="/stores/{{ store.id }}/report?bill={{ bill }}&doc=1" target="_blank" rel="noopener" title="Folha da loja + conta original, para o diretor assinar">Imprimir para assinatura</a>{% endif %}
+  {% if bill %}<a class="btn cta" id="sign-link" href="/stores/{{ store.id }}/report?bill={{ bill }}&doc=1" title="Folha da loja + conta original, para o diretor assinar">Imprimir para assinatura</a>{% endif %}
   <a class="btn on-dark" id="print-link" href="/stores/{{ store.id }}/report">Imprimir relatório</a>
   {% if user.can_write %}<a class="btn on-dark" href="/manual?store_id={{ store.id }}">Lançamento manual</a>
   <a class="btn on-dark" href="/stores/{{ store.id }}/settings">Cadastro</a>{% endif %}

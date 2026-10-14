@@ -219,3 +219,18 @@ def test_every_admin_route_refuses_other_profiles(client, db):
             if r.status_code not in (403, 404, 422):
                 open_admin.append((path, r.status_code))
     assert not open_admin, f"rotas de admin abertas a funcionário: {open_admin}"
+
+
+def test_report_and_print_open_in_the_same_tab():
+    """Relatório, folha para assinatura e original são telas do próprio sistema: abrem na mesma aba, com Voltar.
+    Aba nova só para a imagem ampliada na conferência (sair dali perderia o que foi digitado) e para o arquivo
+    bruto quando não deu para montar a impressão."""
+    import pathlib
+    root = pathlib.Path("app/templates")
+    for f in root.rglob("*.html"):
+        for line in f.read_text(encoding="utf-8").splitlines():
+            if 'target="_blank"' in line:
+                assert f.name in ("review.html", "report.html", "print.html"), f"{f}: {line.strip()[:120]}"
+                assert "/report?" not in line and "/print\"" not in line
+    for f in ("stores/report.html", "bills/print.html"):
+        assert "data-back>← Voltar" in (root / f).read_text(encoding="utf-8")

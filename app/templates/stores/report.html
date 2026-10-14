@@ -3,7 +3,7 @@
 {% block title %}Folha de impressão {{ store.code }} · Economart Energia{% endblock %}
 {% block content %}
 <div class="page-head no-print">
-  <div><div class="crumbs"><a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div><h1>{{ 'Folha para assinatura' if sign_bill else 'Folha de impressão' }}</h1>
+  <div><div class="crumbs"><a href="/stores/{{ store.id }}" data-back>← Voltar</a> · <a href="/stores/{{ store.id }}">{{ store.code }}</a> /</div><h1>{{ 'Folha para assinatura' if sign_bill else 'Folha de impressão' }}</h1>
     {% if sign_bill %}<div class="muted">Conta de {{ sign_bill.reference|month_label }}. Na impressão, a página em pé sai girada na folha deitada: é só virar o papel.</div>{% endif %}</div>
   <form method="get" class="actions">
     <label for="s" style="margin:0">De</label><input id="s" type="month" name="start" value="{{ start.strftime('%Y-%m') }}" style="width:auto">

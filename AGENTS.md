@@ -66,7 +66,7 @@ O sistema tem que ser óbvio pelo desenho, não por legendas. Não trate o usuá
 
 ```bash
 ruff check --select F,E9 .        # é o que o CI roda; imports não usados quebram o CI
-python -m pytest -q               # 425 testes
+python -m pytest -q               # 426 testes
 ```
 
 O CI (`.github/workflows/ci.yml`) roda ruff, pytest e pip-audit.

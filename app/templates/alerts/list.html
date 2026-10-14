@@ -23,7 +23,7 @@
     </div>
     <div class="aact no-print">
       <a class="btn sm" href="/units/{{ a.unit_id }}">Ver unidade</a>
-      <a class="btn sm" href="/bills/{{ a.bill_id }}/print" target="_blank" rel="noopener">Ver conta</a>
+      <a class="btn sm" href="/bills/{{ a.bill_id }}/print">Ver conta</a>
       {% if can_ack %}<form method="post" action="/alertas/conferido">{{ csrf(csrf_token) }}<input type="hidden" name="key" value="{{ a.key }}"><button class="btn sm primary">Conferido</button></form>{% endif %}
     </div>
   </article>

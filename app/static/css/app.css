@@ -780,3 +780,6 @@ kbd { display: inline-block; min-width: 22px; padding: 2px 7px; border: 1px soli
 .errcard .errcode { font-size: 13px; margin-top: -8px; }
 .erricon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; margin: 0 0 14px; background: var(--accent-soft); color: var(--accent); }
 .erricon.e403, .erricon.e410, .erricon.e413 { background: var(--warn-soft); color: var(--warn); } .erricon.e500 { background: var(--bad-soft); color: var(--bad); }
+/* Na troca de tela, menu e barras do celular ficam parados; só o conteúdo esmaece. */
+.side { view-transition-name: side; } .m-topbar { view-transition-name: m-topbar; } .m-bottomnav { view-transition-name: m-bottomnav; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
