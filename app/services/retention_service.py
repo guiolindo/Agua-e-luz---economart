@@ -33,8 +33,11 @@ def purge_expired_documents(db: Session, retention_days: int | None = None) -> i
 
 
 def _run_once() -> None:
+    from app.services import trash_service
+
     with SessionLocal() as db:
         purge_expired_documents(db)
+        trash_service.purge_old(db)
 
 
 async def retention_loop() -> None:

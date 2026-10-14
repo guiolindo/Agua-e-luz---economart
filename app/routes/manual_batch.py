@@ -100,6 +100,8 @@ async def batch_save(request: Request, user: User = Depends(writer_required), db
         if found and action == "skip":
             skipped += 1
             continue
+        before = ({"value": str(found[0].value), "reference": found[0].reference.isoformat(), "data": found[0].data}
+                  if found else None)
         rec = found[0] if found else ManualRecord(store_id=s.id, record_type_id=rtype.id, created_by=user.id,
                                                    reference=reference, value=value)
         if not found:
@@ -108,7 +110,8 @@ async def batch_save(request: Request, user: User = Depends(writer_required), db
         rec.notes, rec.updated_by = notes, user.id
         db.flush()
         audit_service.log(db, user.id, "update" if found else "create", "manual_record", rec.id,
-                          {"value": str(value), "reference": reference.isoformat(), "data": data, "batch": batch})
+                          {"value": str(value), "reference": reference.isoformat(), "data": data, "batch": batch,
+                           **({"before": before} if before else {})})
         replaced, created = (replaced + 1, created) if found else (replaced, created + 1)
     db.commit()
 

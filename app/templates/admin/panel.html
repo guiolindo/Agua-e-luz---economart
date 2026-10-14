@@ -8,6 +8,10 @@
   <a class="btn on-dark" href="/admin/users">Usuários</a><a class="btn on-dark" href="/admin/audit">Auditoria completa</a>
 {% endcall %}
 
+{% if delete_blocks %}<div class="flash error" role="alert"><div><strong>Exclusão em massa barrada:</strong>
+  {% for uid in delete_blocks|map(attribute='user_id')|unique %}{{ p.names.get(uid, '—') }}{{ ', ' if not loop.last }}{% endfor %} tentou excluir muitas contas em pouco tempo.
+  <a href="/admin/lixeira"><strong>Ver na Lixeira</strong></a></div></div>
+{% elif trash_week %}<div class="flash info" role="status">{{ trash_week }} conta(s)/lançamento(s) excluído(s) nos últimos 7 dias. <a href="/admin/lixeira">Lixeira</a></div>{% endif %}
 <div class="grid cols-4" style="margin-bottom:16px">
   <div class="kpi"><div class="label">On-line agora</div><div class="value">{{ p.online|length }}</div><div class="sub">de {{ p.active_users }} usuário(s) ativo(s)</div></div>
   <div class="kpi alt"><div class="label">Contas lançadas em {{ month|month_label }}</div><div class="value">{{ r.total }}</div><div class="sub">{% if r.prev_total %}{% set d = (r.total - r.prev_total) / r.prev_total * 100 %}<span class="{{ 'up' if d > 0 else 'down' }}">{{ '↑' if d > 0 else '↓' if d < 0 else '→' }} {{ d|abs|round(0)|int }}%</span> vs. mês anterior ({{ r.prev_total }}){% else %}hoje: {{ p.entries_today }}{% endif %}</div></div>

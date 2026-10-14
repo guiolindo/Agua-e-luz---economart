@@ -37,7 +37,11 @@ def test_viewer_sees_the_document_once_the_bill_is_confirmed(client, db, png):
 
 
 # ---------------------------------------------------------- excluir conta apaga o arquivo (sem outra referência)
-def test_deleting_a_bill_purges_its_document(client, db, png):
+def test_deleted_bill_document_is_purged_when_the_trash_expires(client, db, png):
+    """Excluir manda a conta para a lixeira com a foto/PDF (para poder restaurar); quando o prazo da lixeira vence,
+    o arquivo é apagado de vez, como antes acontecia na hora da exclusão."""
+    from app.services import trash_service
+
     _make_store(client)
     job = _upload(client, png)
     _review_confirm(client, job)
@@ -45,6 +49,9 @@ def test_deleting_a_bill_purges_its_document(client, db, png):
     doc_id = bill.document_id
     assert client.get(f"/documents/{doc_id}").status_code == 200
     assert client.post(f"/manual/bills/{bill.id}/delete", {}).status_code == 303
+    db.expire_all()
+    assert db.get(Document, doc_id).data is not None                    # na lixeira: restaurável com o original
+    assert trash_service.purge_old(db, days=0) == 1
     db.expire_all()
     assert db.get(Document, doc_id).data is None
     assert client.get(f"/documents/{doc_id}").status_code == 410

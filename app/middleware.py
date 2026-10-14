@@ -140,6 +140,10 @@ POLICIES = (
     Policy("documents", frozenset({"GET"}), re.compile(r"^/documents/"), 60, 60),
     Policy("api", frozenset({"GET"}), re.compile(r"^/api/"), 240, 60),
     Policy("mutations", MUTATIONS, re.compile(r"^/"), 120, 60),
+    # planilha/PowerPoint pesam no servidor (montar o arquivo): ninguém baixa 10 por minuto de verdade
+    Policy("export", frozenset({"GET"}), re.compile(r"^/.*/export\.(csv|xlsx|pptx)$"), 10, 60),
+    # telas comuns: 5 por segundo, sustentado por um minuto, é robô (uma pessoa abre poucas por minuto)
+    Policy("pages", frozenset({"GET"}), re.compile(r"^/(?!static/|health$|sw\.js$|offline$)"), 300, 60),
 )
 _buckets: dict[str, deque] = defaultdict(deque)
 
@@ -160,12 +164,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 while q and q[0] <= now - policy.window:
                     q.popleft()
                 if len(q) >= policy.max_requests:
-                    return _deny("Muitas tentativas. Aguarde um pouco e tente novamente.", 429,
-                                 {"Retry-After": str(policy.window)})
+                    msg = "Muitas tentativas. Aguarde um pouco e tente novamente."
+                    if "text/html" in request.headers.get("accept", "") and request.method.upper() == "GET":
+                        from starlette.responses import HTMLResponse
+                        return HTMLResponse(f'<!doctype html><meta charset="utf-8"><title>Aguarde</title><p style="font:16px system-ui;'
+                                            f'margin:40px auto;max-width:420px">{msg}</p>', 429, {"Retry-After": str(policy.window)})
+                    return _deny(msg, 429, {"Retry-After": str(policy.window)})
                 q.append(now)
                 if len(_buckets) > 5000:  # contém crescimento sob ataque distribuído
                     for k in [k for k, v in _buckets.items() if not v or v[-1] <= now - 600]:
                         _buckets.pop(k, None)
+                    if len(_buckets) > 50000:   # ainda enorme (milhares de IPs ao mesmo tempo): teto rígido de memória
+                        for k in list(_buckets)[:len(_buckets) - 40000]:
+                            _buckets.pop(k, None)
         return await call_next(request)
 
 

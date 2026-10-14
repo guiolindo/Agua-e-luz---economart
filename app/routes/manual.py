@@ -3,18 +3,16 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
-from app.models import ConsumerUnit, Document, EnergyBill, ManualRecord, RecordType, User
-from app.models.import_job import Import
+from app.models import ConsumerUnit, EnergyBill, ManualRecord, RecordType, User
 from app.repositories.stores import list_record_types, list_stores
 from app.schemas.forms import bill_to_form, parse_bill_form
 from app.security import current_user, verify_csrf, writer_required
-from app.services import audit_service
+from app.services import audit_service, trash_service
 from app.services.duplicate_service import find_bill_duplicates, find_manual_duplicates
-from app.models.mixins import utcnow
 from app.services.import_service import save_bill
 from app.utils.parsing import clean_str, parse_date, parse_decimal, parse_reference
 from app.web import flash, render
@@ -134,6 +132,8 @@ async def manual_save(request: Request, user: User = Depends(writer_required), d
     if dups and action not in ("replace", "new"):
         return rerender(dups, 409)
     rec = existing or (dups[0] if dups and action == "replace" else None)
+    before = ({"value": str(rec.value), "reference": rec.reference.isoformat(), "data": rec.data, "notes": rec.notes}
+              if rec is not None else None)          # editar guarda o valor anterior (dá para desfazer pela auditoria)
     if rec is None:
         rec = ManualRecord(store_id=store_id, record_type_id=rtype.id, created_by=user.id, reference=reference,
                            value=value)
@@ -143,7 +143,7 @@ async def manual_save(request: Request, user: User = Depends(writer_required), d
     rec.notes, rec.updated_by = clean_str(posted.get("notes"), 2000), user.id
     db.flush()
     audit_service.log(db, user.id, "update" if existing or action == "replace" else "create", "manual_record", rec.id,
-                      {"value": str(value), "reference": reference.isoformat(), "data": data})
+                      {"value": str(value), "reference": reference.isoformat(), "data": data, **({"before": before} if before else {})})
     db.commit()
     from app.models import Store
     from app.utils import formatting as fmt
@@ -158,17 +158,15 @@ def bill_delete(request: Request, bill_id: int, user: User = Depends(writer_requ
     bill = db.get(EnergyBill, bill_id)
     if not bill:
         raise HTTPException(404, "Conta não encontrada.")
-    unit_id, doc_id = bill.unit_id, bill.document_id
-    audit_service.log(db, user.id, "delete", "energy_bill", bill.id,
-                      {"reference": bill.reference.isoformat(), "total_value": str(bill.total_value)})
-    db.execute(update(Import).where(Import.bill_id == bill.id).values(bill_id=None))   # importação deixa de apontar para a conta (FK no Postgres)
-    db.delete(bill)
-    db.flush()
-    if doc_id and db.scalar(select(EnergyBill.id).where(EnergyBill.document_id == doc_id)) is None:
-        # nenhuma outra conta aponta mais para esta foto/PDF: apaga o arquivo (os dados lidos continuam salvos)
-        db.execute(update(Document).where(Document.id == doc_id).values(data=None, purged_at=utcnow()))
+    unit_id = bill.unit_id
+    try:
+        trash_service.check_can_delete(db, user)
+    except trash_service.TrashError as exc:
+        flash(request, str(exc), "error")
+        return RedirectResponse(f"/units/{unit_id}", status_code=303)
+    trash_service.move_to_trash(db, bill, user)      # a foto/PDF fica guardada enquanto a conta estiver na lixeira
     db.commit()
-    flash(request, "Conta excluída.", "info")
+    flash(request, "Conta excluída. O administrador consegue restaurá-la pela Lixeira.", "info")
     return RedirectResponse(f"/units/{unit_id}", status_code=303)
 
 
@@ -179,10 +177,14 @@ def record_delete(request: Request, record_id: int, user: User = Depends(writer_
     if not rec:
         raise HTTPException(404, "Lançamento não encontrado.")
     store_id = rec.store_id
-    audit_service.log(db, user.id, "delete", "manual_record", rec.id, {"reference": rec.reference.isoformat()})
-    db.delete(rec)
+    try:
+        trash_service.check_can_delete(db, user)
+    except trash_service.TrashError as exc:
+        flash(request, str(exc), "error")
+        return RedirectResponse(f"/stores/{store_id}", status_code=303)
+    trash_service.move_to_trash(db, rec, user)
     db.commit()
-    flash(request, "Lançamento excluído.", "info")
+    flash(request, "Lançamento excluído. O administrador consegue restaurá-lo pela Lixeira.", "info")
     return RedirectResponse(f"/stores/{store_id}", status_code=303)
 
 

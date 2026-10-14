@@ -9,9 +9,9 @@ from app import security
 from app.config import get_settings
 from app.models.mixins import utcnow
 from app.database import get_db
-from app.models import AuditLog, User
+from app.models import AuditLog, TrashItem, User
 from app.security import admin_required, verify_csrf
-from app.services import audit_service, auth_service, totp_service
+from app.services import audit_service, auth_service, totp_service, trash_service
 from app.web import flash, render
 
 router = APIRouter()
@@ -174,20 +174,21 @@ ACTION_LABELS = {
     "import": "Conta importada", "cancel": "Importação descartada", "purge": "Arquivos antigos apagados",
     "role_change": "Perfil alterado", "activate": "Usuário reativado", "deactivate": "Usuário desativado",
     "view": "Abriu a apresentação do sistema", "link": "Loja vinculada à lista", "due_ack": "Marcada como paga", "alert_ack": "Alerta conferido", "replace": "Conta substituída", "create": "Criação", "update": "Alteração", "delete": "Exclusão",
+    "restore": "Restaurado da lixeira", "delete_blocked": "Exclusão em massa barrada",
 }
 ENTITY_LABELS = {"store": "loja", "consumer_unit": "unidade", "energy_bill": "conta", "manual_record": "lançamento",
                  "record_type": "tipo de registro", "user": "usuário", "import": "importação", "document": "documento",
                  "bills": "contas", "audit": "auditoria", "auth": "", "alert": "alerta",
-                 "presentation": "apresentação", "company_stores": "lista de lojas"}
+                 "presentation": "apresentação", "company_stores": "lista de lojas", "trash": "lixeira"}
 BAD_ACTIONS = {"login_failed", "login_2fa_failed", "2fa_disable_failed", "2fa_setup_failed", "login_blocked", "account_locked",
-               "password_change_failed", "import_rejected", "login_temp_expired", "delete", "deactivate"}
-OK_ACTIONS = {"login", "login_2fa", "password_changed", "account_unlocked", "2fa_enabled"}
+               "password_change_failed", "import_rejected", "login_temp_expired", "delete", "deactivate", "delete_blocked"}
+OK_ACTIONS = {"login", "login_2fa", "password_changed", "account_unlocked", "2fa_enabled", "restore"}
 
 
 def action_label(action: str, entity: str = "") -> str:
     base = ACTION_LABELS.get(action, action)
     ent = ENTITY_LABELS.get(entity, "")
-    return f"{base} · {ent}" if action in ("create", "update", "delete") and ent else base
+    return f"{base} · {ent}" if action in ("create", "update", "delete", "restore") and ent else base
 
 
 def details_text(details: dict | None) -> str:
@@ -284,7 +285,9 @@ def admin_panel(request: Request, mes: str | None = None, user: User = Depends(a
                   month=month, this_month=m.this_month(), r=m.ranking(db, month), daily=m.daily(db, month),
                   f=m.imports_funnel(db, month), logins=m.logins_by_day(db, 30),
                   online_minutes=panel.ONLINE_MINUTES, label=action_label, bad=BAD_ACTIONS, good=OK_ACTIONS,
-                  legacy_count=len(company_stores.legacy_stores(db)))
+                  legacy_count=len(company_stores.legacy_stores(db)), delete_blocks=trash_service.recent_blocks(db),
+                  trash_week=db.scalar(select(func.count()).select_from(TrashItem)
+                                       .where(TrashItem.deleted_at >= utcnow() - timedelta(days=7))) or 0)
 
 
 @router.get("/admin/usuarios/{user_id}")
@@ -308,3 +311,61 @@ def admin_user_page(request: Request, user_id: int, mes: str | None = None, user
                   rank_n=len(rank["rows"]), online=panel.is_online(target), role=panel.ROLE_LABELS.get(target.role, target.role),
                   ago=panel.ago, local=m.local, export_label=export_label, label=action_label, describe=details_text,
                   bad=BAD_ACTIONS, good=OK_ACTIONS)
+
+
+# ---------------------------------------------------------------- lixeira
+@router.get("/admin/lixeira")
+def trash_page(request: Request, por: int | None = None, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    stmt = select(TrashItem).order_by(TrashItem.restored_at.is_not(None), TrashItem.deleted_at.desc()).limit(500)
+    if por:
+        stmt = stmt.where(TrashItem.deleted_by == por)
+    items = list(db.scalars(stmt))
+    names = {u.id: u.username for u in db.scalars(select(User))}
+    since = utcnow() - timedelta(days=7)
+    week = db.execute(select(TrashItem.deleted_by, func.count()).where(TrashItem.deleted_at >= since)
+                      .group_by(TrashItem.deleted_by)).all()
+    return render(request, "admin/trash.html", user=user, items=items, names=names, por=por,
+                  week=sorted(week, key=lambda r: -r[1]), blocks=trash_service.recent_blocks(db),
+                  kinds=trash_service.KIND_LABELS, days=get_settings().trash_days,
+                  limit=get_settings().max_deletes_per_hour)
+
+
+@router.post("/admin/lixeira/{item_id}/restaurar", dependencies=[Depends(verify_csrf)])
+def trash_restore(request: Request, item_id: int, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    item = db.get(TrashItem, item_id)
+    if item is None:
+        flash(request, "Item não encontrado na lixeira.", "error")
+        return RedirectResponse("/admin/lixeira", status_code=303)
+    try:
+        trash_service.restore(db, item, user)
+    except trash_service.TrashError as exc:
+        db.rollback()
+        flash(request, str(exc), "error")
+        return RedirectResponse("/admin/lixeira", status_code=303)
+    db.commit()
+    flash(request, f"Restaurado: {item.summary}.")
+    return RedirectResponse("/admin/lixeira", status_code=303)
+
+
+@router.post("/admin/lixeira/restaurar-de", dependencies=[Depends(verify_csrf)])
+def trash_restore_all(request: Request, deleted_by: int = Form(...), confirm_password: str = Form(""),
+                      user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    """Desfaz de uma vez tudo o que uma pessoa excluiu (o caso do funcionário que saiu apagando)."""
+    if not security.verify_password(confirm_password, user.password_hash):
+        flash(request, "Senha incorreta: restaurar tudo de uma vez precisa da confirmação da sua senha.", "error")
+        return RedirectResponse(f"/admin/lixeira?por={deleted_by}", status_code=303)
+    ok, failed = 0, []
+    for item in db.scalars(select(TrashItem).where(TrashItem.deleted_by == deleted_by, TrashItem.restored_at.is_(None))
+                           .order_by(TrashItem.deleted_at)):
+        try:
+            with db.begin_nested():
+                trash_service.restore(db, item, user)
+            ok += 1
+        except trash_service.TrashError:
+            failed.append(item.summary)
+    db.commit()
+    msg = f"{ok} item(ns) restaurado(s)."
+    if failed:
+        msg += f" {len(failed)} ficaram na lixeira porque já existe outro lançamento no mesmo mês (confira um a um)."
+    flash(request, msg, "info" if failed else "ok")
+    return RedirectResponse(f"/admin/lixeira?por={deleted_by}", status_code=303)
