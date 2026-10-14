@@ -25,6 +25,11 @@
       scales: { x: { grid: { color: GRID }, ticks: { callback: (v) => (extra.tick || ((x) => x))(v) }, ...(extra.x || {}) }, y: { grid: { display: false } } } },
     plugins: extra.refs || [] });
 
+  // clicar numa barra de loja abre a página da loja (o próximo passo natural de quem vê o ranking)
+  const clickTo = (list) => ({
+    onClick: (e, els) => { if (els.length && list[els[0].index] && list[els[0].index].id) window.location.href = '/stores/' + list[els[0].index].id; },
+    onHover: (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; } });
+
   // 1) empresa por mês, empilhado por fornecedor + linha de variação
   new Chart($('c-month'), { data: { labels: D.labels, datasets: [
       ...D.by_type.map((t) => ({ type: 'bar', label: t.name, data: t.values, backgroundColor: t.color, stack: 's', yAxisID: 'y', maxBarThickness: 44, order: 2 })),
@@ -37,12 +42,12 @@
   // 2) ranking
   const top = rows.slice(0, 15);
   hbar('c-rank', top.map(lab), top.map((r) => r.total), top.map((r, i) => i === 0 ? BLUE : '#9aa5b4'),
-       (v, i) => nfBRL0.format(v) + ' · ' + nfN.format(top[i].share) + '% da empresa', { tick: (v) => nfBRL0.format(v) });
+       (v, i) => nfBRL0.format(v) + ' · ' + nfN.format(top[i].share) + '% da empresa', { tick: (v) => nfBRL0.format(v), options: clickTo(top) });
 
   // 3) variação último mês vs anterior
   const mv = rows.filter((r) => r.var_last != null).sort((a, b) => b.var_last - a.var_last).slice(0, 20);
   hbar('c-var', mv.map(lab), mv.map((r) => r.var_last), mv.map((r) => r.var_last > 0 ? UP : r.var_last < 0 ? DOWN : NEUTRAL),
-       (v, i) => arrow(v) + ' (' + nfBRL0.format(mv[i].before) + ' → ' + nfBRL0.format(mv[i].last) + ')', { tick: (v) => v + '%' });
+       (v, i) => arrow(v) + ' (' + nfBRL0.format(mv[i].before) + ' → ' + nfBRL0.format(mv[i].last) + ')', { tick: (v) => v + '%', options: clickTo(mv) });
 
   // 4) composição por fornecedor (100%)
   const typeIds = Object.keys(D.types);

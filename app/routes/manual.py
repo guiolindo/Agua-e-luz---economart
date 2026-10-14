@@ -40,7 +40,11 @@ def manual_page(request: Request, bill: int | None = None, record: int | None = 
                 store_id: int | None = None, user: User = Depends(writer_required), db: Session = Depends(get_db)):
     """Sem pistas de destino (loja, edição, modo=loja) mostra só a ESCOLHA do tipo de lançamento; o formulário
     individual só abre depois que a pessoa escolhe "Lançamento de uma loja"."""
-    extra: dict = {"sel_store": store_id,
+    from app.services.due_service import local_today
+
+    prev = local_today().replace(day=1)
+    prev = prev.replace(year=prev.year - 1, month=12) if prev.month == 1 else prev.replace(month=prev.month - 1)
+    extra: dict = {"sel_store": store_id, "form": {"reference": prev.strftime("%Y-%m")},   # mês passado, como no lote
                    "view": "form" if (bill or record or store_id or modo == "loja") else "choose"}
     if bill:
         b = db.get(EnergyBill, bill)
@@ -141,7 +145,11 @@ async def manual_save(request: Request, user: User = Depends(writer_required), d
     audit_service.log(db, user.id, "update" if existing or action == "replace" else "create", "manual_record", rec.id,
                       {"value": str(value), "reference": reference.isoformat(), "data": data})
     db.commit()
-    flash(request, "Lançamento salvo.")
+    from app.models import Store
+    from app.utils import formatting as fmt
+
+    st = db.get(Store, store_id)
+    flash(request, f"{rtype.name} de {fmt.month_label(reference)} salvo em {st.short_label if st else 'loja'}: {fmt.brl(value)}.")
     return RedirectResponse(f"/stores/{store_id}?type_id={rtype.id}", status_code=303)
 
 

@@ -8,10 +8,20 @@ from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app.models import ConsumerUnit, EnergyBill, ManualRecord, RecordType, Store, User
 from app.security import current_user
+from app.utils import formatting as fmt
 from app.utils.parsing import normalize_uc
 from app.web import render
 
 router = APIRouter()
+MONTH_NAMES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro",
+               "novembro", "dezembro"]
+
+
+def _plain(text: str) -> str:
+    import unicodedata
+
+    return unicodedata.normalize("NFKD", str(text)).encode("ascii", "ignore").decode().lower()
+
 
 
 def _parse_month(s: str | None) -> date | None:
@@ -57,6 +67,7 @@ def _collect(db: Session, store_id, type_id, start, end, q, origin):
         store = b.unit.store if b.unit else None
         rows.append({
             "reference": b.reference, "store_code": store.short_label if store else "—",
+            "store_search": f"{store.code} {store.name or ''}" if store else "",
             "store_id": store.id if store else None,
             "unit_number": b.unit.number if b.unit else "—",
             "unit_id": b.unit_id, "bill_id": b.id, "record_id": None,
@@ -68,6 +79,7 @@ def _collect(db: Session, store_id, type_id, start, end, q, origin):
     for r in manuals:
         rows.append({
             "reference": r.reference, "store_code": r.store.short_label if r.store else "—",
+            "store_search": f"{r.store.code} {r.store.name or ''}" if r.store else "",
             "store_id": r.store_id, "unit_number": (r.unit.number if r.unit else "—"),
             "unit_id": r.unit_id, "bill_id": None, "record_id": r.id,
             "type_name": types_by_id[r.record_type_id].name if r.record_type_id in types_by_id else "Lançamento",
@@ -76,18 +88,30 @@ def _collect(db: Session, store_id, type_id, start, end, q, origin):
         })
     rows.sort(key=lambda r: (r["reference"], r["store_code"], r["unit_number"]), reverse=True)
 
-    # Busca livre: nº UC (normaliza pontos/traços), código da loja, tipo, nº da nota, referência MM/AAAA.
-    q_norm = (q or "").strip().lower()
-    q_digits = normalize_uc(q)
-    if q_norm:
+    # Busca livre por palavras (todas precisam aparecer, em qualquer ordem): código e nome da loja, nº da UC
+    # (com ou sem pontos), fornecedor, nº da nota e o mês em vários formatos ("jan/2026", "01/2026", "janeiro", "2026").
+    # Assim "L05 jan/2026", "contagem colonial", "coelba setembro" e "1206" funcionam.
+    words = [w for w in (q or "").strip().lower().split() if w]
+    if words:
+        def month_terms(ref):
+            name = MONTH_NAMES[ref.month - 1]
+            return [fmt.month_label(ref).lower(), f"{ref.month:02d}/{ref.year}", f"{ref.month}/{ref.year}",
+                    f"{name}/{ref.year}", name, f"{name[:3]}/{str(ref.year)[2:]}", str(ref.year)]
+
         def hit(r):
-            parts = [r["store_code"], r["unit_number"], r["type_name"], r["invoice_number"] or "",
-                     f"{r['reference'].month:02d}/{r['reference'].year}", f"{r['reference'].year}"]
-            text = " ".join(p.lower() for p in parts if p)
-            if q_norm in text:
-                return True
-            # fallback por dígitos do UC: ajuda quando o usuário digitou "1206" ou "12060073018"
-            return bool(q_digits and r["unit_number"] and q_digits in normalize_uc(r["unit_number"]))
+            parts = [r["store_code"], r.get("store_search", ""), r["unit_number"], r["type_name"],
+                     r["invoice_number"] or "", *month_terms(r["reference"])]
+            text = " ".join(_plain(p) for p in parts if p)
+            uc = normalize_uc(r["unit_number"] or "")
+            for w in words:
+                pw = _plain(w)
+                if pw in text:
+                    continue
+                d = normalize_uc(w)
+                if d and len(d) >= 3 and uc and d in uc:      # dígitos da UC: "1206" ou "12060073018"
+                    continue
+                return False
+            return True
         rows = [r for r in rows if hit(r)]
 
     return rows, stores, types

@@ -167,3 +167,21 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     for k in [k for k, v in _buckets.items() if not v or v[-1] <= now - 600]:
                         _buckets.pop(k, None)
         return await call_next(request)
+
+
+class DropEmptyQueryParamsMiddleware:
+    """Formulários GET mandam os filtros vazios ("?q=L03&store_id=&type_id="). Parâmetro numérico opcional vazio
+    virava erro 422 em JSON (a busca de Contas quebrava). Campo vazio = filtro não usado: some antes da rota."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope.get("query_string"):
+            from urllib.parse import parse_qsl, urlencode
+
+            pairs = parse_qsl(scope["query_string"].decode("latin-1"), keep_blank_values=True)
+            kept = [(k, v) for k, v in pairs if v != ""]
+            if len(kept) != len(pairs):
+                scope = dict(scope, query_string=urlencode(kept).encode("latin-1"))
+        await self.app(scope, receive, send)

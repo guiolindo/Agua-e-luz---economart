@@ -175,4 +175,4 @@ def test_numbered_stores_show_their_name_not_the_number(client, db):
     _seed_bill(client, db, store.id)
     html = client.get("/diretoria").text
     assert "Maior participação no gasto do período: Contagem Colonial" in html
-    assert '<div class="value sm">Contagem Colonial</div>' in html
+    assert 'title="Abrir a loja">Contagem Colonial →</a>' in html                            # indicador clicável, com o nome

@@ -18,6 +18,7 @@ from app import (  # noqa: F401  (models registra as tabelas no metadata)
 )
 from app.config import get_settings
 from app.middleware import (
+    DropEmptyQueryParamsMiddleware,
     BodySizeLimitMiddleware,
     CSRFOriginMiddleware,
     RateLimitMiddleware,
@@ -90,6 +91,7 @@ def create_app() -> FastAPI:
     app.add_middleware(BodySizeLimitMiddleware)
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(DropEmptyQueryParamsMiddleware)
     app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
     for module in (auth, account, alerts, dashboard, director, stores, bills, types, imports, manual, manual_batch, points, charts, documents, help, presentation, company, admin):

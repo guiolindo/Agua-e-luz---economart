@@ -285,7 +285,7 @@ def client_payload(data: dict) -> dict:
         "month_totals": data["month_totals"], "month_vars": [v["pct"] for v in data["month_vars"]],
         "by_type": data["by_type"],
         "types": {str(t.id): {"name": t.name, "color": data["colors"][t.id]} for t in data["types"]},
-        "rows": [{k: r[k] for k in ("id", "code", "name", "region", "values", "total", "share", "last", "before", "rs_kwh",
+        "rows": [{k: r[k] for k in ("id", "code", "label", "name", "region", "values", "total", "share", "last", "before", "rs_kwh",
                                     "demand_use", "demand_over", "mix")} | {"var_last": r["vs_last_month"]["pct"]}
                  for r in data["rows"]],
         "avg_rs_kwh": data["kpi"]["rs_kwh"],

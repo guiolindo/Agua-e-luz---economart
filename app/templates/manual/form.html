@@ -40,7 +40,7 @@
       <select id="dup" name="duplicate_action" required><option value="">Escolha…</option><option value="replace">Substituir o existente</option><option value="new">Salvar como novo registro</option></select></div></div>
   {% endif %}
 
-  <div class="row row-3">
+  <div class="row row-3 pick-row">
     <div class="field {{ 'error' if errors.store }}"><label for="store">Loja *</label>
       <select id="store" name="store_id" {{ 'disabled' if editing }} required><option value="">Selecione…</option>
         {% for s in stores %}<option value="{{ s.id }}" {{ 'selected' if sel_store == s.id }}>{{ s.label }}</option>{% endfor %}</select>

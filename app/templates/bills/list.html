@@ -8,7 +8,7 @@
 <form class="card" method="get" action="/notas" data-no-loading>
   <div class="row row-searchbar">
     <div class="field"><label for="q">Buscar</label>
-      <input id="q" type="search" name="q" value="{{ q }}" placeholder="Loja, unidade, nota ou mês" autocomplete="off" autofocus></div>
+      <input id="q" type="search" name="q" value="{{ q }}" placeholder="Ex.: Contagem set/2026, coelba, 1206…" autocomplete="off" autofocus></div>
     <div class="field" style="align-self:end"><button class="btn primary">Filtrar</button></div>
   </div>
   <details class="more-filters" {{ 'open' if store_id or type_id or origin or start or end }}>

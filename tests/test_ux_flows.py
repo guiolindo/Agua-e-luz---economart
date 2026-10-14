@@ -35,3 +35,25 @@ def test_review_hides_the_other_unit_options_when_the_unit_was_recognised(client
     assert r.status_code == 303
     after = client.get(r.headers["location"]).text
     assert "Importar outra" in after and 'id="sign-link"' in after                       # um só destaque: imprimir
+
+
+def test_search_with_empty_filters_works(client, db):
+    """O formulário de Contas manda os filtros vazios (store_id=&type_id=): antes dava erro 422 em JSON."""
+    r = client.get("/notas?q=L03&store_id=&type_id=&origin=&start=&end=")
+    assert r.status_code == 200 and "Contas e lançamentos" in r.text
+    assert client.get("/notas/export.csv?q=&store_id=&type_id=").status_code == 200
+    assert client.get("/diretoria?region=&supplier=").status_code == 200
+
+
+def test_search_understands_store_name_and_month_together(client, db):
+    from tests.test_roles import _seed_bill
+
+    store_id = _make_store(client, code="L05")
+    db.query(__import__("app.models", fromlist=["Store"]).Store).filter_by(id=store_id).one().name = "Loja Oeste"
+    db.commit()
+    _seed_bill(client, db, store_id)                                      # conta de AGO/2026
+    def n(q):
+        import re
+        return int(re.search(r"(\d+) registro", client.get("/notas", params={"q": q}).text).group(1))
+    assert n("L05 ago/2026") == 1 and n("loja oeste") == 1 and n("oeste agosto") == 1 and n("08/2026") == 1
+    assert n("L05 set/2026") == 0 and n("cemig 2026") == 1
