@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Lixeira · Economart Energia{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Lixeira</h1>
+  <div class="muted">{% if user.is_admin %}Tudo o que foi excluído nos últimos {{ days }} dias, com a foto/PDF original. Quem excluiu consegue desfazer sozinho por {{ personal_days }} dias.
+  {% else %}O que você excluiu nos últimos {{ personal_days }} dias. Depois disso, só o administrador restaura.{% endif %}</div></div>
+  {% if user.is_admin %}<div class="actions"><a class="btn" href="/admin/audit?action=delete">Exclusões na auditoria</a></div>{% endif %}</div>
+
+{% if user.is_admin %}
+{% set blocked = {} %}{% for b in blocks %}{% if b.user_id not in blocked %}{% set _ = blocked.update({b.user_id: b}) %}{% endif %}{% endfor %}
+{% if blocked %}<div class="flash error" role="alert"><div><strong>Exclusão em massa barrada.</strong>
+  {% for uid, b in blocked.items() %}<div>{{ names.get(uid, '—') }} tentou excluir mais de {{ limit }} itens em uma hora (última vez em {{ b.at|dt_br }}). <a href="/lixeira?por={{ uid }}">Ver o que foi excluído</a></div>{% endfor %}
+</div></div>{% endif %}
+
+{% if week %}<div class="card"><h2>Quem excluiu nos últimos 7 dias</h2>
+  <div class="who-pills">{% for uid, n in week %}<a class="who-pill{{ ' on' if por == uid }}" href="/lixeira?por={{ uid }}">{{ names.get(uid, '—') }} · {{ n }}</a>{% endfor %}
+  {% if por %}<a class="who-pill" href="/lixeira">Todos</a>{% endif %}</div></div>{% endif %}
+
+{% if por and pending %}<form method="post" action="/lixeira/restaurar-de" class="card" data-confirm-password="Restaurar os {{ pending }} item(ns) excluídos por {{ names.get(por, '—') }}? Confirme com a sua senha.">
+  {{ csrf(csrf_token) }}<input type="hidden" name="deleted_by" value="{{ por }}">
+  <div class="trash-all"><div><strong>{{ pending }} item(ns) excluídos por {{ names.get(por, '—') }}</strong> ainda na lixeira.</div>
+  <button class="btn primary">Restaurar tudo de {{ names.get(por, '—') }}</button></div></form>{% endif %}
+{% endif %}
+
+{% if rows %}<div class="card flush"><div class="tablewrap"><table class="stack"><thead><tr><th>Excluído em</th>{% if user.is_admin %}<th>Por</th>{% endif %}<th>Tipo</th><th>O quê</th><th class="right">Ação</th></tr></thead><tbody>
+  {% for r in rows %}{% set it = r.item %}<tr{% if not r.can %} class="muted"{% endif %}>
+    <td class="nowrap mono small" data-label="Excluído em">{{ it.deleted_at|dt_br }}</td>
+    {% if user.is_admin %}<td data-label="Por">{{ names.get(it.deleted_by, '—') }}</td>{% endif %}
+    <td data-label="Tipo">{{ kinds.get(it.kind, it.kind) }}</td>
+    <td data-label="O quê">{{ it.summary }}</td>
+    <td class="right actcell" data-label="Ação">{% if it.restored_at %}<span class="badge ok">Restaurado {{ it.restored_at|dt_br }}{% if it.restored_by and names %} por {{ names.get(it.restored_by, '—') }}{% endif %}</span>
+      {% elif r.relaunched %}<span class="badge">Lançada de novo</span>
+      {% elif r.can %}<form method="post" action="/lixeira/{{ it.id }}/restaurar" style="display:inline">{{ csrf(csrf_token) }}<button class="btn sm">Restaurar</button></form>{% endif %}</td></tr>
+  {% endfor %}
+</tbody></table></div></div>
+{% else %}<div class="card empty">{{ 'Nada foi excluído' ~ (' por esta pessoa' if por else '') ~ '.' if user.is_admin else 'Nada na sua lixeira.' }}</div>{% endif %}
+{% endblock %}

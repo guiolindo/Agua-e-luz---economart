@@ -139,12 +139,16 @@
     <p>O botão <strong>Verificar integridade</strong> confere se alguém mexeu no histórico por fora do sistema. Se aparecer <em>“Auditoria íntegra”</em>, está tudo certo. Se aparecer <em>“Adulteração detectada”</em>, guarde uma cópia do banco e investigue.</p>
     <p class="hint">Use o filtro <strong>Evento</strong> para ver só logins com falha, só exclusões etc.</p></section>
 
-  <section class="card" id="admin-lixeira"><h2>Lixeira: desfazer exclusões</h2>
-    <p>Conta ou lançamento excluído vai para o menu <strong>Lixeira</strong>, com a foto/PDF original, e fica lá por 6 meses. <strong>Restaurar</strong> devolve o item exatamente como estava.</p>
+  <section class="card" id="admin-lixeira"><h2>Lixeira do administrador</h2>
+    <p>O administrador vê na <strong>Lixeira</strong> tudo o que foi excluído nos últimos 6 meses, de todas as pessoas, e restaura qualquer item.</p>
     <p>Quem não é administrador pode excluir até 15 itens por hora. Passou disso, o sistema barra as exclusões e avisa no Painel admin. Para desfazer tudo o que uma pessoa apagou, clique no nome dela na Lixeira e em <strong>Restaurar tudo</strong>.</p></section>
   {% endif %}
 
   {# ======================= TODOS ======================= #}
+  {% if user.can_write %}<section class="card" id="lixeira"><h2>Excluí a conta errada</h2>
+    <p>Logo depois de excluir aparece <strong>Desfazer</strong>. Viu depois? Abra <strong>Lixeira</strong> no menu: o que você excluiu fica lá por 30 dias, com a foto/PDF, e <strong>Restaurar</strong> devolve como estava. Depois de 30 dias, peça ao administrador.</p>
+    <p class="hint">Se você já lançou o mesmo mês de novo, o item sai da sua lixeira: não há o que restaurar.</p></section>{% endif %}
+
   <section class="card" id="alertas"><h2>Alertas</h2>
     <p>Menu <strong>Alertas</strong>. O sistema compara cada conta nova com as últimas contas <strong>da mesma unidade</strong> e avisa quando algo foge do padrão: valor muito acima ou abaixo da média, custo por kWh que subiu, demanda acima do contratado, nota fiscal repetida ou itens que não fecham com o total.</p>
     <ul><li><strong>Alta</strong>, <strong>Média</strong> e <strong>Baixa</strong> indicam o quanto vale conferir logo.</li>

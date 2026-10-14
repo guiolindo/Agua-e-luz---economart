@@ -289,9 +289,12 @@ vez. Falhas são logadas e não derrubam o aplicativo.
 ## Lixeira
 
 Excluir conta (`/manual/bills/{id}/delete`) ou lançamento (`/manual/records/{id}/delete`) passa por
-`trash_service.move_to_trash`: a linha inteira vai como JSON para `trash_items` e a foto/PDF é mantida. O
-administrador restaura em `/admin/lixeira` (um item ou tudo o que uma pessoa excluiu); a restauração recusa se o
-mesmo mês já foi relançado. `check_can_delete` barra quem não é admin após `MAX_DELETES_PER_HOUR` exclusões
+`trash_service.move_to_trash`: a linha inteira vai como JSON para `trash_items` e a foto/PDF é mantida. A tela
+seguinte mostra **Desfazer**. Em `/lixeira`, quem lança contas vê e restaura o que ele mesmo excluiu nos últimos
+`TRASH_PERSONAL_DAYS` (30); o administrador vê tudo até `TRASH_DAYS` e pode restaurar tudo o que uma pessoa
+excluiu. Se o mesmo mês foi lançado de novo (`trash_service.relaunched`), o item some da lixeira pessoal, aparece
+como "Lançada de novo" para o admin e a restauração é recusada sem duplicar; se o lançamento novo for excluído, o
+antigo volta a ser restaurável. `check_can_delete` barra quem não é admin após `MAX_DELETES_PER_HOUR` exclusões
 (padrão 15) e grava `delete_blocked` na auditoria.
 Execução manual: `python -m scripts.purge_documents`. A rejeição de um arquivo que não é conta apaga os bytes na
 hora, sem esperar o prazo.

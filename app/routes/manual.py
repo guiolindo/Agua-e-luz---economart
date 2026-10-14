@@ -164,9 +164,9 @@ def bill_delete(request: Request, bill_id: int, user: User = Depends(writer_requ
     except trash_service.TrashError as exc:
         flash(request, str(exc), "error")
         return RedirectResponse(f"/units/{unit_id}", status_code=303)
-    trash_service.move_to_trash(db, bill, user)      # a foto/PDF fica guardada enquanto a conta estiver na lixeira
+    item = trash_service.move_to_trash(db, bill, user)      # a foto/PDF fica guardada enquanto a conta estiver na lixeira
     db.commit()
-    flash(request, "Conta excluída. O administrador consegue restaurá-la pela Lixeira.", "info")
+    request.session["undo"] = {"id": item.id, "text": f"Conta excluída: {item.summary}.", "next": f"/units/{unit_id}"}
     return RedirectResponse(f"/units/{unit_id}", status_code=303)
 
 
@@ -182,9 +182,9 @@ def record_delete(request: Request, record_id: int, user: User = Depends(writer_
     except trash_service.TrashError as exc:
         flash(request, str(exc), "error")
         return RedirectResponse(f"/stores/{store_id}", status_code=303)
-    trash_service.move_to_trash(db, rec, user)
+    item = trash_service.move_to_trash(db, rec, user)
     db.commit()
-    flash(request, "Lançamento excluído. O administrador consegue restaurá-lo pela Lixeira.", "info")
+    request.session["undo"] = {"id": item.id, "text": f"Lançamento excluído: {item.summary}.", "next": f"/stores/{store_id}"}
     return RedirectResponse(f"/stores/{store_id}", status_code=303)
 
 

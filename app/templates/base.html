@@ -68,7 +68,10 @@
         <span>Ajuda</span></a>
       {% if user.can_write %}<a href="/types" class="{{ 'active' if path.startswith('/types') }}" {% if path.startswith('/types') %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-        <span>Tipos de registro</span></a>{% endif %}
+        <span>Tipos de registro</span></a>
+      <a href="/lixeira" class="{{ 'active' if path.startswith('/lixeira') }}" {% if path.startswith('/lixeira') %}aria-current="page"{% endif %}>
+        <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        <span>Lixeira</span></a>{% endif %}
       {% if user.is_admin %}<hr>
       <a href="/admin" class="{{ 'active' if path == '/admin' }}" {% if path == '/admin' %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
@@ -76,9 +79,6 @@
       <a href="/admin/audit" class="{{ 'active' if path.startswith('/admin/audit') }}" {% if path.startswith('/admin/audit') %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
         <span>Auditoria</span></a>
-      <a href="/admin/lixeira" class="{{ 'active' if path.startswith('/admin/lixeira') }}" {% if path.startswith('/admin/lixeira') %}aria-current="page"{% endif %}>
-        <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-        <span>Lixeira</span></a>
       <a href="/admin/users" class="{{ 'active' if path.startswith('/admin/users') }}" {% if path.startswith('/admin/users') %}aria-current="page"{% endif %}>
         <svg width="20" height="20" class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>Usuários</span></a>{% endif %}
@@ -109,6 +109,9 @@
     </div>{% endif %}
     {% if legacy_count %}<div class="flash warn" role="status"><strong>{{ legacy_count }} loja(s) criada(s) antes da lista oficial.</strong> Vincule cada uma à loja da lista para juntar as contas. <a href="/stores#vincular"><strong>Vincular agora</strong></a></div>{% endif %}
     {% if user and user.is_admin and not user.has_2fa and path in ('/', '/admin/users') and not user.must_change_password %}<div class="flash warn" role="status">Ative a verificação em duas etapas da sua conta de administrador. <a href="/account/2fa"><strong>Ativar</strong></a></div>{% endif %}
+    {% if undo %}<div class="flash info undo" role="status"><span>{{ undo.text }}</span>
+      <form method="post" action="/lixeira/{{ undo.id }}/restaurar">{{ '' }}<input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="next" value="{{ undo.next }}"><button class="btn sm">Desfazer</button></form>
+      <a href="/lixeira">Lixeira</a></div>{% endif %}
     {% for f in flashes %}<div class="flash {{ f.level }}" role="{{ 'alert' if f.level == 'error' else 'status' }}" data-flash="{{ f.level }}">{{ f.text }}</div>{% endfor %}
     {% block content %}{% endblock %}
   </main>

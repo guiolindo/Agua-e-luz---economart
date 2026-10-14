@@ -103,15 +103,37 @@ def _conflict(db: Session, model, values: dict):
     return db.scalar(stmt.limit(1))
 
 
+def _values(item: TrashItem) -> tuple[type, dict, dict]:
+    model = KINDS[item.kind]
+    cols = {c.name: c for c in model.__table__.columns}
+    return model, cols, {name: _load(cols[name], v) for name, v in item.payload.items() if name in cols}
+
+
+def relaunched(db: Session, item: TrashItem):
+    """O mesmo mês (mesma unidade/loja e tipo) foi lançado de novo depois da exclusão: não há o que restaurar."""
+    model, _, values = _values(item)
+    return _conflict(db, model, values)
+
+
+def personal_cutoff() -> datetime:
+    return utcnow() - timedelta(days=get_settings().trash_personal_days)
+
+
+def can_restore(user: User, item: TrashItem) -> bool:
+    """Quem excluiu desfaz sozinho por `trash_personal_days` (30); depois disso, e para itens de outras pessoas,
+    só o administrador (até `trash_days`)."""
+    if user.is_admin:
+        return True
+    deleted_at = item.deleted_at if item.deleted_at.tzinfo else item.deleted_at.replace(tzinfo=timezone.utc)
+    return item.deleted_by == user.id and deleted_at >= personal_cutoff()
+
+
 def restore(db: Session, item: TrashItem, user: User):
     if item.restored_at is not None:
         raise TrashError("Este item já foi restaurado.")
-    model = KINDS[item.kind]
-    cols = {c.name: c for c in model.__table__.columns}
-    values = {name: _load(cols[name], v) for name, v in item.payload.items() if name in cols}
+    model, cols, values = _values(item)
     if _conflict(db, model, values) is not None:
-        raise TrashError(f"Já existe outro lançamento para o mesmo mês ({item.summary.split(' · ')[0]}). "
-                         "Confira e exclua o atual antes de restaurar este.")
+        raise TrashError(f"Não precisa restaurar: {item.summary.rsplit(' · ', 1)[0]} já foi lançada de novo.")
     if db.get(model, values["id"]) is not None:      # número reaproveitado pelo banco: volta com um número novo
         values.pop("id")
     obj = model(**{cols[n].key: v for n, v in values.items()})

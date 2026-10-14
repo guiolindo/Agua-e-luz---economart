@@ -788,3 +788,4 @@ kbd { display: inline-block; min-width: 22px; padding: 2px 7px; border: 1px soli
 .who-pill { border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 12px; font-weight: 600; font-size: 13px; color: var(--ink-2); background: var(--surface); }
 .who-pill:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); } .who-pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .trash-all { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.flash.undo { flex-wrap: wrap; } .flash.undo span { flex: 1 1 auto; } .flash.undo form { margin: 0; }

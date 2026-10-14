@@ -49,7 +49,8 @@ class Settings(BaseSettings):
     # Foto/PDF original some do banco após este prazo (os dados lidos permanecem). ~6 meses.
     document_retention_days: int = 183
     retention_check_hours: int = 6
-    trash_days: int = 180                 # contas/lançamentos excluídos ficam restauráveis por ~6 meses
+    trash_days: int = 180                 # lixeira do administrador: excluídos ficam restauráveis por ~6 meses
+    trash_personal_days: int = 30         # quem excluiu desfaz sozinho por 30 dias (depois, só o administrador)
     max_deletes_per_hour: int = 15        # acima disso (por pessoa, exceto admin) a exclusão é barrada e o admin avisado
 
     @field_validator("gemini_model")

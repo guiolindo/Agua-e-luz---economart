@@ -46,6 +46,7 @@ from app.routes import (
     manual_batch,
     points,
     stores,
+    trash,
     types,
 )
 from app.security import LoginRequired, MustChangePassword, MustSetup2FA
@@ -103,7 +104,7 @@ def create_app() -> FastAPI:
     app.mount("/static", GZipMiddleware(StaticCacheMiddleware(StaticFiles(directory=BASE_DIR / "static")),
                                         minimum_size=1000), name="static")
 
-    for module in (auth, account, alerts, dashboard, director, stores, bills, types, imports, manual, manual_batch, points, charts, documents, help, presentation, company, admin):
+    for module in (auth, account, alerts, dashboard, director, stores, bills, types, imports, manual, manual_batch, points, charts, documents, help, presentation, company, admin, trash):
         app.include_router(module.router)
 
     @app.get("/favicon.ico", include_in_schema=False)

@@ -70,6 +70,7 @@ def render(request: Request, name: str, status_code: int = 200, **ctx):
     ctx["csp_nonce"] = getattr(request.state, "csp_nonce", "")
     ctx["login_stamp"] = request.session.get("iat", "")
     ctx["flashes"] = request.session.pop("flash", [])
+    ctx["undo"] = request.session.pop("undo", None)            # "Conta excluída. Desfazer" (uma vez, logo após excluir)
     ctx["path"] = request.url.path
     s, iat = get_settings(), request.session.get("iat")
     ctx["session_idle"] = s.session_idle_minutes * 60 if iat else 0           # aviso de "sessão vai terminar" (app.js)
