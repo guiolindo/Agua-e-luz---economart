@@ -43,17 +43,17 @@
 
     <section class="card" aria-labelledby="lojas-h">
       <h2 id="lojas-h">Lojas</h2>
-      <div class="field {{ 'error' if errors.stores }}" style="margin-bottom:8px">
+      <div class="field" style="margin-bottom:8px">
         <label for="qs" class="sr">Filtrar lojas</label>
-        <input id="qs" type="search" placeholder="Filtrar por código, nome ou UF…" autocomplete="off">
-        {% if errors.stores %}<div class="err">{{ errors.stores }}</div>{% endif %}</div>
+        <input id="qs" type="search" placeholder="Filtrar por código, nome ou UF…" autocomplete="off"></div>
       <div class="actions" style="margin-bottom:8px">
         <button type="button" class="btn sm" id="all">Marcar todas (visíveis)</button>
         <button type="button" class="btn sm" id="none">Limpar</button></div>
-      <div class="storepicker" id="picker" role="group" aria-label="Lojas que recebem o lançamento">
+      {% if errors.stores %}<div class="err" role="alert" style="margin-bottom:6px">{{ errors.stores }}</div>{% endif %}
+      <div class="storepicker{{ ' has-error' if errors.stores }}" id="picker" role="group" aria-label="Lojas que recebem o lançamento">
         {% for s in stores %}<label class="chk storeopt" data-q="{{ (s.code ~ ' ' ~ (s.name or '') ~ ' ' ~ (s.region or ''))|lower }}">
           <input type="checkbox" name="store_ids" value="{{ s.id }}" {{ 'checked' if s.id in selected }}>
-          <span><strong>{{ s.code }}</strong>{% if s.name %} <span class="muted small">{{ s.name }}</span>{% endif %}{% if s.region %} <span class="badge">{{ s.region }}</span>{% endif %}</span></label>
+          <span><strong>{{ s.short_label }}</strong>{% if s.name and s.short_label != s.name %} <span class="muted small">{{ s.name }}</span>{% elif s.code != s.short_label %} <span class="muted small">{{ s.code }}</span>{% endif %}{% if s.region %} <span class="badge">{{ s.region }}</span>{% endif %}</span></label>
         {% else %}<p class="muted">Nenhuma loja ativa cadastrada.</p>{% endfor %}
       </div>
       <p class="batch-total" id="total" aria-live="polite">Nenhuma loja marcada.</p>

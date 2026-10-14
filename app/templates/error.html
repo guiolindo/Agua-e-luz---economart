@@ -1,7 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Erro {{ code }}{% endblock %}
+{% set titles = {403: "Sem acesso a esta área", 404: "Página não encontrada", 405: "Página não encontrada", 410: "Arquivo expirado", 413: "Arquivo grande demais", 500: "Algo deu errado"} %}
+{% block title %}{{ titles.get(code, "Algo deu errado") }} · Economart Energia{% endblock %}
 {% block bare %}
-<main class="login card" id="content" style="margin-top:10vh">
-  <h1>{{ message }}</h1><p class="muted">Código {{ code }}.</p><p><a class="btn" href="/">Voltar ao painel</a></p>
+<main class="errpage" id="content">
+  <div class="errcard">
+    <img src="/static/img/logo.png" alt="Economart" width="178" height="45">
+    <h1>{{ titles.get(code, "Algo deu errado") }}</h1>
+    <p>{{ message }}</p>
+    <div class="actions"><a class="btn primary" href="/">Ir para o início</a><a class="btn" href="/" data-back>Voltar</a></div>
+  </div>
 </main>
 {% endblock %}

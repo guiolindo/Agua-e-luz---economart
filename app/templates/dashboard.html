@@ -10,9 +10,9 @@
 {% endcall %}
 
 {% if stores == 0 %}<section class="card"><h2>Primeiros passos</h2>
-  <ol class="steps-help"><li>{% if user.can_write %}<a href="/stores/new">Cadastre a primeira loja</a>{% else %}Peça a um funcionário para cadastrar as lojas{% endif %} (código, nome e região).</li>
-    <li>{% if user.can_write %}Adicione as unidades consumidoras da loja{% else %}Aguarde o cadastro das unidades consumidoras pelo funcionário{% endif %}, ou use <strong>+ Unidade consumidora</strong>.</li>
-    <li>Clique em <strong>Importar conta</strong> e envie a foto ou o PDF da primeira conta.</li></ol></section>{% endif %}
+  <ol class="steps-help"><li>{% if user.is_admin %}<a href="/admin/lojas">Importe a lista de lojas da empresa</a>{% elif user.can_write %}<a href="/stores/new">Cadastre a primeira loja</a>{% else %}Peça ao administrador para cadastrar as lojas{% endif %}.</li>
+    <li>{% if user.can_write %}Cadastre as unidades consumidoras (<strong>+ Unidade consumidora</strong>){% else %}Aguarde o cadastro das unidades consumidoras{% endif %}.</li>
+    <li>{% if user.can_write %}<a href="/import">Importe a primeira conta</a>{% else %}Aguarde a primeira conta importada{% endif %}.</li></ol></section>{% endif %}
 <div class="grid cols-4" style="margin-bottom:16px">
   <div class="kpi"><div class="label">Lojas ativas</div><div class="value">{{ stores }}</div></div>
   <div class="kpi"><div class="label">Unidades consumidoras</div><div class="value">{{ units }}</div></div>

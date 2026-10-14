@@ -3,6 +3,20 @@
 Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada item corresponde a commits em
 `ccr-9b4b2f9b-4bk1nd`. O motivo das decisões maiores está em [`DECISIONS.md`](DECISIONS.md).
 
+## 2026-10-14
+
+- **Auditoria de fluxo (tarefas reais, de ponta a ponta).** Robô fez as tarefas dos 4 perfis como um usuário (primeiro acesso com senha provisória e senha fraca, importar conta, arquivo errado, conta repetida, campo obrigatório vazio, lançamento manual e em várias lojas, unidade repetida, alerta, excluir e cancelar, diretoria, consulta tentando entrar onde não pode, admin, sessão expirada, celular, teclado) e todas as telas de um sistema recém-instalado; 48 telas revistas. Corrigido:
+  - **Conferência da conta mais simples:** com a unidade reconhecida (o caso comum), aparece só a unidade encontrada; "Associar a outra" e "Cadastrar esta unidade" ficam atrás de **Não é esta unidade? Trocar**. O botão **Confirmar e salvar** fica fixo embaixo, sempre visível (antes era preciso rolar a página inteira).
+  - **Depois de salvar:** um único destaque, **Imprimir para assinatura** (o próximo passo); "Importar conta" virou "Importar outra", secundário.
+  - **Endereço inexistente** mostrava `{"detail":"Not Found"}`: agora é a página de erro do sistema, refeita (título claro, mensagem, "Ir para o início" e "Voltar", sem "Código 404").
+  - **Sessão expirada:** o login explica "Sua sessão terminou. Entre de novo para continuar de onde parou."
+  - **Primeiro acesso:** o campo se chama "Senha provisória", não "Senha atual".
+  - **Celular:** o aviso de vencimento ficava no alto e por cima do menu aberto (a regra do celular era anulada por outra declarada depois): agora fica embaixo e some com o menu aberto.
+  - **Lançar em várias lojas sem marcar loja:** o erro aparecia no campo de busca; agora aponta a lista de lojas (contorno vermelho). A lista mostra o nome da loja.
+  - **Lançamentos recentes:** o número da unidade não quebra mais no meio.
+  - **Conta repetida:** a mensagem não fala mais em "Gemini".
+  - **Sistema vazio:** "Primeiros passos" e a tela de Lojas levam o administrador a **Importar lista de lojas**; o Painel admin mostra uma frase em vez de gráfico vazio.
+
 ## 2026-10-13
 
 - **Menos texto óbvio na tela.** Revisão de todos os textos de apoio: saíram as frases que repetiam o título ou o botão (ex.: "Busque, abra o PDF, imprima ou edite qualquer conta", "Confira os dados lidos antes de salvar", "Clique na imagem para abrir em tamanho real", "Terminou de lançar? Imprima a folha...", "Corrija os dados do ponto de energia...") e as longas foram encurtadas (vínculo de lojas, importar lista, auditoria, lançamento em várias lojas, folha para assinatura). Ficaram só regras, limites, consequências e legendas de gráfico. O botão do topo passou de "+ Novo ponto de energia" para **"+ Unidade consumidora"**, o mesmo nome da janela (antes uma frase explicava que eram a mesma coisa); o cartão do Painel virou "Unidades sem dia de vencimento". A regra ficou escrita no `AGENTS.md` (seção "Textos na interface").

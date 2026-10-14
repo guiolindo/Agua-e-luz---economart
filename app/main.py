@@ -4,9 +4,10 @@ import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import (  # noqa: F401  (models registra as tabelas no metadata)
@@ -129,12 +130,16 @@ def create_app() -> FastAPI:
         return render(request, "error.html", status_code=500, code=500,
                       message="Ocorreu um erro inesperado. Tente novamente; se persistir, avise o administrador.")
 
-    @app.exception_handler(HTTPException)
-    async def _http_error(request: Request, exc: HTTPException):
+    # também os erros do próprio roteador (endereço que não existe, método errado), não só os HTTPException das rotas
+    @app.exception_handler(StarletteHTTPException)
+    async def _http_error(request: Request, exc: StarletteHTTPException):
+        generic = {404: "Esta página não existe ou foi removida.", 405: "Esta ação não está disponível por aqui."}
+        detail = exc.detail if isinstance(exc.detail, str) else ""
+        if detail in ("Not Found", "Method Not Allowed", "") or not detail:
+            detail = generic.get(exc.status_code, "Algo deu errado.")
         if "text/html" in request.headers.get("accept", ""):
-            return render(request, "error.html", status_code=exc.status_code, code=exc.status_code,
-                          message=exc.detail if isinstance(exc.detail, str) else "Algo deu errado.")
-        return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
+            return render(request, "error.html", status_code=exc.status_code, code=exc.status_code, message=detail)
+        return PlainTextResponse(detail, status_code=exc.status_code)
 
     return app
 

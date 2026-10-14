@@ -740,3 +740,17 @@ body.is-leaving .shell, body.is-leaving .m-topbar { transition: transform .6s ea
 .timeline ul li::before { content: ""; position: absolute; left: -19px; top: 9px; width: 8px; height: 8px; border-radius: 50%; background: #2e6bb0; box-shadow: 0 0 0 2px var(--surface); }
 .timeline ul li.bad::before { background: var(--bad); } .timeline ul li.good::before { background: var(--ok); } .timeline .tt { color: var(--muted); min-width: 42px; font-variant-numeric: tabular-nums; }
 @media (max-width: 480px) { table.stores-tbl th, table.stores-tbl td { padding-left: 7px; padding-right: 7px; } table.stores-tbl .btn.sm { padding-left: 8px; padding-right: 8px; } }   /* Lojas no celular sem rolar para o lado */
+/* página de erro (404, 403, 500...) */
+.errpage { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--bg); }
+.errcard { width: 100%; max-width: 460px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 28px 28px 24px; box-shadow: 0 12px 32px -18px rgba(16,36,63,.35); }
+.errcard img { height: 36px; width: auto; margin-bottom: 18px; } .errcard h1 { font-size: 22px; margin: 0 0 6px; } .errcard p { color: var(--muted); margin: 0 0 18px; }
+.storepicker.has-error { outline: 2px solid var(--bad); outline-offset: 2px; border-radius: 8px; }
+/* avisos (toasts) no celular: embaixo, acima da barra de navegação; esta regra vem depois da regra base de .toasts
+   (antes ficava antes dela e era anulada: o aviso cobria o topo da tela). Com o menu aberto, o aviso some. */
+@media (max-width: 800px) { .toasts { right: 10px; left: 10px; width: auto; top: auto; bottom: calc(84px + env(safe-area-inset-bottom)); } }
+body.drawer-open .toasts { display: none; }
+/* conferência: outras opções de unidade recolhidas; botão de salvar sempre à vista */
+.unit-other { margin-top: 8px; } .unit-other > summary { cursor: pointer; font-size: 13px; color: var(--accent); font-weight: 600; padding: 4px 0; }
+.unit-other[open] > summary { margin-bottom: 8px; }
+.review-actions { position: sticky; bottom: 0; z-index: 5; background: var(--bg); padding: 12px 0; border-top: 1px solid var(--line); margin-top: 8px; }
+@media (max-width: 800px) { .review-actions { bottom: calc(68px + env(safe-area-inset-bottom)); } }

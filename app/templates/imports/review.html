@@ -31,6 +31,8 @@
         <ul class="notice-list">{% for u in similar %}<li>{{ u.store.short_label }} · <span class="mono">{{ u.number }}</span></li>{% endfor %}</ul>{% endif %}</div>
     {% endif %}
 
+    {# unidade reconhecida (o caso comum): as outras opções ficam recolhidas atrás de "Trocar" #}
+    {% if unit %}<details class="unit-other" {{ 'open' if unit_mode != 'matched' }}><summary>Não é esta unidade? Trocar</summary>{% endif %}
     <div class="unit-choice"><label class="radio"><input type="radio" name="unit_mode" value="existing" {{ 'checked' if unit_mode == 'existing' }}> Associar a uma unidade existente</label>
       <div class="body"><select name="unit_id" aria-label="Unidade existente"><option value="">Selecione…</option>
         {% for u in units %}<option value="{{ u.id }}" {{ 'selected' if posted.get('unit_id') == u.id|string or (not unit and similar and similar[0].id == u.id and not posted) }}>{{ u.store.code }} · {{ u.number }}{% if u.description %} · {{ u.description }}{% endif %}</option>{% endfor %}</select></div></div>
@@ -42,6 +44,7 @@
         <div class="field {{ 'error' if errors.new_number }}"><label>Nº da unidade</label><input type="text" name="new_number" value="{{ posted.get('new_number', e.consumer_unit_number or '') }}">{% if errors.new_number %}<div class="err">{{ errors.new_number }}</div>{% endif %}</div>
         <div class="field"><label>Descrição</label><input type="text" name="new_description" value="{{ posted.get('new_description', '') }}"></div>
       </div></div></div>
+    {% if unit %}</details>{% endif %}
   </section>
 
   {# --- Possível duplicidade --- #}
@@ -66,7 +69,7 @@
       </tbody></table></div><p class="muted small">Itens são guardados como lidos; não são editáveis aqui.</p></details>{% endif %}
   </section>
 
-  <div class="actions"><button class="btn primary">Confirmar e salvar</button>
+  <div class="actions review-actions"><button class="btn primary">Confirmar e salvar</button>
     <button class="btn danger" type="submit" form="cancel" data-confirm="Descartar esta importação?">Descartar importação</button></div>
 </form>
 

@@ -18,9 +18,9 @@
 
 <div class="grid cols-2 adm-grid">
   <section class="card"><div class="adm-head"><h2>Contas lançadas por mês</h2><span class="muted small">últimos 12 meses</span></div>
-    {{ viz(dict(d.by_month, axis='Mês'), 'Contas lançadas por mês por ' ~ u.username, height=230) }}</section>
+    {% if d.by_month.series[0].data|sum + d.by_month.series[1].data|sum %}{{ viz(dict(d.by_month, axis='Mês'), 'Contas lançadas por mês por ' ~ u.username, height=230) }}{% else %}<p class="muted">Nenhuma conta lançada nos últimos 12 meses.</p>{% endif %}</section>
   <section class="card"><div class="adm-head"><h2>Contas lançadas por dia</h2><span class="muted small">{{ month|month_label }}</span></div>
-    {{ viz(dict(daily, axis='Dia'), 'Contas lançadas por dia em ' ~ (month|month_label), height=230) }}</section>
+    {% if d.month_n %}{{ viz(dict(daily, axis='Dia'), 'Contas lançadas por dia em ' ~ (month|month_label), height=230) }}{% else %}<p class="muted">Nenhuma conta lançada em {{ month|month_label }}.</p>{% endif %}</section>
 </div>
 
 <div class="grid cols-3 adm-grid">
@@ -36,7 +36,7 @@
 </div>
 
 <section class="card adm-grid"><div class="adm-head"><h2>Acessos por dia</h2><span class="muted small">últimos 30 dias</span></div>
-  {{ viz(dict(d.logins, axis='Dia'), 'Acessos de ' ~ u.username ~ ' por dia', height=180) }}</section>
+  {% if d.logins.active_days %}{{ viz(dict(d.logins, axis='Dia'), 'Acessos de ' ~ u.username ~ ' por dia', height=180) }}{% else %}<p class="muted">Nenhum acesso nos últimos 30 dias.</p>{% endif %}</section>
 
 <div class="grid cols-2 adm-grid">
   <section class="card flush"><div style="padding:14px 18px 0"><h2>Últimas contas lançadas</h2></div>

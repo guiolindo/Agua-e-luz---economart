@@ -5,6 +5,8 @@ document.addEventListener('click', (e) => {
     window.addEventListener('afterprint', () => { window.location.href = next; }, { once: true }); window.print(); return; }
   const sheet = e.target.closest('[data-print-sheet]');       // só a folha da loja (a conta original vai em outro trabalho de impressão)
   if (sheet) { e.preventDefault(); document.documentElement.classList.add('sheet-only'); window.print(); return; }
+  const back = e.target.closest('[data-back]');                // "Voltar" da página de erro: volta de onde veio (se houver)
+  if (back && history.length > 1) { e.preventDefault(); history.back(); return; }
   const print = e.target.closest('[data-print]');
   if (print) { e.preventDefault(); window.print(); return; }
   const c = e.target.closest('button[data-confirm], a[data-confirm]');

@@ -86,7 +86,7 @@ async def import_upload(request: Request, background: BackgroundTasks, file: Upl
     already = _already_imported(db, data) if len(data) <= limit else None
     if already is not None:
         return render(request, "imports/upload.html", status_code=409, user=user, dup_bill=already,
-                      error="Este mesmo arquivo já foi importado e a conta está salva. Nada foi enviado ao Gemini.",
+                      error="Este arquivo já foi importado e a conta está salva.",
                       stores=list_stores(db, only_active=True), store_id=store_id, recent=[],
                       max_mb=get_settings().max_upload_mb)
     try:

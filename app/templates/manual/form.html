@@ -13,7 +13,7 @@
     <div class="tablewrap"><table><tbody id="manual-body">
       {% for ref, lbl, title, blob, value, href in items %}
         {% if lbl != ns.month %}{% set ns.month = lbl %}<tr class="group-row"><td colspan="3" data-filter-match="{{ lbl }}">{{ lbl }}</td></tr>{% endif %}
-        <tr data-filter-blob="{{ blob|lower }}"><td>{{ title }}</td><td class="num">{{ value|brl }}</td><td class="right"><a class="btn sm" href="{{ href }}">Editar</a></td></tr>
+        <tr data-filter-blob="{{ blob|lower }}"><td>{{ title|replace("-", "‑") }}</td><td class="num">{{ value|brl }}</td><td class="right"><a class="btn sm" href="{{ href }}">Editar</a></td></tr>
       {% else %}<tr><td class="muted">Nenhum lançamento manual ainda.</td></tr>{% endfor %}
     </tbody></table></div></section>
 {% endmacro %}
