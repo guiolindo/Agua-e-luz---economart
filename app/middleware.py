@@ -185,3 +185,87 @@ class DropEmptyQueryParamsMiddleware:
             if len(kept) != len(pairs):
                 scope = dict(scope, query_string=urlencode(kept).encode("latin-1"))
         await self.app(scope, receive, send)
+
+
+class StaticCacheMiddleware:
+    """Cache dos arquivos de /static. CSS/JS pedidos com ?v=<hash> mudam de endereço a cada versão: o navegador
+    guarda por 1 ano sem perguntar de novo. O resto (imagens, fontes, biblioteca de gráficos) guarda por 1 dia.
+    Sem isto o navegador revalida cada arquivo em toda troca de tela."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        versioned = b"v=" in scope.get("query_string", b"")
+        value = b"public, max-age=31536000, immutable" if versioned else b"public, max-age=86400"
+
+        async def send_with_cache(message):
+            if message["type"] == "http.response.start" and message["status"] == 200:
+                headers = [(k, v) for k, v in message.get("headers", []) if k.lower() != b"cache-control"]
+                message = dict(message, headers=headers + [(b"cache-control", value)])
+            await send(message)
+
+        await self.app(scope, receive, send_with_cache)
+
+
+# ------------------------------------------------------------ código da requisição (rastreio no log)
+import contextvars  # noqa: E402
+import logging  # noqa: E402
+
+request_id_var: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="")
+_access_log = logging.getLogger("app.requests")
+SLOW_MS = 2000
+
+
+class RequestIdMiddleware:
+    """Cada requisição ganha um código curto (ex.: 7f3a9c21) que vai em todas as linhas de log dela, no cabeçalho
+    X-Request-ID e na tela de erro. Quando alguém avisar "deu erro", o código leva direto à linha certa do log.
+    Também registra requisições lentas (>= 2 s) e erros 5xx. Fica por fora de tudo e não reseta o contexto, para
+    que o tratador de erro 500 (que roda por fora dos middlewares) ainda veja o código."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        rid = secrets.token_hex(4)
+        request_id_var.set(rid)
+        scope.setdefault("state", {})["request_id"] = rid
+        t0, status = time.perf_counter(), 500
+
+        async def send_with_id(message):
+            nonlocal status
+            if message["type"] == "http.response.start":
+                status = message["status"]
+                message = dict(message, headers=list(message.get("headers", [])) + [(b"x-request-id", rid.encode())])
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_with_id)
+        finally:
+            ms = (time.perf_counter() - t0) * 1000
+            if status >= 500 or ms >= SLOW_MS:
+                _access_log.warning("%s %s -> %d em %.0f ms", scope.get("method"), scope.get("path"), status, ms)
+
+
+class RequestIdLogFilter(logging.Filter):
+    """Prefixa as mensagens de log com [req=<código>] quando há uma requisição em andamento."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        rid = request_id_var.get()
+        if rid and not getattr(record, "_rid_done", False):
+            record.msg = f"[req={rid}] {record.getMessage()}"
+            record.args = ()
+            record._rid_done = True
+        return True
+
+
+def install_request_id_logging() -> None:
+    flt = RequestIdLogFilter()
+    for name in ("", "uvicorn", "uvicorn.error", "uvicorn.access"):
+        for h in logging.getLogger(name).handlers:
+            if not any(isinstance(f, RequestIdLogFilter) for f in h.filters):
+                h.addFilter(flt)

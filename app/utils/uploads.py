@@ -50,6 +50,10 @@ def validate_upload(filename: str, data: bytes, max_bytes: int) -> tuple[str, st
             raise UploadError("Não foi possível abrir este PDF. Confira se o arquivo não está corrompido ou protegido por senha.")
         if pages > MAX_PDF_PAGES:
             raise UploadError(f"O PDF tem {pages} páginas. Envie apenas a(s) página(s) da conta (até {MAX_PDF_PAGES}).")
+        if pdf_has_active_content(data):
+            raise UploadError("Este PDF tem código embutido (JavaScript ou comando de abrir programa) e foi recusado por "
+                              "segurança. Conta de energia não tem isso: baixe o PDF de novo no site da distribuidora "
+                              "ou envie uma foto da conta.")
     else:
         w, h = _image_size(data)
         if w and h and w * h > (MAX_JPEG_PIXELS if real == "image/jpeg" else MAX_IMAGE_PIXELS):
@@ -89,3 +93,61 @@ def _image_size(data: bytes) -> tuple[int, int] | tuple[None, None]:
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+_SCRIPT_ACTIONS = {"/JavaScript", "/Launch", "/ImportData", "/SubmitForm", "/ResetForm", "/Rendition"}
+
+
+def pdf_has_active_content(data: bytes) -> bool:
+    """O PDF original abre direto no navegador (Conferir/Ver original). Conta de energia não traz script; um PDF com
+    JavaScript, ação automática ao abrir ou comando para executar programa é recusado no envio.
+
+    Confere a estrutura (catálogo, ação de abertura, ações das páginas, anotações e campos de formulário). Se o PDF
+    não puder ser lido estruturalmente (defeitos pequenos são comuns em PDF de scanner), procura as marcas nos bytes."""
+    import io
+
+    try:
+        from pypdf import PdfReader
+
+        reader = PdfReader(io.BytesIO(data), strict=False)
+        root = _obj(reader.trailer.get("/Root"))
+        names = _obj(root.get("/Names")) if root else None
+        if names and "/JavaScript" in names:
+            return True
+        if root and (_is_script(root.get("/OpenAction")) or _has_script_aa(root.get("/AA"))):
+            return True
+        for page in reader.pages:
+            if _has_script_aa(page.get("/AA")):
+                return True
+            for annot in _obj(page.get("/Annots")) or []:
+                a = _obj(annot)
+                if a and (_is_script(a.get("/A")) or _has_script_aa(a.get("/AA"))):
+                    return True
+        form = _obj(root.get("/AcroForm")) if root else None
+        for field in (_obj(form.get("/Fields")) or []) if form else []:
+            f = _obj(field)
+            if f and (_has_script_aa(f.get("/AA")) or "/JS" in f):
+                return True
+        return False
+    except Exception:  # noqa: BLE001 — leitura estrutural falhou: cai na busca nos bytes
+        return any(mark in data for mark in (b"/JavaScript", b"/JS ", b"/JS(", b"/JS<", b"/Launch"))
+
+
+def _obj(x):
+    return x.get_object() if hasattr(x, "get_object") else x
+
+
+def _is_script(action, depth: int = 0) -> bool:
+    a = _obj(action)
+    if not hasattr(a, "get") or depth > 8:
+        return False
+    if a.get("/S") in _SCRIPT_ACTIONS or "/JS" in a:
+        return True
+    nxt = _obj(a.get("/Next"))
+    items = nxt if isinstance(nxt, list) else ([nxt] if nxt is not None else [])
+    return any(_is_script(n, depth + 1) for n in items)
+
+
+def _has_script_aa(aa) -> bool:
+    aa = _obj(aa)
+    return bool(hasattr(aa, "values") and any(_is_script(v) for v in aa.values()))

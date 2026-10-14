@@ -187,7 +187,7 @@ def test_deactivating_user_kills_open_sessions(client):
     assert _login(ana, "ana", pw).status_code == 303
     ana.post("/account/password", {"current_password": pw, "new_password": "Nova-senha-forte-77", "confirm": "Nova-senha-forte-77"})
     assert ana.get("/stores").status_code == 200
-    uid = int(re.search(r"/admin/users/(\d+)/toggle", client.get("/admin/users").text.split("ana")[-1]).group(1))
+    uid = int(re.search(r'/admin/users/(\d+)/toggle"[^>]*Desativar ana\?', client.get("/admin/users").text).group(1))
     client.post(f"/admin/users/{uid}/toggle")
     assert ana.get("/stores", follow_redirects=False).status_code == 303
 

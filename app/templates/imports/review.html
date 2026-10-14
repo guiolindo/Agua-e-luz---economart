@@ -7,7 +7,7 @@
 </div></div>
 
 <div class="review">
-<form method="post" action="/import/{{ job.id }}/confirm" id="confirm">
+<form method="post" action="/import/{{ job.id }}/confirm" id="confirm" data-dirty-guard>
   {{ csrf(csrf_token) }}
   {% if errors %}<div class="flash error">Há campos a corrigir.</div>{% endif %}
 

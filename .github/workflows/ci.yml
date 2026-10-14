@@ -13,6 +13,8 @@ jobs:
         with: { python-version: "3.12", cache: pip }
       - run: pip install -r requirements-dev.txt ruff pip-audit
       - run: ruff check --select F,E9 .
+      - name: Sintaxe dos scripts do navegador (um erro aqui desliga todos os botões da tela)
+        run: for f in app/static/js/*.js app/static/sw.js; do node --check "$f" || exit 1; done
       - run: pytest -q
       - name: Vulnerabilidades conhecidas nas dependências
         run: pip-audit -r requirements.txt

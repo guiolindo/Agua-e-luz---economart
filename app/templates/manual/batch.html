@@ -8,7 +8,7 @@
   <div class="muted">Um lançamento para cada loja marcada.</div></div>
   <a class="btn" href="/manual">← Trocar tipo de lançamento</a></div>
 
-<form method="post" action="/manual/lote" id="bf" data-no-loading>
+<form method="post" action="/manual/lote" id="bf" data-no-loading data-dirty-guard>
   {{ csrf(csrf_token) }}
   {% if errors %}<div class="flash error" role="alert">Corrija os campos destacados.</div>{% endif %}
   {% if dups %}
@@ -86,9 +86,15 @@
   document.getElementById('none').addEventListener('click', () => { boxes.forEach((b) => { b.checked = false; }); sync(); });
   [type, value].forEach((el) => el.addEventListener('input', sync)); boxes.forEach((b) => b.addEventListener('change', sync));
   form.addEventListener('submit', (e) => {
+    if (e.defaultPrevented) return;
     const n = boxes.filter((b) => b.checked).length, v = num(value.value);
-    if (n > 1 && v !== null && !window.confirm('Lançar ' + brl.format(v) + ' em ' + n + ' lojas (' + brl.format(v * n) + ' no total)?')) e.preventDefault();
-    else if (!e.defaultPrevented) { go.disabled = true; go.textContent = 'Lançando…'; }
+    if (n > 1 && v !== null && !form.dataset.ok) {
+      e.preventDefault();
+      ask('Lançar ' + brl.format(v) + ' em ' + n + ' lojas (' + brl.format(v * n) + ' no total)?', { ok: 'Lançar' })
+        .then((r) => { if (r) { form.dataset.ok = '1'; if (form.requestSubmit) form.requestSubmit(); else form.submit(); } });
+      return;
+    }
+    delete form.dataset.ok; go.disabled = true; go.textContent = 'Lançando…';
   });
   sync();
 })();

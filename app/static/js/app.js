@@ -9,23 +9,55 @@ document.addEventListener('click', (e) => {
   if (back && history.length > 1) { e.preventDefault(); history.back(); return; }
   const print = e.target.closest('[data-print]');
   if (print) { e.preventDefault(); window.print(); return; }
-  const c = e.target.closest('button[data-confirm], a[data-confirm]');
-  if (c && !window.confirm(c.dataset.confirm)) e.preventDefault();
 });
 window.addEventListener('afterprint', () => document.documentElement.classList.remove('sheet-only'));
+// Confirmações numa janela do próprio sistema (no lugar do confirm()/prompt() do navegador, que mostrava a senha
+// digitada em texto aberto). Roda na captura: segura o envio, pergunta e, se confirmado, envia de novo.
+const ask = (msg, { password = false, danger = false, ok = 'Confirmar' } = {}) => new Promise((resolve) => {
+  let d = document.getElementById('ask-dialog');
+  if (!d) {
+    d = document.createElement('dialog'); d.id = 'ask-dialog'; d.className = 'dialog ask';
+    d.setAttribute('aria-labelledby', 'ask-msg');
+    d.innerHTML = '<form method="dialog"><p class="ask-msg" id="ask-msg"></p>'
+      + '<div class="field ask-pw"><label for="ask-pw">Sua senha</label><input type="password" id="ask-pw" autocomplete="current-password"></div>'
+      + '<div class="ask-actions"><button class="btn" type="submit" value="no">Cancelar</button><button class="btn primary" type="submit" value="ok" id="ask-ok"></button></div></form>';
+    document.body.appendChild(d);
+    d.querySelector('#ask-pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (e.target.value) d.close('ok'); } });
+  }
+  const pw = d.querySelector('#ask-pw'), okb = d.querySelector('#ask-ok');
+  d.querySelector('.ask-msg').textContent = msg; okb.textContent = ok;
+  okb.classList.toggle('danger', danger); okb.classList.toggle('primary', !danger);
+  d.querySelector('.ask-pw').hidden = !password; pw.value = '';
+  d.returnValue = '';
+  d.addEventListener('close', () => resolve(d.returnValue === 'ok' ? (password ? pw.value : true) : null), { once: true });
+  d.showModal(); (password ? pw : okb).focus();
+});
+const isDanger = (el) => !!(el && (el.classList.contains('danger') || el.querySelector && el.querySelector('.danger')));
+const setHidden = (f, name, value) => {
+  let h = f.querySelector('input[name=' + name + ']');
+  if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = name; f.appendChild(h); }
+  h.value = value;
+};
+document.addEventListener('click', (e) => {
+  const c = e.target.closest('button[data-confirm], a[data-confirm]');
+  if (!c) return;
+  if (c.dataset.confirmed) { delete c.dataset.confirmed; return; }
+  e.preventDefault(); e.stopImmediatePropagation();
+  ask(c.dataset.confirm, { danger: isDanger(c) }).then((r) => { if (r) { c.dataset.confirmed = '1'; c.click(); } });
+}, true);
 document.addEventListener('submit', (e) => {
   const f = e.target;
-  const msg = f.dataset && f.dataset.confirm;
-  if (msg && !window.confirm(msg)) { e.preventDefault(); return; }
-  const pwMsg = f.dataset && f.dataset.confirmPassword;   // ação sensível (ex.: tirar o 2FA de outro admin): confirma com a SUA senha
-  if (pwMsg) {
-    const pw = window.prompt(pwMsg);
-    if (!pw) { e.preventDefault(); return; }
-    let h = f.querySelector('input[name=confirm_password]');
-    if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = 'confirm_password'; f.appendChild(h); }
-    h.value = pw;
+  if (!f.dataset || (!f.dataset.confirm && !f.dataset.confirmPassword)) return;
+  if (f.dataset.confirmed) { delete f.dataset.confirmed; return; }
+  e.preventDefault(); e.stopImmediatePropagation();
+  const sub = e.submitter;
+  const go = () => { f.dataset.confirmed = '1'; if (f.requestSubmit) f.requestSubmit(sub && sub.form === f ? sub : undefined); else f.submit(); };
+  if (f.dataset.confirmPassword) {      // ação sensível (ex.: tirar o 2FA de outro admin): confirma com a SUA senha
+    ask(f.dataset.confirmPassword, { password: true, danger: isDanger(f) }).then((pw) => { if (pw) { setHidden(f, 'confirm_password', pw); go(); } });
+  } else {
+    ask(f.dataset.confirm, { danger: isDanger(f) }).then((r) => { if (r) go(); });
   }
-});
+}, true);
 document.addEventListener('change', (e) => {
   const t = e.target;
   if (t.id === 'doc' && t.type === 'checkbox' && t.form && !t.hidden) {   // imprimir conta: incluir o original
@@ -37,11 +69,10 @@ document.addEventListener('change', (e) => {
   }
   if (t.matches('[data-autosubmit]') && t.form) {
     if (t.name === 'role' && t.value === 'admin') {   // promover alguém a admin: confirma com a SUA senha antes de enviar
-      const pw = window.prompt('Confirme sua senha de administrador para promover ' + (t.dataset.user || 'este usuário') + ':');
-      if (!pw) return;                                 // cancelou: não envia (a tela volta ao estado real no próximo load)
-      let h = t.form.querySelector('input[name=confirm_password]');
-      if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = 'confirm_password'; t.form.appendChild(h); }
-      h.value = pw;
+      const f = t.form, before = [...t.options].find((o) => o.defaultSelected);
+      ask('Promover ' + (t.dataset.user || 'este usuário') + ' a administrador? Confirme com a sua senha.', { password: true, ok: 'Promover' })
+        .then((pw) => { if (!pw) { if (before) t.value = before.value; return; } setHidden(f, 'confirm_password', pw); f.submit(); });
+      return;
     }
     t.form.submit();
   }
@@ -447,3 +478,133 @@ document.querySelectorAll('[data-copy-insights]').forEach((btn) => btn.addEventL
   if (!seen) b.classList.add('shine');
   b.addEventListener('click', () => { try { localStorage.setItem('apresentacao-vista', '1'); } catch (e) { /* ignora */ } });
 })();
+
+// ---------------------------------------------------------------- conexão, sessão e atalhos
+// Faixa no topo quando a internet cai ou o servidor não responde. O que foi digitado fica na tela; envio de formulário
+// sem conexão é segurado (em vez de trocar a tela por um erro do navegador e perder o que foi preenchido).
+const net = (() => {
+  let bar = null, serverDown = false, wasOff = false, hideT = 0;
+  const el = () => {
+    if (!bar) { bar = document.createElement('div'); bar.className = 'netbar no-print'; bar.setAttribute('role', 'status'); bar.setAttribute('aria-live', 'polite'); bar.hidden = true; document.body.appendChild(bar); }
+    return bar;
+  };
+  const show = (text, kind) => { clearTimeout(hideT); const b = el(); b.textContent = text; b.className = 'netbar no-print ' + (kind || 'off'); b.hidden = false; };
+  const hide = () => { if (bar) bar.hidden = true; };
+  const offline = () => { wasOff = true; show('Sem internet. O que você digitou continua na tela: envie quando a conexão voltar.'); };
+  const back = () => { if (!wasOff && !serverDown) return; wasOff = false; serverDown = false; show('Conexão de volta.', 'ok'); hideT = setTimeout(hide, 2500); };
+  addEventListener('offline', offline);
+  addEventListener('online', back);
+  if (!navigator.onLine) offline();
+  return {
+    error() { if (!navigator.onLine) return offline(); serverDown = true; show('O servidor não respondeu. Tente de novo em instantes.'); },
+    ok() { if (serverDown && navigator.onLine) back(); },
+    blockSubmit() { show('Sem internet: nada foi enviado. O que você digitou continua na tela; envie quando a conexão voltar.'); el().classList.add('pulse'); },
+  };
+})();
+document.addEventListener('submit', (e) => {
+  if (!navigator.onLine && e.target.method && e.target.method.toLowerCase() === 'post') { e.preventDefault(); e.stopImmediatePropagation(); net.blockSubmit(); }
+}, true);
+
+// Sessão: avisa 5 min antes de terminar por falta de uso (e deixa continuar com 1 clique) ou pelo limite de horas.
+// Sem o aviso, quem passava muito tempo conferindo uma conta perdia o que digitou ao clicar em Salvar.
+const session = (() => {
+  const b = document.body, idle = Number(b.dataset.idle || 0), maxLeft = Number(b.dataset.maxLeft || 0);
+  if (!idle) return { touch() {} };
+  const t0 = Date.now(), WARN = 5 * 60 * 1000;
+  let idleEnd = t0 + idle * 1000; const maxEnd = maxLeft ? t0 + maxLeft * 1000 : Infinity;
+  let d = null, tick = 0;
+  const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  const build = () => {
+    d = document.createElement('dialog'); d.className = 'dialog ask'; d.id = 'session-dialog'; d.setAttribute('aria-labelledby', 'sess-msg');
+    d.innerHTML = '<p class="ask-msg" id="sess-msg"></p><div class="ask-actions"><button class="btn" type="button" id="sess-later">Fechar</button><button class="btn primary" type="button" id="sess-go"></button></div>';
+    document.body.appendChild(d);
+    d.querySelector('#sess-later').addEventListener('click', () => { d.dataset.dismissed = '1'; d.close(); });
+    d.querySelector('#sess-go').addEventListener('click', async () => {
+      const end = Math.min(idleEnd, maxEnd);
+      if (Date.now() >= end) { location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search); return; }
+      if (maxEnd - Date.now() <= WARN) { d.close(); return; }           // limite de horas: não há como estender
+      try { const r = await fetch('/api/alertas/contagem', { credentials: 'same-origin', headers: { Accept: 'application/json' } }); if (r.ok && !r.redirected) { d.close(); return; } } catch (e) { /* cai abaixo */ }
+      location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search);
+    });
+  };
+  const render = () => {
+    const now = Date.now(), end = Math.min(idleEnd, maxEnd), left = end - now, byMax = maxEnd <= idleEnd;
+    if (left > WARN) { if (d && d.open) d.close(); return; }
+    if (!d) build();
+    const msg = d.querySelector('#sess-msg'), go = d.querySelector('#sess-go'), later = d.querySelector('#sess-later');
+    if (left <= 0 && !d.dataset.ended) { d.dataset.ended = '1'; delete d.dataset.dismissed; }
+    if (left <= 0) { msg.textContent = 'Sua sessão terminou. Entre de novo para continuar.'; go.textContent = 'Entrar de novo'; later.hidden = true; }
+    else if (byMax) { msg.textContent = 'Sua sessão chega ao limite de horas em ' + mmss(left) + '. Salve o que estiver fazendo; depois é só entrar de novo.'; go.textContent = 'Entendi'; later.hidden = true; }
+    else { msg.textContent = 'Sua sessão vai terminar em ' + mmss(left) + ' por falta de uso.'; go.textContent = 'Continuar conectado'; later.hidden = false; }
+    if (!d.open && !d.dataset.dismissed) { d.showModal(); go.focus(); }
+  };
+  tick = setInterval(render, 1000);
+  document.addEventListener('visibilitychange', render);
+  return { touch() { idleEnd = Date.now() + idle * 1000; if (d) { delete d.dataset.dismissed; render(); } } };
+})();
+
+// Toda chamada ao servidor feita pela página renova o prazo da sessão e informa a faixa de conexão.
+(() => {
+  const orig = window.fetch.bind(window);
+  window.fetch = (input, init) => orig(input, init).then((r) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, location.href);
+    if (url.origin === location.origin) { net.ok(); if (r.ok && !r.redirected) session.touch(); }
+    return r;
+  }, (err) => { if (!(err && err.name === 'AbortError')) net.error(); throw err; });
+})();
+
+// Formulários longos (conferência da conta, lançamento manual, lote): avisa antes de sair da tela sem salvar.
+(() => {
+  const forms = document.querySelectorAll('form[data-dirty-guard]'); if (!forms.length) return;
+  let dirty = false, sending = false;
+  const mark = (e) => { if (e.target.type !== 'search') dirty = true; };     // filtrar a lista não é dado digitado
+  forms.forEach((f) => { f.addEventListener('input', mark); f.addEventListener('change', mark); });
+  document.addEventListener('submit', (e) => { if (!e.defaultPrevented) sending = true; });
+  window.addEventListener('pageshow', () => { sending = false; });
+  window.addEventListener('beforeunload', (e) => { if (dirty && !sending) { e.preventDefault(); e.returnValue = ''; } });
+})();
+
+// Atalhos de teclado (fora de campos de texto): "/" busca, "i" importa conta, "g" + letra navega, "?" mostra a lista.
+// Só valem para o que existe no menu de quem está usando.
+(() => {
+  const nav = document.querySelector('.side .nav'); if (!nav) return;
+  const GO = [['p', '/', 'Painel'], ['e', '/diretoria', 'Painel executivo'], ['c', '/notas', 'Contas'], ['l', '/stores', 'Lojas'],
+    ['a', '/alertas', 'Alertas'], ['m', '/manual', 'Lançamento manual'], ['h', '/ajuda', 'Ajuda']]
+    .filter(([, href]) => nav.querySelector('a[href="' + href + '"]:not(.cta)'));
+  const canImport = !!nav.querySelector('a.cta[href="/import"]');
+  let prefix = 0, help = null;
+  const showHelp = () => {
+    if (!help) {
+      help = document.createElement('dialog'); help.className = 'dialog shortcuts'; help.setAttribute('aria-labelledby', 'sc-title');
+      const rows = [['/', 'Buscar nesta tela'], ...(canImport ? [['i', 'Importar conta']] : []), ...GO.map(([k, , name]) => ['g ' + k, name]), ['?', 'Esta lista'], ['Esc', 'Fechar janelas']];
+      help.innerHTML = '<button class="iconbtn dclose" type="button" aria-label="Fechar">×</button><h2 id="sc-title">Atalhos de teclado</h2><table class="shortcuts-table"><tbody></tbody></table>';
+      const tb = help.querySelector('tbody');
+      rows.forEach(([k, label]) => {
+        const tr = document.createElement('tr'), a = document.createElement('td'), b = document.createElement('td');
+        k.split(' ').forEach((part, i) => { if (i) a.append(' depois '); const kb = document.createElement('kbd'); kb.textContent = part; a.append(kb); });
+        b.textContent = label; tr.append(a, b); tb.append(tr);
+      });
+      help.querySelector('.dclose').addEventListener('click', () => help.close());
+      document.body.appendChild(help);
+    }
+    help.showModal();
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
+    const t = e.target; if (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || document.querySelector('dialog[open]')) return;
+    if (prefix && Date.now() - prefix < 1200) {
+      prefix = 0; const hit = GO.find(([k]) => k === e.key.toLowerCase());
+      if (hit) { e.preventDefault(); location.href = hit[1]; } return;
+    }
+    if (e.key === 'g') { prefix = Date.now(); return; }
+    if (e.key === '?') { e.preventDefault(); showHelp(); return; }
+    if (e.key === '/') { const q = document.querySelector('.main input[type=search]'); if (q) { e.preventDefault(); q.focus(); q.select(); } return; }
+    if (e.key === 'i' && canImport) { e.preventDefault(); location.href = '/import'; }
+  });
+})();
+
+// Tela "sem conexão": um service worker mostra uma página própria (que volta sozinha quando a internet volta) em vez do
+// erro do navegador. Ele não guarda nenhuma página com dados: só a tela offline e o logo.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
+}

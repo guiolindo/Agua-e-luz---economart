@@ -5,8 +5,16 @@
 <main class="errpage" id="content">
   <div class="errcard">
     <img src="/static/img/logo.png" alt="Economart" width="178" height="45">
+    {% set icons = {
+      404: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M9 9.2a2 2 0 1 1 2.6 1.9c-.4.2-.6.5-.6.9v.4"/><path d="M11 15h.01"/>',
+      405: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M9 9.2a2 2 0 1 1 2.6 1.9c-.4.2-.6.5-.6.9v.4"/><path d="M11 15h.01"/>',
+      403: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+      410: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      413: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3-3 3 3"/>'} %}
+    <div class="erricon e{{ code }}" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">{{ icons.get(code, '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>')|safe }}</svg></div>
     <h1>{{ titles.get(code, "Algo deu errado") }}</h1>
     <p>{{ message }}</p>
+    {% if request_id %}<p class="errcode">Código do erro: <strong class="mono">{{ request_id }}</strong> <span class="muted">(passe ao administrador)</span></p>{% endif %}
     <div class="actions"><a class="btn primary" href="/">Ir para o início</a><a class="btn" href="/" data-back>Voltar</a></div>
   </div>
 </main>

@@ -14,7 +14,13 @@ def make_engine(url: str | None = None):
     if url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
     else:
+        # O gateway do Railway derruba conexões Postgres ociosas: sem isto, a 1ª tela depois de alguns minutos parado
+        # pode dar erro ("SSL SYSCALL error: EOF detected"). Três camadas: testa a conexão antes de usar, renova as
+        # que têm mais de 3 min e manda keep-alive TCP a cada 30 s para ela não ser vista como ociosa.
         kwargs["pool_pre_ping"] = True
+        kwargs["pool_recycle"] = 180
+        kwargs["connect_args"] = {"keepalives": 1, "keepalives_idle": 30, "keepalives_interval": 10,
+                                  "keepalives_count": 5, "connect_timeout": 10}
     return create_engine(url, **kwargs)
 
 

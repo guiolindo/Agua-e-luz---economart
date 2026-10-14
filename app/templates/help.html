@@ -176,15 +176,19 @@
     <ul>
       <li>O botão <strong>Apresentação do sistema</strong>, no rodapé do menu, abre os slides que explicam o sistema (setas do teclado, <strong>R</strong> para a versão resumida, <strong>P</strong> para passar sozinho, <strong>F</strong> para tela cheia). Ele fica disponível por tempo limitado.</li>
       <li>O sistema se adapta ao <strong>celular</strong>: o menu vira uma barra embaixo, com o botão de importar sempre à mão. As tabelas largas rolam para o lado.</li>
+      <li><strong>Atalhos de teclado</strong> (no computador): <kbd>/</kbd> busca na tela, {% if user.can_write %}<kbd>i</kbd> importa conta, {% endif %}<kbd>g</kbd> e depois a inicial da tela (<kbd>c</kbd> Contas, <kbd>l</kbd> Lojas, <kbd>a</kbd> Alertas…) navega. <kbd>?</kbd> mostra a lista completa.</li>
+      <li><strong>Sem internet:</strong> uma faixa avisa no alto e o que você digitou continua na tela; nada é enviado até a conexão voltar. Se a página não abrir, aparece a tela "Sem conexão", que volta sozinha.</li>
     </ul></section>
 
   <section class="card" id="faq"><h2>Dúvidas comuns</h2>
     <details><summary>Esqueci minha senha</summary><p>Peça ao administrador para <strong>Redefinir senha</strong>. Ele te passa uma senha provisória de 4 dígitos; você cria a sua no primeiro acesso.</p></details>
     <details><summary>Apareceu “acesso bloqueado”</summary><p>Foram muitas tentativas erradas seguidas. Espere o tempo que a tela informa (15 minutos) ou peça ao administrador para <strong>Desbloquear</strong>.</p></details>
-    <details><summary>O sistema me desconectou sozinho</summary><p>Por segurança, após 60 minutos sem usar (ou 12 horas de uso) é preciso entrar de novo. Nada é perdido.</p></details>
+    <details><summary>O sistema me desconectou sozinho</summary><p>Por segurança, após 60 minutos sem usar (ou 12 horas de uso) é preciso entrar de novo. Cinco minutos antes aparece um aviso: <strong>Continuar conectado</strong> mantém a sessão. Depois de entrar de novo, você volta para a mesma tela.</p></details>
+    <details><summary>Apareceu “Código do erro”</summary><p>Algo falhou no sistema. Passe o código ao administrador: ele leva direto ao registro do problema.</p></details>
     <details><summary>Qual senha posso criar?</summary><p>Pelo menos 8 caracteres, misturando letras e números (ou símbolos). Evite nomes, “123456” e “senha”. Não use a senha de outros sistemas.</p></details>
     {% if user.can_write %}<details><summary>O sistema leu um valor errado na conta</summary><p>Na tela de conferência, corrija o campo antes de salvar. Se já salvou, abra <strong>Contas</strong> e clique em <strong>Editar</strong>.</p></details>
     <details><summary>Apareceu “Arquivo barrado”</summary><p>O sistema olhou o arquivo e concluiu que <strong>não é uma conta de energia</strong> (pode ser outro documento, uma foto qualquer ou uma conta de outro serviço). Nada é lançado e o arquivo é apagado. Se era mesmo uma conta de energia, envie de novo uma foto inteira, de frente e sem reflexo — ou use o Lançamento manual.</p></details>
+    <details><summary>Apareceu “PDF tem código embutido”</summary><p>O PDF tem um programa dentro (JavaScript ou comando para abrir algo) e foi recusado por segurança. Conta de verdade não tem isso: baixe de novo no site da distribuidora ou envie uma foto da conta.</p></details>
     <details><summary>A conta não achou a loja ou a unidade</summary><p>Na conferência, escolha a unidade na lista. Se ela não existe, cadastre antes em <strong>+ Unidade consumidora</strong> e reenvie.</p></details>
     <details><summary>O gráfico não mostra um mês</summary><p>Esse mês ainda não tem conta enviada ou lançada. Envie a conta ou lance manualmente que ele aparece.</p></details>{% endif %}
     <details><summary>Preciso de uma função que não vejo</summary><p>Cada perfil vê só o que usa. Se faltar algo para o seu trabalho, peça ao administrador para ajustar o seu perfil.</p></details></section>

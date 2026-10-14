@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sem conexão · Economart Energia</title>
+  <meta name="theme-color" content="#1B4F8A">
+  {# Estilo embutido: esta página é guardada pelo service worker e precisa abrir sem nada da rede. #}
+  <style>
+    *{box-sizing:border-box} html,body{margin:0;min-height:100%}
+    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f3f6fa;color:#1d2b3a;display:grid;place-items:center;min-height:100vh;padding:24px}
+    .card{background:#fff;border:1px solid #dfe6ee;border-radius:16px;padding:32px 28px;max-width:440px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(20,40,70,.08)}
+    img{height:40px;width:auto;margin-bottom:22px}
+    .ico{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#fff4e5;color:#b45309;display:grid;place-items:center}
+    h1{font-size:22px;margin:0 0 8px} p{margin:0 0 20px;color:#4a5a6b;line-height:1.5}
+    .pill{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:#8a5a00;background:#fff7e6;border:1px solid #f3d9a4;border-radius:999px;padding:6px 14px;margin-bottom:22px}
+    .pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;animation:p 1.4s ease-in-out infinite}
+    .pill.ok{color:#17663a;background:#e9f7ef;border-color:#b8e2c8} .pill.ok::before{animation:none}
+    button{font:inherit;font-weight:600;background:#1B4F8A;color:#fff;border:0;border-radius:10px;padding:11px 22px;cursor:pointer}
+    button:focus-visible{outline:3px solid #f47920;outline-offset:2px}
+    @keyframes p{50%{opacity:.25}} @media (prefers-reduced-motion:reduce){.pill::before{animation:none}}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <img src="/static/img/logo.png" alt="Economart">
+    <div class="ico" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.8a15 15 0 0 1 4.2-2.6M22 8.8a15 15 0 0 0-11-3.7M5 12.9a10 10 0 0 1 5.2-2.7M19 12.9a10 10 0 0 0-2.4-1.6M8.5 16.4a5 5 0 0 1 7 0"/><line x1="12" y1="20" x2="12.01" y2="20"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div>
+    <h1>Sem conexão</h1>
+    <p>Não foi possível falar com o sistema: a internet caiu ou o sistema está reiniciando. A tela abre sozinha assim que a conexão voltar.</p>
+    <div class="pill" id="net-pill" role="status" aria-live="polite">Aguardando a conexão…</div><br>
+    <button type="button" id="retry">Tentar de novo</button>
+  </main>
+  <script src="/static/js/offline.js?v={{ ASSET_VERSION }}"></script>
+</body>
+</html>

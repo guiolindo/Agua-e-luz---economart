@@ -69,10 +69,20 @@ def user_create(request: Request, username: str = Form(..., max_length=80), role
     return RedirectResponse("/admin/users", status_code=303)
 
 
+def _guarded(target: User, me: User) -> bool:
+    """Contas que valem a confirmação da senha de quem está mexendo: outro administrador ou a diretoria."""
+    return target.id != me.id and target.role in ("admin", "director")
+
+
 @router.post("/admin/users/{user_id}/reset-password", dependencies=[Depends(verify_csrf)])
-def user_reset(request: Request, user_id: int, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+def user_reset(request: Request, user_id: int, confirm_password: str = Form(""), user: User = Depends(admin_required),
+               db: Session = Depends(get_db)):
     target = db.get(User, user_id)
     if not target:
+        return RedirectResponse("/admin/users", status_code=303)
+    if _guarded(target, user) and not security.verify_password(confirm_password, user.password_hash):
+        # a senha provisória de um admin/diretor dá acesso à conta dele: uma sessão sequestrada não pode gerá-la sozinha
+        flash(request, f"Senha incorreta: redefinir a senha de {target.username} precisa da confirmação da sua senha.", "error")
         return RedirectResponse("/admin/users", status_code=303)
     temp = security.generate_temp_password()
     auth_service.set_password(db, target, temp, must_change=True)  # revoga sessões e desbloqueia
@@ -116,11 +126,14 @@ def user_role(request: Request, user_id: int, role: str = Form(...), confirm_pas
 
 
 @router.post("/admin/users/{user_id}/toggle", dependencies=[Depends(verify_csrf)])
-def user_toggle(request: Request, user_id: int, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+def user_toggle(request: Request, user_id: int, confirm_password: str = Form(""), user: User = Depends(admin_required),
+                db: Session = Depends(get_db)):
     target = db.get(User, user_id)
     if target and target.id != user.id:
         if target.active and target.role == "admin" and _active_admins(db) <= 1:
             flash(request, "É preciso manter pelo menos um administrador ativo.", "error")
+        elif target.active and target.role == "admin" and not security.verify_password(confirm_password, user.password_hash):
+            flash(request, f"Senha incorreta: desativar o administrador {target.username} precisa da confirmação da sua senha.", "error")
         else:
             target.active = not target.active
             if target.active:

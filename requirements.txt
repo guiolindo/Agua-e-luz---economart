@@ -9,6 +9,7 @@ google-genai>=1.0
 psycopg[binary]>=3.2
 pillow>=10.4
 pypdfium2>=4.30
+pypdf>=5.0
 cryptography>=42
 tzdata>=2024.1
 segno>=1.6

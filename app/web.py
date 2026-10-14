@@ -1,5 +1,6 @@
 """Configuração do Jinja2 e helper de renderização."""
 import hashlib
+import time
 from pathlib import Path
 
 from fastapi import Request
@@ -14,13 +15,13 @@ BASE_DIR = Path(__file__).resolve().parent
 
 
 def _asset_version() -> str:
-    """Hash curto dos CSS/JS que mudam, para derrotar o cache do browser quando
-    qualquer um deles mudar. Templates incluem ?v={{ ASSET_VERSION }} nos links.
-    Vendor fixo (chart.umd.min.js) fica de fora — nunca muda."""
+    """Hash curto de todos os CSS/JS do sistema, para derrotar o cache do browser quando qualquer um deles mudar.
+    Templates incluem ?v={{ ASSET_VERSION }} nos links. Varre as pastas (não uma lista fixa): um arquivo novo
+    entra sozinho na conta. Vendor fixo (chart.umd.min.js) fica de fora — nunca muda."""
     h = hashlib.sha1()
-    for rel in ("static/css/app.css", "static/js/app.js", "static/js/chart_panel.js", "static/js/director.js", "static/js/presentation.js", "static/css/presentation.css"):
-        p = BASE_DIR / rel
-        if p.exists():
+    for p in sorted((BASE_DIR / "static").glob("[cj]s*/*.*")):
+        if p.suffix in (".css", ".js") and p.is_file():
+            h.update(p.name.encode())
             h.update(p.read_bytes())
     return h.hexdigest()[:10]
 
@@ -70,4 +71,7 @@ def render(request: Request, name: str, status_code: int = 200, **ctx):
     ctx["login_stamp"] = request.session.get("iat", "")
     ctx["flashes"] = request.session.pop("flash", [])
     ctx["path"] = request.url.path
+    s, iat = get_settings(), request.session.get("iat")
+    ctx["session_idle"] = s.session_idle_minutes * 60 if iat else 0           # aviso de "sessão vai terminar" (app.js)
+    ctx["session_max_left"] = max(0, int(iat) + s.session_max_hours * 3600 - int(time.time())) if iat else 0
     return templates.TemplateResponse(request, name, ctx, status_code=status_code)
