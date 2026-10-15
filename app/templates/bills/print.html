@@ -38,7 +38,7 @@
       <tr><th>Referência</th><td>{{ bill.reference|month_label }}</td><th>Vencimento</th><td>{{ bill.due_date|date_br }}</td><th>Emissão</th><td>{{ bill.issue_date|date_br }}</td></tr>
       <tr><th>Nota fiscal</th><td>{{ bill.invoice_number or '—' }}{% if bill.series %} · série {{ bill.series }}{% endif %}</td><th>Modalidade</th><td>{{ bill.tariff_modality or '—' }}</td><th>Classe</th><td>{{ bill.bill_class or '—' }}{% if bill.subclass %} / {{ bill.subclass }}{% endif %}</td></tr>
       <tr><th>Leitura anterior</th><td>{{ bill.previous_reading_date|date_br }}</td><th>Leitura atual</th><td>{{ bill.current_reading_date|date_br }}</td><th>Dias</th><td>{{ bill.days if bill.days is not none else '—' }}</td></tr>
-      <tr><th>Consumo HP / HFP</th><td>{{ bill.consumption_hp|num(2) }} / {{ bill.consumption_hfp|num(2) }} kWh</td><th>Demanda HP / HFP</th><td>{{ bill.demand_hp|num(2) }} / {{ bill.demand_hfp|num(2) }} kW</td><th>Demanda contratada</th><td>{{ bill.contracted_demand|num(2) }} kW</td></tr>
+      <tr><th>Consumo HP / HFP</th><td>{{ bill.consumption_hp|num(2) }} / {{ bill.consumption_hfp|num(2) }} kWh</td>{% if bill.demand_hp or bill.demand_hfp or bill.contracted_demand %}<th>Demanda HP / HFP</th><td>{{ bill.demand_hp|num(2) }} / {{ bill.demand_hfp|num(2) }} kW</td><th>Demanda contratada</th><td>{{ bill.contracted_demand|num(2) }} kW</td>{% else %}<td colspan="4"></td>{% endif %}</tr>
       <tr><th>PIS/COFINS</th><td>{{ bill.pis_cofins_value|brl }}</td><th>ICMS</th><td>{{ bill.icms_value|brl }}</td><th>Consumo único</th><td>{{ bill.consumption_kwh|num(2) }}{{ ' kWh' if bill.consumption_kwh is not none }}</td></tr>
     </tbody></table>
     {% if bill.notes %}<p class="small muted" style="margin:6px 0 0">{{ bill.notes }}</p>{% endif %}

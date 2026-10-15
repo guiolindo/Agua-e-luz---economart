@@ -390,7 +390,9 @@ def _store_slide(prs, data, r, position, total_stores):
               note=f"média da empresa {_brl(data['kpi']['rs_kwh'], 3)}" if data["kpi"]["rs_kwh"] else None),
         _card(s, 9.85, 2.35, 2.9, 1.35, f"{fmt.num(r['demand_use'], 0)}%" if r["demand_use"] is not None else "—", "Demanda usada",
               value_color=BAD if (r["demand_over"] or 0) else WHITE,
-              note=(f"{r['demand_over']} conta(s) acima do contratado" if r["demand_over"] else "da demanda contratada")),
+              note=(f"{r['demand_over']} conta(s) acima do contratado" if r["demand_over"] else "da demanda contratada"))
+        if data.get("has_demand") else
+        _card(s, 9.85, 2.35, 2.9, 1.35, str(r.get("n_months") or 0), "Meses com conta", note="no período"),
     ]
     cd = CategoryChartData()
     cd.categories = [lbl + ("*" if p else "") for lbl, p in zip(data["labels"], data["partial"])]

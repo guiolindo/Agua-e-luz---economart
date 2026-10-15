@@ -57,6 +57,10 @@ templates.env.globals["today_long"] = today_long
 templates.env.globals["login_max_attempts"] = get_settings().max_login_attempts
 templates.env.globals["login_block_minutes"] = get_settings().login_block_minutes
 templates.env.globals["ASSET_VERSION"] = _asset_version()
+
+from app.services.demand_flag import demand_in_use  # noqa: E402
+
+templates.env.globals["demand_in_use"] = demand_in_use   # telas de demanda só aparecem se alguma conta tem o dado
 templates.env.filters.update(brl=fmt.brl, num=fmt.num, pct=fmt.pct, month_label=fmt.month_label, date_br=fmt.date_br, dt_br=dt_br)
 
 

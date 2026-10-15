@@ -197,7 +197,7 @@ def executive_workbook(data: dict, insights: list[dict], pending: list[dict], fi
         "Competência: contas e lançamentos manuais entram pelo mês de referência.",
         "Custo efetivo por kWh: total da conta de distribuidora ÷ kWh, com demanda, impostos e multas incluídos. Não é a tarifa da energia.",
         "Mês incompleto: marcado com * e fora das variações.",
-        "Demanda: a ultrapassagem só conta acima de 5% da contratada (REN ANEEL 1.000/2021, Grupo A).",
+        *(["Demanda: a ultrapassagem só conta acima de 5% da contratada (REN ANEEL 1.000/2021, Grupo A)."] if data.get("has_demand") else []),
         "Variações e destaques indicam onde conferir; a causa não é identificada pelo sistema.",
     ):
         ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=4)
@@ -218,6 +218,8 @@ def executive_workbook(data: dict, insights: list[dict], pending: list[dict], fi
     ws = wb.create_sheet("Lojas")
     heads = ["Loja", "Nome", "Região", "Total no período", "% da empresa", "Média por mês", "Variação da média vs. período anterior",
              f"{focus}", f"Variação vs. {prev}", "Custo efetivo por kWh", "Demanda usada", "Contas acima da contratada (>5%)"]
+    if not data.get("has_demand"):
+        heads = heads[:-2]                       # nenhuma loja com demanda nas contas: sem colunas vazias
     first = _title(ws, "Comparativo entre lojas", subtitle, len(heads))
     _header(ws, first, heads)
     row = first + 1
@@ -226,7 +228,7 @@ def executive_workbook(data: dict, insights: list[dict], pending: list[dict], fi
         _text(ws.cell(row=row, column=2), s["name"])
         _text(ws.cell(row=row, column=3), s["region"])
         vals = [s["total"], _fraction(s["share"]), s["avg"], _fraction(s["vs_prev_period"]["pct"]), s["last"],
-                _fraction(s["vs_last_month"]["pct"]), s["rs_kwh"], _fraction(s["demand_use"]), s["demand_over"] or 0]
+                _fraction(s["vs_last_month"]["pct"]), s["rs_kwh"], _fraction(s["demand_use"]), s["demand_over"] or 0][:len(heads) - 3]
         for col, v in enumerate(vals, start=4):
             ws.cell(row=row, column=col, value=v)
         row += 1

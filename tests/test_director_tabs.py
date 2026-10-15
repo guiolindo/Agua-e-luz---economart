@@ -93,8 +93,30 @@ def test_year_projection_appears_with_a_full_year(client, db):
 def test_tabs_are_links_that_keep_the_filters(client, db):
     _make_store(client)
     html = client.get("/diretoria?start=2026-01&end=2026-09&region=MG").text
-    for key in ("geral", "lojas", "evitavel", "contratos", "ano"):
+    for key in ("geral", "lojas", "evitavel", "ano"):
         assert f'data-aba-link="{key}"' in html
+    assert 'data-aba-link="contratos"' not in html                                  # sem conta com demanda, sem a aba
     assert 'href="?start=2026-01&amp;end=2026-09&amp;region=MG&amp;aba=lojas"' in html
     assert 'data-aba="geral"' in html
     assert 'data-aba="geral"' in client.get("/diretoria?aba=invalida").text
+
+
+def test_demand_screens_only_appear_when_some_bill_has_demand(client, db):
+    from app.services import demand_flag
+
+    _make_store(client)
+    unit = db.query(ConsumerUnit).one()
+    cemig = db.query(RecordType).filter_by(code="cemig").one()
+    _bill(db, unit, cemig, date(2026, 9, 1), "1000", kwh=2000)                      # loja de baixa tensão: sem demanda
+    db.commit()
+    html = client.get("/diretoria?start=2026-09&end=2026-09").text
+    assert 'data-aba-link="contratos"' not in html and "c-util" not in html and "Demanda usada" not in html
+    assert 'data-aba="geral"' in client.get("/diretoria?aba=contratos").text            # aba que não existe: volta à visão geral
+    assert "Demanda contratada usada" not in client.get(f"/stores/{unit.store_id}").text
+    assert "Demanda usada" not in client.get("/diretoria/export.csv?start=2026-09&end=2026-09").text
+    _bill(db, unit, cemig, date(2026, 8, 1), "1000", kwh=2000, contracted=100, demand=90)
+    db.commit()
+    demand_flag.reset()
+    html = client.get("/diretoria?start=2026-08&end=2026-09").text
+    assert 'data-aba-link="contratos"' in html and "c-util" in html and "Demanda usada" in html
+    assert "Demanda usada" in client.get("/diretoria/export.csv?start=2026-08&end=2026-09").text

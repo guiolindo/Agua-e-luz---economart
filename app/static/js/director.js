@@ -19,7 +19,7 @@
     const x = c.scales.x.getPixelForValue(value); if (!isFinite(x)) return;
     const { top, bottom } = c.chartArea, g = c.ctx; g.save(); g.strokeStyle = color; g.setLineDash([5, 4]); g.lineWidth = 1.5;
     g.beginPath(); g.moveTo(x, top); g.lineTo(x, bottom); g.stroke(); g.setLineDash([]); g.fillStyle = color; g.font = '11px sans-serif'; g.fillText(label, x + 4, top + 11); g.restore(); } });
-  const hbar = (id, labels, data, colors, fmtFn, extra = {}) => new Chart($(id), {
+  const hbar = (id, labels, data, colors, fmtFn, extra = {}) => $(id) && new Chart($(id), {   // gráfico que a tela não tem (ex.: demanda): pula
     type: 'bar', data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: 2, maxBarThickness: 22 }] },
     options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: false, ...extra.options,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (i) => fmtFn(i.raw, i.dataIndex) } }, ...(extra.plugins || {}) },

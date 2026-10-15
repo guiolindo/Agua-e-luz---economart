@@ -5,6 +5,8 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-15
 
+- **Demanda só aparece quando existe.** Nenhuma conta com demanda contratada ou medida no sistema (lojas de baixa tensão, ou faturas em que a leitura não trouxe esses números) = o assunto some das telas: aba Contratos, gráfico de uso da demanda, coluna "Demanda usada" do comparativo, nota de demanda, quadro da página da loja, coluna da página da unidade (por unidade), linha do relatório da conta, categoria "Ultrapassagem de demanda" do Gasto evitável (se zerada), colunas da planilha/CSV, cartão do PowerPoint, ajuda e slides da apresentação. A primeira conta salva com demanda faz tudo aparecer sozinho (checagem central em `demand_flag`, guardada por 60 s e renovada ao salvar uma conta).
+
 - **Apresentação do sistema atualizada (27 → 31 slides).** Novas capturas do Painel executivo em abas (Visão geral e Lojas) e slides novos: **Gasto evitável** (entra também na versão resumida, agora com 9 slides), **Contratos**, **Ano / por que o gasto mudou** e, no capítulo do funcionário, **Excluiu errado? Desfazer** (botão Desfazer e Lixeira de 30 dias). Em números, "5 abas no painel da diretoria" no lugar dos formatos de impressão; em Segurança, aviso antes de a sessão expirar e o cartão "Nada se perde" (histórico e lixeira com recuperação).
 
 - **Painel executivo em abas, com três telas novas.** Pesquisa de mercado (EnergyCAP, IBM Envizi, Arcadia, Schneider Resource Advisor, Enel X/Via Varejo): os sistemas separam a visão do diretor por assunto, mostram o gasto evitável em R$ e só projetam o ano com 12 meses de histórico. O painel virou cinco abas, com os mesmos filtros:

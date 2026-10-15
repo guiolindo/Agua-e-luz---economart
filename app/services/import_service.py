@@ -189,6 +189,9 @@ def save_bill(db: Session, unit: ConsumerUnit, record_type_id: int, values: dict
               document_id: int | None = None, line_items: list | None = None, source: str = "import",
               replace: EnergyBill | None = None) -> EnergyBill:
     """Cria a conta, ou (replace=...) substitui os dados de uma existente mantendo o histórico em auditoria."""
+    from app.services import demand_flag
+
+    demand_flag.reset()                         # conta nova pode ser a 1ª com demanda: as telas de demanda passam a aparecer
     payload = {f: values.get(f) for f in BILL_FIELDS}
     if unit.due_day is None and values.get("due_date"):
         unit.due_day = values["due_date"].day  # o lembrete de vencimento nasce sozinho a partir da conta

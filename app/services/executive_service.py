@@ -225,6 +225,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
         "by_type": [{"id": t.id, "name": t.name, "color": color_of[t.id], "values": [_f(v) or None for v in by_type_month[t.id]]}
                     for t in types if t.id in by_type_month and any(by_type_month[t.id])],
         "rows": rows, "pending_items": pending[:12], "dist_avg": dist_avg,
+        "has_demand": any(r["demand_use"] is not None for r in rows),     # lojas de baixa tensão: sem demanda nas contas
     }
 
 

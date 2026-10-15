@@ -3,6 +3,7 @@
 {% macro delta(v) %}{% if v and v.pct is not none %}<span class="var var-{{ v.direction }}">{{ v.text }}</span>{% else %}<span class="muted">—</span>{% endif %}{% endmacro %}
 {% block title %}Painel executivo · Economart Energia{% endblock %}
 {% block content %}
+{% set dem = demand_in_use() %}
 <div class="dirpanel" data-stores="{{ rows|length }}" data-aba="{{ aba }}">
 <style id="page-a4">@page { size: A4 landscape; margin: 8mm; }</style>
 <style id="page-a3" media="not all">@page { size: 420mm 297mm; margin: 8mm; }</style>
@@ -75,7 +76,7 @@
 
 <div class="grid cols-2 pp-3 pp-break" data-tab="lojas">
   <section class="card a3-4" data-tab="lojas"><div class="card-head"><h2>Custo efetivo por kWh</h2><span class="muted small">total da conta ÷ kWh · vermelho = acima da média da própria distribuidora</span></div><div class="dchart tall"><canvas id="c-kwh" role="img" aria-label="Custo por kWh por loja"></canvas></div></section>
-  <section class="card a3-4" data-tab="lojas"><div class="card-head"><h2>Uso da demanda contratada <span class="muted small">· média do período</span></h2><span class="muted small">demanda medida ÷ contratada, na média dos meses · o mês de pico está na aba Contratos</span></div><div class="dchart tall"><canvas id="c-util" role="img" aria-label="Uso da demanda contratada"></canvas></div></section>
+  {% if dem %}<section class="card a3-4" data-tab="lojas"><div class="card-head"><h2>Uso da demanda contratada <span class="muted small">· média do período</span></h2><span class="muted small">demanda medida ÷ contratada, na média dos meses · o mês de pico está na aba Contratos</span></div><div class="dchart tall"><canvas id="c-util" role="img" aria-label="Uso da demanda contratada"></canvas></div></section>{% endif %}
 </div>
 
 <section class="card no-print" data-tab="lojas">
@@ -101,12 +102,12 @@
   <div style="padding:14px 18px 0"><h2>Comparativo entre lojas</h2></div>
   {% set ns = namespace(prev=false) %}{% for r in rows %}{% if r.vs_prev_period and r.vs_prev_period.pct is not none %}{% set ns.prev = true %}{% endif %}{% endfor %}
   <div class="tablewrap"><table class="dense">
-    <thead><tr><th>Loja</th><th>Região</th><th class="num">Total no período</th><th class="num">% da empresa</th><th class="num">Média/mês</th>{% if ns.prev %}<th class="num" title="média mensal vs. média do período anterior">vs. período anterior</th>{% endif %}<th class="num">{{ focus_label }}</th><th class="num">vs. {{ prev_label }}</th><th class="num">R$/kWh</th><th class="num">Demanda usada</th></tr></thead>
+    <thead><tr><th>Loja</th><th>Região</th><th class="num">Total no período</th><th class="num">% da empresa</th><th class="num">Média/mês</th>{% if ns.prev %}<th class="num" title="média mensal vs. média do período anterior">vs. período anterior</th>{% endif %}<th class="num">{{ focus_label }}</th><th class="num">vs. {{ prev_label }}</th><th class="num">R$/kWh</th>{% if dem %}<th class="num">Demanda usada</th>{% endif %}</tr></thead>
     <tbody>{% for r in rows %}<tr><td><a href="/stores/{{ r.id }}"><strong>{{ r.label }}</strong></a><div class="muted small">{{ "loja " ~ r.code if r.label != r.code else r.name }}</div></td><td>{{ r.region or '—' }}</td>
       <td class="num">{{ r.total|brl(0) }}</td><td class="num">{{ r.share|num(1) }}%</td><td class="num">{{ r.avg|brl(0) }}</td>{% if ns.prev %}<td class="num">{{ delta(r.vs_prev_period) }}</td>{% endif %}
       <td class="num">{{ r.last|brl(0) if r.last is not none else '—' }}</td><td class="num">{{ delta(r.vs_last_month) }}</td>
       <td class="num">{{ r.rs_kwh|brl(3) if r.rs_kwh else '—' }}</td>
-      <td class="num">{% if r.demand_use is not none %}{{ r.demand_use|num(0) }}%{% if r.demand_over %} <span class="badge warn" title="Contas com demanda acima da tolerância de 5% sobre a contratada">{{ r.demand_over }} acima</span>{% endif %}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+      {% if dem %}<td class="num">{% if r.demand_use is not none %}{{ r.demand_use|num(0) }}%{% if r.demand_over %} <span class="badge warn" title="Contas com demanda acima da tolerância de 5% sobre a contratada">{{ r.demand_over }} acima</span>{% endif %}{% else %}—{% endif %}</td>{% endif %}</tr>{% endfor %}</tbody>
   </table></div>
 </section>
 
@@ -120,7 +121,7 @@
     <li><strong>Competência:</strong> contas e lançamentos manuais entram pelo mês de referência; a tabela "por vencimento" usa o vencimento só das contas de distribuidora.</li>
     <li><strong>Custo efetivo por kWh:</strong> total da conta de distribuidora ÷ kWh consumidos, com demanda, impostos e multas incluídos. Não é a tarifa da energia. Unidades no mercado livre só ficam comparáveis quando somadas a LL Energia e demais cobranças do mesmo mês.</li>
     <li><strong>Mês incompleto:</strong> aparece com * e fica fora das variações; os indicadores usam o último mês completo.</li>
-    <li><strong>Demanda:</strong> a ultrapassagem só conta acima de 5% da demanda contratada (REN ANEEL 1.000/2021, Grupo A). Unidades sem leitura de demanda não entram.</li>
+    {% if dem %}<li><strong>Demanda:</strong> a ultrapassagem só conta acima de 5% da demanda contratada (REN ANEEL 1.000/2021, Grupo A). Unidades sem leitura de demanda não entram.</li>{% endif %}
     <li><strong>Variações e destaques:</strong> indicam onde conferir. A causa não é identificada pelo sistema.</li>
   </ul></aside>
 {% if rows|selectattr('name')|list %}<section class="card storekey a3-12" aria-label="Legenda das lojas" data-tab="lojas"><h2>Legenda das lojas</h2>
@@ -134,16 +135,16 @@
   {% else %}
   <div class="grid cols-4 kpis">
     <div class="kpi alt"><div class="label">Total evitável</div><div class="value">{{ avoid.total|brl(0) }}</div><div class="sub muted">{{ avoid_share|num(1) ~ '% do gasto do período' if avoid_share is not none else '' }}</div></div>
-    {% for c in avoid.categories %}<div class="kpi"><div class="label">{{ c.label }}</div><div class="value">{{ c.total|brl(0) }}</div></div>{% endfor %}
+    {% for c in avoid_cats %}<div class="kpi"><div class="label">{{ c.label }}</div><div class="value">{{ c.total|brl(0) }}</div></div>{% endfor %}
   </div>
   {% if avoid.total %}<div class="dchart"><canvas id="c-avoid" role="img" aria-label="Gasto evitável por mês e tipo"></canvas></div>{% endif %}
   <p class="hint">Base: {{ avoid.with_items }} de {{ avoid.bills }} contas do período com os itens detalhados{% if avoid.bills > avoid.with_items %} (as outras, em geral lançadas à mão, não entram){% endif %}. Itens identificados pelo nome na fatura: ultrapassagem de demanda, energia reativa excedente, juros e multa por atraso.</p>
   {% endif %}
 </section>
 {% if avoid.rows %}<section class="card flush tab-new" data-tab="evitavel"><div style="padding:14px 18px 0"><h2>Por loja</h2></div>
-  <div class="tablewrap"><table class="dense stack"><thead><tr><th>Loja</th>{% for c in avoid.categories %}<th class="num">{{ c.label }}</th>{% endfor %}<th class="num">Total</th></tr></thead><tbody>
+  <div class="tablewrap"><table class="dense stack"><thead><tr><th>Loja</th>{% for c in avoid_cats %}<th class="num">{{ c.label }}</th>{% endfor %}<th class="num">Total</th></tr></thead><tbody>
   {% for r in avoid.rows %}<tr><td data-label="Loja"><a href="/stores/{{ r.id }}"><strong>{{ r.label }}</strong></a>{% if r.region %} <span class="badge">{{ r.region }}</span>{% endif %}</td>
-    {% for c in avoid.categories %}<td class="num" data-label="{{ c.label }}">{{ r[c.key]|brl(0) if r[c.key] else '—' }}</td>{% endfor %}<td class="num" data-label="Total"><strong>{{ r.total|brl(0) }}</strong></td></tr>{% endfor %}
+    {% for c in avoid_cats %}<td class="num" data-label="{{ c.label }}">{{ r[c.key]|brl(0) if r[c.key] else '—' }}</td>{% endfor %}<td class="num" data-label="Total"><strong>{{ r.total|brl(0) }}</strong></td></tr>{% endfor %}
   </tbody></table></div></section>
 <section class="card flush tab-new" data-tab="evitavel"><div style="padding:14px 18px 0"><h2>Maiores itens</h2></div>
   <div class="tablewrap"><table class="dense stack"><thead><tr><th>Loja</th><th>Mês</th><th>Item na fatura</th><th class="num">Valor</th><th class="right no-print"><span class="sr">Conta</span></th></tr></thead><tbody>
@@ -151,7 +152,7 @@
     <td class="num" data-label="Valor">{{ i.value|brl }}</td><td class="right no-print"><a class="btn sm" href="/bills/{{ i.bill_id }}/print?doc=1#original">Ver conta</a></td></tr>{% endfor %}
   </tbody></table></div></section>{% endif %}
 
-{# ======================= CONTRATOS ======================= #}
+{% if dem %}{# ======================= CONTRATOS ======================= #}
 <section class="card tab-new" data-tab="contratos">
   <div class="card-head"><h2>Demanda contratada · 12 meses até {{ contracts.end|month_label }}</h2>
     <button class="btn sm no-print" type="button" data-print-tab="contratos">Imprimir esta tela</button></div>
@@ -173,6 +174,7 @@
     <td data-label="Situação"><span class="badge {{ {'bad': 'bad', 'warn': 'warn', 'ok': 'ok'}.get(r.tone, '') }}">{{ r.status }}</span></td></tr>{% endfor %}
   </tbody></table></div>
   <p class="hint" style="padding:0 18px 14px">Ultrapassagem: demanda medida acima de 105% da contratada (REN ANEEL 1.000/2021), que costuma gerar cobrança. Redução: a maior demanda dos últimos 12 meses ficou abaixo de 80% do contrato. Antes de mudar o contrato, confirme com a distribuidora (há regras de prazo e de sazonalidade).</p></section>{% endif %}
+{% endif %}
 
 {# ======================= ANO ======================= #}
 <section class="card tab-new" data-tab="ano">

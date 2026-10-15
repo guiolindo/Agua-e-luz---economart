@@ -28,12 +28,16 @@ def executive_panel(request: Request, start: str | None = None, end: str | None 
     from app.models.mixins import utcnow
     from app.services import director_extra as extra
 
+    from app.services.demand_flag import demand_in_use
+
     by = "due" if by == "due" else "reference"
-    aba = aba if aba in {t[0] for t in TABS} else "geral"
+    dem = demand_in_use()                        # nenhuma conta com demanda (lojas de baixa tensão): o assunto some das telas
+    tabs = [t for t in TABS if dem or t[0] != "contratos"]
+    aba = aba if aba in {t[0] for t in tabs} else "geral"
     data = executive_service.build(db, parse_reference(start), parse_reference(end), by, types or None, region or None)
     focus = data["months"][data["focus_idx"]] if data["months"] else data["end"]
     avoid = extra.avoidable(db, data["start"], data["end"], by, region or None, types or None)
-    contracts = extra.contracts(db, data["end"], region or None)
+    contracts = extra.contracts(db, data["end"], region or None) if dem else {"rows": [], "counts": {}}
     year = extra.year_view(db, focus, by, region or None, types or None)
     insights = executive_service.insights(data)
     why = extra.decomposition_sentence(year["mom"], *year["mom_label"])
@@ -49,7 +53,8 @@ def executive_panel(request: Request, start: str | None = None, end: str | None 
         "contracts": {r["label"]: r["series"] for r in contracts["rows"]},
     }
     return render(request, "director/panel.html", user=user, payload=executive_service.client_payload(data), printed_at=utcnow(),
-                  alerts_open=alert_service.counts(db), insights=insights, aba=aba, tabs=TABS, base_qs=base_qs,
+                  alerts_open=alert_service.counts(db), insights=insights, aba=aba, tabs=tabs, base_qs=base_qs,
+                  avoid_cats=[c for c in avoid["categories"] if dem or c["key"] != "ultrapassagem" or c["total"]],
                   avoid=avoid, avoid_labels=extra.CAT_LABEL, contracts=contracts, year=year, extra_payload=extra_payload,
                   avoid_share=float(avoid["total"]) / data["kpi"]["total"] * 100 if data["kpi"]["total"] else None, **data)
 
@@ -75,11 +80,13 @@ def executive_csv(start: str | None = None, end: str | None = None, by: str = "r
     out = io.StringIO()
     w = csv.writer(out, delimiter=";", lineterminator="\r\n")
     focus, prev = data["focus_label"], data["prev_label"]
+    dem = data.get("has_demand")
     w.writerow(["Loja", "Nome", "Região", "Total no período (R$)", "% da empresa", "Média por mês (R$)",
-                "Variação média vs. período anterior (%)", f"{focus} (R$)", f"Variação vs. {prev} (%)", "R$/kWh", "Demanda usada (%)"])
+                "Variação média vs. período anterior (%)", f"{focus} (R$)", f"Variação vs. {prev} (%)", "R$/kWh"] + (["Demanda usada (%)"] if dem else []))
     for r in data["rows"]:
         w.writerow([_csv_cell(r["code"]), _csv_cell(r["name"]), _csv_cell(r["region"]), num(r["total"]), num(r["share"], 1), num(r["avg"]),
-                    num(r["vs_prev_period"]["pct"], 1), num(r["last"]), num(r["vs_last_month"]["pct"], 1), num(r["rs_kwh"], 3), num(r["demand_use"], 1)])
+                    num(r["vs_prev_period"]["pct"], 1), num(r["last"]), num(r["vs_last_month"]["pct"], 1), num(r["rs_kwh"], 3)]
+                   + ([num(r["demand_use"], 1)] if dem else []))
     audit_service.log(db, user.id, "export", "bills", None, {"painel": "diretoria", "lojas": len(data["rows"])})
     db.commit()
     return Response("\ufeff" + out.getvalue(), media_type="text/csv; charset=utf-8",

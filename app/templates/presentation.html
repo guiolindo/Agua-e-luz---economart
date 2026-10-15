@@ -110,7 +110,7 @@
         <div class="stats">
           <div class="stat rv" style="--i:2"><b data-count="8">8</b><span>tipos de conta e de lançamento</span></div>
           <div class="stat rv" style="--i:3"><b data-count="4">4</b><span>perfis de acesso</span></div>
-          <div class="stat rv" style="--i:4"><b data-count="5">5</b><span>abas no painel da diretoria</span></div>
+          <div class="stat rv" style="--i:4">{% set n_abas = 5 if demand_in_use() else 4 %}<b data-count="{{ n_abas }}">{{ n_abas }}</b><span>abas no painel da diretoria</span></div>
           <div class="stat rv" style="--i:5"><b data-count="3">3</b><span>jeitos de levar o painel: papel, planilha e PowerPoint</span></div>
           <div class="stat rv" style="--i:6"><b data-count="1">1</b><span>conferência antes de qualquer conta ser salva</span></div>
         </div>
@@ -218,8 +218,8 @@
 
     <section class="slide s-split" data-chapter="dir" data-sum aria-label="Painel executivo">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · painel</p>{{ lines(['Tudo o que importa,', 'em <em>frases</em>']) }}
-        <ul class="rv" style="--i:2"><li>O que subiu, o que caiu e por quê: consumo ou custo por kWh.</li><li>Cinco abas: Visão geral, Lojas, Gasto evitável, Contratos e Ano.</li><li>Filtro por período e por região, valendo para todas.</li></ul></div>
-      {{ dev('dir-painel', 'Painel executivo com abas, destaques e indicadores', 'Painel executivo', [{'x':30,'y':26,'t':'Cinco abas','side':'r'},{'x':56,'y':42,'t':'Resumo em frases','side':'l'},{'x':91,'y':14,'t':'Imprime em A4 ou A3','side':'l'}]) }}
+        <ul class="rv" style="--i:2"><li>O que subiu, o que caiu e por quê: consumo ou custo por kWh.</li><li>{{ "Cinco abas: Visão geral, Lojas, Gasto evitável, Contratos e Ano." if demand_in_use() else "Quatro abas: Visão geral, Lojas, Gasto evitável e Ano." }}</li><li>Filtro por período e por região, valendo para todas.</li></ul></div>
+      {{ dev('dir-painel', 'Painel executivo com abas, destaques e indicadores', 'Painel executivo', [{'x':30,'y':26,'t':'Uma aba por assunto','side':'r'},{'x':56,'y':42,'t':'Resumo em frases','side':'l'},{'x':91,'y':14,'t':'Imprime em A4 ou A3','side':'l'}]) }}
     </section>
 
     <section class="slide s-split rev" data-chapter="dir" aria-label="Gráficos">
@@ -229,8 +229,8 @@
     </section>
 
     <section class="slide s-split" data-chapter="dir" aria-label="Evolução e comparação">
-      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · evolução</p>{{ lines(['Evolução', 'e <em>demanda</em>']) }}
-        <ul class="rv" style="--i:2"><li>Marque as lojas que quer ver na linha do tempo.</li><li>Custo por kWh contra a média da <b>mesma distribuidora</b> (CEMIG, COELBA e Energisa têm tarifas diferentes).</li><li>Uso médio da demanda contratada.</li><li>Mapa de calor e comparação entre duas lojas.</li></ul></div>
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · evolução</p>{{ lines(['Evolução', 'e <em>demanda</em>']) if demand_in_use() else lines(['Evolução', 'e <em>custo</em>']) }}
+        <ul class="rv" style="--i:2"><li>Marque as lojas que quer ver na linha do tempo.</li><li>Custo por kWh contra a média da <b>mesma distribuidora</b> (CEMIG, COELBA e Energisa têm tarifas diferentes).</li>{% if demand_in_use() %}<li>Uso médio da demanda contratada.</li>{% endif %}<li>Mapa de calor e comparação entre duas lojas.</li></ul></div>
       {{ dev('dir-graficos-2', 'Evolução das lojas e outros gráficos do painel', 'Painel executivo · evolução') }}
     </section>
 
@@ -240,11 +240,11 @@
       {{ dev('dir-evitavel', 'Aba Gasto evitável com o total por tipo e por mês', 'Painel executivo · Gasto evitável', [{'x':22,'y':40,'t':'Total evitável no período','side':'r'},{'x':55,'y':66,'t':'Mês a mês, por tipo','side':'l'}]) }}
     </section>
 
-    <section class="slide s-split" data-chapter="dir" aria-label="Contratos">
+    {% if demand_in_use() %}<section class="slide s-split" data-chapter="dir" aria-label="Contratos">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · contratos</p>{{ lines(['A demanda', 'está <em>certa</em>?']) }}
         <ul class="rv" style="--i:2"><li>Contratada contra a maior demanda medida em 12 meses.</li><li>Quem passou do limite: avaliar aumento.</li><li>Quem usa menos de 80%: avaliar redução.</li><li>Com pouco histórico, o sistema avisa em vez de recomendar.</li></ul></div>
       {{ dev('dir-contratos', 'Aba Contratos com a situação da demanda de cada unidade', 'Painel executivo · Contratos') }}
-    </section>
+    </section>{% endif %}
 
     <section class="slide s-split rev" data-chapter="dir" aria-label="Ano">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · ano</p>{{ lines(['Por que o gasto', '<em>mudou</em>?']) }}

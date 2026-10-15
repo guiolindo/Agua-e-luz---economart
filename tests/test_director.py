@@ -286,7 +286,7 @@ def test_store_profile_does_not_claim_demand_status_without_readings(client, db)
     _store_with_bills(db, "SEMDEM", {(2026, 1): 1000, (2026, 2): 1100})
     sid = db.query(Store).filter_by(code="SEMDEM").one().id
     html = _user(client, "diretor12", "director").get(f"/stores/{sid}?start=2026-01&end=2026-02").text
-    assert "sem leitura de demanda" in html and "dentro do contratado" not in html
+    assert "Demanda contratada usada" not in html and "dentro do contratado" not in html   # nenhuma conta com demanda: o quadro some
 
 
 def test_no_fall_is_reported_when_every_store_rose(db):
