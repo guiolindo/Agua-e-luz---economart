@@ -15,7 +15,7 @@ from app.services.duplicate_service import find_manual_duplicates
 from app.utils import formatting as fmt
 from app.utils.parsing import clean_str, parse_date, parse_decimal, parse_reference
 from app.utils.timezone import local_today
-from app.web import flash, render
+from app.web import flash, plural, render
 
 router = APIRouter()
 DEFAULT_TYPE_CODE = "ll-energia"
@@ -115,11 +115,11 @@ async def batch_save(request: Request, user: User = Depends(writer_required), db
         replaced, created = (replaced + 1, created) if found else (replaced, created + 1)
     db.commit()
 
-    parts = [f"{created} novo(s)"] if created else []
+    parts = [plural(created, "novo", "novos")] if created else []
     if replaced:
-        parts.append(f"{replaced} substituído(s)")
+        parts.append(plural(replaced, "substituído", "substituídos"))
     if skipped:
-        parts.append(f"{skipped} já existia(m) e foi(ram) mantido(s)")
+        parts.append(f"{skipped} já " + ("existia e foi mantido" if skipped == 1 else "existiam e foram mantidos"))
     flash(request, f"{rtype.name} de {fmt.month_label(reference)}: {fmt.brl(value)} em {created + replaced} {'loja' if created + replaced == 1 else 'lojas'}"
                    f" ({', '.join(parts)}).")
     month = reference.strftime("%Y-%m")

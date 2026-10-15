@@ -35,7 +35,7 @@
 
 <section class="card flush">
   <div style="padding:14px 18px 0;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px">
-    <h2 style="margin:0">{{ total }} registro(s){% if total > rows|length %} · mostrando os {{ rows|length }} mais recentes{% endif %}</h2>
+    <h2 style="margin:0">{{ plural(total, "registro", "registros") }}{% if total > rows|length %} · mostrando os {{ rows|length }} mais recentes{% endif %}</h2>
     {% if user.can_write %}<div class="actions">
       <a class="btn sm" href="/import">Importar conta</a>
       <a class="btn sm" href="/manual">Novo lançamento manual</a>

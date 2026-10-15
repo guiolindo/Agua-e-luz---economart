@@ -17,9 +17,9 @@
   <div class="who-pills">{% for uid, n in week %}<a class="who-pill{{ ' on' if por == uid }}" href="/lixeira?por={{ uid }}">{{ names.get(uid, '—') }} · {{ n }}</a>{% endfor %}
   {% if por %}<a class="who-pill" href="/lixeira">Todos</a>{% endif %}</div></div>{% endif %}
 
-{% if por and pending %}<form method="post" action="/lixeira/restaurar-de" class="card" data-confirm-password="Restaurar os {{ pending }} item(ns) excluídos por {{ names.get(por, '—') }}? Confirme com a sua senha.">
+{% if por and pending %}<form method="post" action="/lixeira/restaurar-de" class="card" data-confirm-password="Restaurar {{ plural(pending, "item excluído", "itens excluídos") }} por {{ names.get(por, '—') }}? Confirme com a sua senha.">
   {{ csrf(csrf_token) }}<input type="hidden" name="deleted_by" value="{{ por }}">
-  <div class="trash-all"><div><strong>{{ pending }} item(ns) excluídos por {{ names.get(por, '—') }}</strong> ainda na lixeira.</div>
+  <div class="trash-all"><div><strong>{{ plural(pending, "item excluído", "itens excluídos") }} por {{ names.get(por, '—') }}</strong> ainda na lixeira.</div>
   <button class="btn primary">Restaurar tudo de {{ names.get(por, '—') }}</button></div></form>{% endif %}
 {% endif %}
 

@@ -9,7 +9,7 @@
   <div class="actions">{% if user.can_write %}<a class="btn" href="/units/{{ unit.id }}/edit">Editar unidade</a><a class="btn primary" href="/import?store_id={{ store.id }}">Importar conta</a><a class="btn" href="/manual?store_id={{ store.id }}">Lançamento manual</a>{% endif %}</div>
 </div>
 
-{% if off_type and user.can_write %}<div class="flash warn" role="status"><strong>{{ off_type }} conta(s) desta unidade estão com outro fornecedor</strong> (não {{ rtype.name }}). Os painéis somam pelo fornecedor de cada conta.
+{% if off_type and user.can_write %}<div class="flash warn" role="status"><strong>{{ plural(off_type, "conta desta unidade está", "contas desta unidade estão") }} com outro fornecedor</strong> (não {{ rtype.name }}). Os painéis somam pelo fornecedor de cada conta.
   <form method="post" action="/units/{{ unit.id }}/align-type" style="display:inline">{{ csrf(csrf_token) }}<button class="btn sm primary">Passar para {{ rtype.name }}</button></form></div>{% endif %}
 {% if last %}
 <p class="muted" style="margin-top:-8px">Última conta: <strong>{{ last.reference|month_label }}</strong>, vencimento {{ last.due_date|date_br }}.</p>

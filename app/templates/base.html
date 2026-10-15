@@ -96,7 +96,7 @@
   <main class="main" id="content" tabindex="-1">
     {% if not user.must_change_password %}<div class="topbar no-print">
       {# "+ Unidade consumidora" só faz sentido como atalho rápido no painel/lojas/ajuda. Em telas que já tratam cadastros, importação ou lançamento, vira ruído. #}
-      {% set show_point_btn = user.can_write and not (path.startswith('/import') or path.startswith('/manual') or path.startswith('/admin') or path.startswith('/types') or path.startswith('/account') or path.startswith('/points') or path.startswith('/notas')) %}
+      {% set show_point_btn = user.can_write and not (path.startswith('/import') or path.startswith('/manual') or path.startswith('/admin') or path.startswith('/types') or path.startswith('/account') or path.startswith('/points') or path.startswith('/notas') or path.startswith('/lixeira')) %}
       {% if show_point_btn %}<button class="btn sm" type="button" data-open-point>+ Unidade consumidora</button>{% endif %}
       {% if user.gets_due_alerts %}
       <div class="bellwrap">
@@ -107,7 +107,7 @@
       </div>
       {% endif %}
     </div>{% endif %}
-    {% if legacy_count %}<div class="flash warn" role="status"><strong>{{ legacy_count }} loja(s) criada(s) antes da lista oficial.</strong> Vincule cada uma à loja da lista para juntar as contas. <a href="/stores#vincular"><strong>Vincular agora</strong></a></div>{% endif %}
+    {% if legacy_count %}<div class="flash warn" role="status"><strong>{{ plural(legacy_count, "loja criada", "lojas criadas") }} antes da lista oficial.</strong> Vincule cada uma à loja da lista para juntar as contas. <a href="/stores#vincular"><strong>Vincular agora</strong></a></div>{% endif %}
     {% if user and user.is_admin and not user.has_2fa and path in ('/', '/admin/users') and not user.must_change_password %}<div class="flash warn" role="status">Ative a verificação em duas etapas da sua conta de administrador. <a href="/account/2fa"><strong>Ativar</strong></a></div>{% endif %}
     {% if undo %}<div class="flash info undo" role="status"><span>{{ undo.text }}</span>
       <form method="post" action="/lixeira/{{ undo.id }}/restaurar">{{ '' }}<input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="next" value="{{ undo.next }}"><button class="btn sm">Desfazer</button></form>

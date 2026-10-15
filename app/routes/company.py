@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models import Store, User
 from app.security import admin_required, verify_csrf
 from app.services import audit_service, company_stores
-from app.web import flash, render
+from app.web import flash, plural, render
 
 router = APIRouter()
 MAX_TEXT = 200_000
@@ -54,9 +54,9 @@ def company_import(request: Request, text: str = Form("", max_length=MAX_TEXT), 
     audit_service.log(db, user.id, "import", "company_stores", None,
                       {"created": created, "updated": updated, "codes": [r.code for r in parsed.rows][:200]})
     db.commit()
-    msg = f"Lista carregada: {created} loja(s) nova(s), {updated} atualizada(s)."
+    msg = f"Lista carregada: {plural(created, 'loja nova', 'lojas novas')}, {plural(updated, 'atualizada', 'atualizadas')}."
     if parsed.errors:
-        msg += f" {len(parsed.errors)} linha(s) ignorada(s) por erro."
+        msg += f" {plural(len(parsed.errors), 'linha ignorada', 'linhas ignoradas')} por erro."
     flash(request, msg)
     return RedirectResponse("/stores#vincular" if company_stores.legacy_stores(db) else "/stores", status_code=303)
 
@@ -97,6 +97,6 @@ def link_store(request: Request, legacy_id: int = Form(...), official_id: int = 
                       {"from_id": old_id, "from": old_label, "units": summary.units, "bills": summary.bills,
                        "records": summary.records})
     db.commit()
-    flash(request, f"{old_label} vinculada a {new.label}: {summary.units} ponto(s) de energia, {summary.bills} conta(s) "
-                   f"e {summary.records} lançamento(s) passaram para a loja oficial.")
+    flash(request, f"{old_label} vinculada a {new.label}: {plural(summary.units, 'unidade', 'unidades')}, {plural(summary.bills, 'conta', 'contas')} "
+                   f"e {plural(summary.records, 'lançamento', 'lançamentos')} passaram para a loja oficial.")
     return RedirectResponse("/stores#vincular", status_code=303)

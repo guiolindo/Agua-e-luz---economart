@@ -50,7 +50,7 @@ def test_parse_flags_bad_lines():
 
 def test_admin_previews_then_loads_the_list(client, db):
     page = client.post("/admin/lojas/conferir", {"text": LIST})
-    assert page.status_code == 200 and "Conferência: 8 loja(s)" in page.text and "Contagem Colonial" in page.text
+    assert page.status_code == 200 and "Conferência: 8 lojas" in page.text and "Contagem Colonial" in page.text
     assert db.query(Store).count() == 0                                                          # conferir não grava
     r = client.post("/admin/lojas/carregar", {"text": LIST})
     assert r.status_code == 303
@@ -73,13 +73,13 @@ def test_old_store_shows_up_to_be_linked_and_links_with_everything(client, db):
     _seed_bill(client, db, old_id)
     assert "Vincule" not in client.get("/").text                                                 # sem lista ainda: sem aviso
     client.post("/admin/lojas/carregar", {"text": LIST})
-    assert "1 loja(s) criada(s) antes da lista oficial" in client.get("/").text
+    assert "1 loja criada antes da lista oficial" in client.get("/").text
     page = client.get("/stores").text
-    assert "Vincule 1 loja(s) criada(s) antes da lista" in page                                   # na própria tela Lojas
+    assert "Vincule 1 loja criada antes da lista" in page                                   # na própria tela Lojas
     official = db.query(Store).filter_by(code="300").one()
     assert f'<option value="{official.id}" selected>' in page                                    # sugestão: CD300 -> 300
     confirm = client.get(f"/admin/lojas/vincular?legacy={old_id}&official={official.id}")
-    assert confirm.status_code == 200 and "1</strong> ponto(s) de energia e <strong>1</strong> conta(s)" in confirm.text
+    assert confirm.status_code == 200 and "1</strong> unidade e <strong>1</strong> conta" in confirm.text
     r = client.post("/admin/lojas/vincular", {"legacy_id": old_id, "official_id": official.id})
     assert r.status_code == 303
     db.expire_all()

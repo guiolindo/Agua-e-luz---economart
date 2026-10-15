@@ -14,7 +14,7 @@
 {% elif enabled %}
 <div class="card" style="max-width:560px">
   <p><span class="badge ok">Ativo</span> O login deste administrador exige o código do autenticador.</p>
-  <p class="muted small">Restam {{ user.totp_recovery|length if user.totp_recovery else 0 }} código(s) de recuperação.</p>
+  <p class="muted small">Restam {{ plural(user.totp_recovery|length if user.totp_recovery else 0, "código", "códigos") }} de recuperação.</p>
   <h2>Desativar</h2>
   <form method="post" action="/account/2fa/disable" data-confirm="Desativar a verificação em duas etapas?">
     {{ csrf(csrf_token) }}

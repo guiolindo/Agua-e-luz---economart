@@ -11,16 +11,16 @@
 {% if delete_blocks %}<div class="flash error" role="alert"><div><strong>Muitas exclusões seguidas:</strong>
   {% for uid in delete_blocks|map(attribute='user_id')|unique %}{{ p.names.get(uid, '—') }}{{ ', ' if not loop.last }}{% endfor %} excluiu muitos itens em pouco tempo e as novas exclusões foram pausadas.
   <a href="/lixeira"><strong>Ver na Lixeira</strong></a></div></div>
-{% elif trash_week %}<div class="flash info" role="status">{{ trash_week }} conta(s)/lançamento(s) excluído(s) nos últimos 7 dias. <a href="/lixeira">Lixeira</a></div>{% endif %}
+{% elif trash_week %}<div class="flash info" role="status">{{ plural(trash_week, "item excluído", "itens excluídos") }} nos últimos 7 dias. <a href="/lixeira">Ver na Lixeira</a></div>{% endif %}
 <div class="grid cols-4" style="margin-bottom:16px">
-  <div class="kpi"><div class="label">On-line agora</div><div class="value">{{ p.online|length }}</div><div class="sub">de {{ p.active_users }} usuário(s) ativo(s)</div></div>
+  <div class="kpi"><div class="label">On-line agora</div><div class="value">{{ p.online|length }}</div><div class="sub">de {{ plural(p.active_users, "usuário ativo", "usuários ativos") }}</div></div>
   <div class="kpi alt"><div class="label">Contas lançadas em {{ month|month_label }}</div><div class="value">{{ r.total }}</div><div class="sub">{% if r.prev_total %}{% set d = (r.total - r.prev_total) / r.prev_total * 100 %}<span class="{{ 'up' if d > 0 else 'down' }}">{{ '↑' if d > 0 else '↓' if d < 0 else '→' }} {{ d|abs|round(0)|int }}%</span> vs. mês anterior ({{ r.prev_total }}){% else %}hoje: {{ p.entries_today }}{% endif %}</div></div>
   <div class="kpi"><div class="label">Importadas pela IA</div><div class="value">{{ (r.ia / r.total * 100)|round(0)|int if r.total else 0 }}%</div><div class="sub">{{ r.ia }} pela IA · {{ r.mao }} à mão{% if f.saved_pct is not none %} · {{ f.saved_pct|round(0)|int }}% dos envios salvos{% endif %}</div></div>
   <div class="kpi {{ 'alt' if p.failed_logins }}"><div class="label">Senhas erradas (24 h)</div><div class="value">{{ p.failed_logins }}</div><div class="sub">{% if p.failed_logins %}<a href="/admin/audit?action=login_failed">ver quem</a>{% else %}nenhuma tentativa suspeita{% endif %}</div></div>
 </div>
 
 <section class="card adm-rank">
-  <div class="adm-head"><h2>Quem mais lançou contas em {{ month|month_label }}</h2><span class="muted small">{{ r.total }} conta(s){% if r.unassigned %} · {{ r.unassigned }} sem autor (carga inicial){% endif %}</span></div>
+  <div class="adm-head"><h2>Quem mais lançou contas em {{ month|month_label }}</h2><span class="muted small">{{ plural(r.total, "conta", "contas") }}{% if r.unassigned %} · {{ r.unassigned }} sem autor (carga inicial){% endif %}</span></div>
   {% if r.rows %}
   <div class="adm-rank-body">
     <ol class="podium">{% for x in r.rows[:3] %}<li class="p{{ loop.index }}"><span class="pos">{{ loop.index }}º</span>
@@ -34,7 +34,7 @@
 <div class="grid cols-2 adm-grid">
   <section class="card"><div class="adm-head"><h2>Contas lançadas por dia</h2><span class="muted small">{{ month|month_label }}</span></div>
     {% if r.total %}{{ viz(dict(daily, axis='Dia'), 'Contas lançadas por dia em ' ~ (month|month_label), height=230) }}{% else %}<p class="muted">Nenhuma conta lançada em {{ month|month_label }}.</p>{% endif %}</section>
-  <section class="card"><div class="adm-head"><h2>Importações (fotos e PDFs)</h2><span class="muted small">{{ f.total }} enviada(s) em {{ month|month_label }}</span></div>
+  <section class="card"><div class="adm-head"><h2>Importações (fotos e PDFs)</h2><span class="muted small">{{ plural(f.total, "enviada", "enviadas") }} em {{ month|month_label }}</span></div>
     {% if f.total %}<ul class="funnel">{% for s in f.stages %}<li class="st-{{ s.key }}"><span class="fl">{{ s.label }}</span><span class="fbar"><i style="width:{{ [s.pct, 0.5 if s.n else 0]|max }}%"></i></span><span class="fn"><strong>{{ s.n }}</strong> <span class="muted small">{{ s.pct|round(0)|int }}%</span></span></li>{% endfor %}</ul>
     {% else %}<p class="muted">Nenhuma foto ou PDF enviado neste mês.</p>{% endif %}</section>
 </div>
@@ -62,12 +62,12 @@
     {% else %}<p class="muted">Ninguém exportou ainda.</p>{% endif %}</section>
 </div>
 
-<section class="card adm-grid"><div class="adm-head"><h2>Acessos por dia</h2><span class="muted small">últimos 30 dias · {{ logins.active_days }} dia(s) com acesso</span></div>
+<section class="card adm-grid"><div class="adm-head"><h2>Acessos por dia</h2><span class="muted small">últimos 30 dias · {{ plural(logins.active_days, "dia", "dias") }} com acesso</span></div>
   {% if logins.active_days %}{{ viz(dict(logins, axis='Dia'), 'Acessos ao sistema por dia, últimos 30 dias', height=200) }}{% else %}<p class="muted">Nenhum acesso nos últimos 30 dias.</p>{% endif %}</section>
 
 <div class="grid cols-2 adm-grid">
   <section class="card"><h2>Apresentação do sistema</h2>
-    <p><strong>{{ p.presentation_seen }}</strong> de {{ p.active_users }} usuário(s) já abriram.</p>
+    <p><strong>{{ p.presentation_seen }}</strong> de {{ plural(p.active_users, "usuário", "usuários") }} já abriram.</p>
     {% if p.presentation_views %}<ul class="adm-list">{% for v in p.presentation_views %}<li><strong>{{ p.names.get(v.user_id, '—') }}</strong><span class="muted small">{{ v.at|dt_br }} · {{ ago(v.at) }}</span></li>{% endfor %}</ul>{% endif %}
     {% if p.presentation_missing %}<p class="muted small">Ainda não abriram: {{ p.presentation_missing|map(attribute='username')|join(', ') }}</p>{% endif %}</section>
 

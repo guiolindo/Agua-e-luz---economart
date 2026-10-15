@@ -355,7 +355,7 @@ def bills_workbook(rows: list[dict], filters_text: str) -> bytes:
     ws = wb.active
     ws.title = "Contas"
     heads = ["Mês de referência", "Loja", "Unidade consumidora", "Tipo", "Valor", "Vencimento", "Nota fiscal", "Origem"]
-    first = _title(ws, "Contas e lançamentos · Economart", f"{filters_text} · {len(rows)} registro(s) · {_stamp()}", len(heads))
+    first = _title(ws, "Contas e lançamentos · Economart", f"{filters_text} · {len(rows)} {"registro" if len(rows) == 1 else "registros"} · {_stamp()}", len(heads))
     _header(ws, first, heads)
     row = first + 1
     for r in rows:

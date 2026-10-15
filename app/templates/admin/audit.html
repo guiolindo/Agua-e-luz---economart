@@ -12,8 +12,8 @@
 <form method="get" class="filterbar"><label for="a">Filtrar por evento</label>
   <select id="a" name="action" data-autosubmit><option value="">Todos os eventos</option>{% for a, lbl in actions %}<option value="{{ a }}" {{ 'selected' if a == action }}>{{ lbl }}</option>{% endfor %}</select>
   {% if action %}<a class="btn sm" href="/admin/audit">Limpar filtro</a>{% endif %}
-  <span class="muted small">{{ rows|length }} evento(s) exibido(s)</span></form>
-{% if integrity %}{% if integrity.ok %}<div class="flash ok" role="status"><strong>Auditoria íntegra.</strong> {{ integrity.protected }} evento(s) protegidos conferidos{% if integrity.legacy %}; {{ integrity.legacy }} anterior(es) à proteção (não verificáveis){% endif %}.
+  <span class="muted small">{{ plural(rows|length, "evento exibido", "eventos exibidos") }}</span></form>
+{% if integrity %}{% if integrity.ok %}<div class="flash ok" role="status"><strong>Auditoria íntegra.</strong> {{ plural(integrity.protected, "evento protegido conferido", "eventos protegidos conferidos") }}{% if integrity.legacy %}; {{ plural(integrity.legacy, "anterior", "anteriores") }} à proteção (não verificáveis){% endif %}.
   <div class="small muted" style="margin-top:4px">Selo final: <span class="mono">{{ integrity.head[:16] }}…</span> Guarde uma cópia deste código: se os últimos registros forem apagados, só ele revela.</div></div>
 {% else %}<div class="flash error" role="alert"><strong>Adulteração detectada no evento #{{ integrity.broken_id }}.</strong> {{ integrity.reason|capitalize }}. Os eventos a partir dele não são confiáveis; preserve uma cópia do banco e investigue.</div>{% endif %}{% endif %}
 <div class="card flush"><div class="tablewrap"><table class="stack"><thead><tr><th>Quando</th><th>Usuário</th><th>Evento</th><th>Registro</th><th>Detalhes</th></tr></thead><tbody>

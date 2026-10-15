@@ -1,4 +1,5 @@
-from datetime import timedelta
+from datetime import date, timedelta
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
@@ -12,6 +13,7 @@ from app.database import get_db
 from app.models import AuditLog, TrashItem, User
 from app.security import admin_required, verify_csrf
 from app.services import audit_service, auth_service, network_service, totp_service, trash_service
+from app.utils import formatting as fmt
 from app.web import flash, render
 
 router = APIRouter()
@@ -191,20 +193,54 @@ def action_label(action: str, entity: str = "") -> str:
     return f"{base} · {ent}" if action in ("create", "update", "delete", "restore") and ent else base
 
 
+# Chaves internas que não dizem nada a quem lê a auditoria (ids técnicos, dados brutos, flags).
+_HIDDEN_DETAILS = {"before", "after", "rede", "by_admin", "trash_id", "store_id", "unit_id", "bill_id", "from_id", "batch",
+                   "data", "source", "quick", "ok", "count_only"}
+_ROLE_NAMES = {"admin": "administrador", "operator": "funcionário", "director": "diretoria", "viewer": "consulta"}
+
+
 def details_text(details: dict | None) -> str:
-    """Detalhes legíveis: IP em claro, usuário digitado oculto (pseudonimizado), antes/depois ficam de fora."""
+    """Detalhes legíveis em português: IP em claro, usuário digitado oculto, nada de nome de campo interno."""
     parts = []
     for k, v in (details or {}).items():
-        if k in ("before", "after", "rede") or v in (None, "", False):
+        if k in _HIDDEN_DETAILS or v in (None, "", False, [], {}):
             continue
         if k == "ip":
             parts.append("IP anonimizado (registro antigo)" if str(v).startswith("h:") else f"IP {v}")
         elif k == "user" and str(v).startswith("h:"):
             parts.append("usuário digitado oculto")
-        elif k == "by_admin":
-            continue
         elif k == "recovery_code":
             parts.append("usou código de recuperação")
+        elif k in ("resumo", "nome", "name", "username", "alerta", "number", "code"):
+            parts.append(str(v))
+        elif k == "cidr":
+            parts.append(f"IP {str(v)[:-3] if str(v).endswith('/32') else v}")
+        elif k == "role":
+            parts.append(f"perfil {_ROLE_NAMES.get(v, v)}")
+        elif k == "formato":
+            parts.append(str(v).upper())
+        elif k == "painel":
+            parts.append(f"painel {v}")
+        elif k in ("rows", "lojas", "units", "bills", "records", "count", "created", "updated"):
+            one, many = {"rows": ("linha", "linhas"), "lojas": ("loja", "lojas"), "units": ("unidade", "unidades"),
+                         "bills": ("conta", "contas"), "records": ("lançamento", "lançamentos"), "count": ("item", "itens"),
+                         "created": ("nova", "novas"), "updated": ("atualizada", "atualizadas")}[k]
+            parts.append(f"{v} {one if v == 1 else many}")
+        elif k == "q":
+            parts.append(f'busca "{v}"')
+        elif k == "reference":
+            parts.append(fmt.month_label(date.fromisoformat(str(v)[:10])) if str(v)[:4].isdigit() else str(v))
+        elif k in ("value", "total_value"):
+            try:
+                parts.append(fmt.brl(Decimal(str(v))))
+            except Exception:  # noqa: BLE001 — valor fora do padrão: mostra como veio
+                parts.append(str(v))
+        elif k == "due_day":
+            parts.append(f"vence dia {v}")
+        elif k == "limit_per_hour":
+            parts.append(f"limite de {v} por hora")
+        elif k == "from":
+            parts.append(f"de {v}")
         else:
             parts.append(f"{k}: {v}")
     return " · ".join(parts)

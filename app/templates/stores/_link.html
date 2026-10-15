@@ -1,6 +1,6 @@
 {% if legacy %}
 <section class="card" id="vincular" style="border-left:4px solid var(--orange)">
-  <h2>Vincule {{ legacy|length }} loja(s) criada(s) antes da lista</h2>
+  <h2>Vincule {{ plural(legacy|length, "loja criada", "lojas criadas") }} antes da lista</h2>
   <p class="muted">Unidades, contas e lançamentos passam para a loja escolhida, e a antiga deixa de existir.</p>
   <div class="tablewrap"><table>
     <thead><tr><th>Loja antiga</th><th class="num">Pontos</th><th class="num">Contas</th><th>Loja oficial</th><th><span class="sr">Ação</span></th></tr></thead>

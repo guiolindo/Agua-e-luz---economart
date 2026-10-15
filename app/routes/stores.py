@@ -14,7 +14,7 @@ from app.security import current_user, verify_csrf, writer_required
 from app.services import audit_service, chart_service, company_stores, due_service, unit_type_service
 from app.services.import_service import UnitConflict, create_unit
 from app.utils.parsing import clean_str, normalize_uc, parse_due_day, parse_reference
-from app.web import flash, render
+from app.web import flash, plural, render
 
 router = APIRouter()
 
@@ -198,9 +198,9 @@ async def unit_edit(request: Request, unit_id: int, number: str = Form(...), des
     db.commit()
     msg = "Unidade atualizada." + (f" Vence todo dia {day}." if day else " Sem dia de vencimento (não gera aviso).")
     if moved:
-        msg += f" {moved} conta(s) já lançada(s) passaram para {unit.record_type.name}."
+        msg += f" {plural(moved, 'conta já lançada passou', 'contas já lançadas passaram')} para {unit.record_type.name}."
     if kept:
-        msg += f" {kept} conta(s) ficaram como estavam: já existe conta de {unit.record_type.name} no mesmo mês."
+        msg += f" {plural(kept, 'conta ficou como estava', 'contas ficaram como estavam')}: já existe conta de {unit.record_type.name} no mesmo mês."
     flash(request, msg, "warn" if kept else "ok")
     return RedirectResponse(f"/units/{unit.id}", status_code=303)
 
@@ -216,7 +216,7 @@ def unit_align_type(request: Request, unit_id: int, user: User = Depends(writer_
                       {"align_bills_to": unit.record_type_id, "bills_moved": moved, "bills_kept": kept})
     db.commit()
     name = unit.record_type.name if unit.record_type else "o fornecedor da unidade"
-    flash(request, f"{moved} conta(s) passaram para {name}." + (f" {kept} ficaram como estavam: já existe conta de {name} no mesmo mês." if kept else ""),
+    flash(request, f"{plural(moved, 'conta passou', 'contas passaram')} para {name}." + (f" {plural(kept, 'ficou como estava', 'ficaram como estavam')}: já existe conta de {name} no mesmo mês." if kept else ""),
           "warn" if kept else "ok")
     return RedirectResponse(f"/units/{unit.id}", status_code=303)
 

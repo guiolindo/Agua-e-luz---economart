@@ -12,7 +12,7 @@
   <div class="kpi alt"><div class="label">Contas em {{ month|month_label }}</div><div class="value">{{ d.month_n }}</div>
     <div class="sub">{% if rank_pos %}{{ rank_pos }}º de {{ rank_n }} no mês · {% endif %}{% if d.prev_n %}mês anterior: {{ d.prev_n }}{% else %}{{ d.month_ia }} pela IA{% endif %}</div></div>
   <div class="kpi"><div class="label">Total já lançado</div><div class="value">{{ d.total_ever }}</div><div class="sub">contas e lançamentos desde o início</div></div>
-  <div class="kpi"><div class="label">Acessos (30 dias)</div><div class="value">{{ d.logins.series[0].data|sum }}</div><div class="sub">em {{ d.logins.active_days }} dia(s){% if d.busiest is not none %} · usa mais por volta das {{ d.busiest }}h{% endif %}</div></div>
+  <div class="kpi"><div class="label">Acessos (30 dias)</div><div class="value">{{ d.logins.series[0].data|sum }}</div><div class="sub">em {{ plural(d.logins.active_days, "dia", "dias") }}{% if d.busiest is not none %} · usa mais por volta das {{ d.busiest }}h{% endif %}</div></div>
   <div class="kpi"><div class="label">Apresentação do sistema</div><div class="value sm">{{ 'Viu' if d.last_view else 'Não viu' }}</div><div class="sub">{{ d.last_view|dt_br if d.last_view else 'ainda não abriu' }}</div></div>
 </div>
 

@@ -8,7 +8,7 @@
 
 {% if preview %}
 <section class="card">
-  <h2>Conferência: {{ preview.rows|length }} loja(s){% if preview.errors %} · {{ preview.errors|length }} linha(s) com erro{% endif %}</h2>
+  <h2>Conferência: {{ plural(preview.rows|length, "loja", "lojas") }}{% if preview.errors %} · {{ plural(preview.errors|length, "linha", "linhas") }} com erro{% endif %}</h2>
   <p class="muted">Nada foi gravado ainda.</p>
   {% if preview.errors %}<div class="flash error" role="alert"><strong>Linhas ignoradas:</strong>
     <ul>{% for e in preview.errors %}<li>Linha {{ e.line }}: {{ e.error }}</li>{% endfor %}</ul></div>{% endif %}

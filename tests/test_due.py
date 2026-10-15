@@ -216,7 +216,7 @@ def test_unit_page_offers_to_fix_bills_with_another_supplier(client, db):
     unit.record_type_id = gt.id                                            # mudou antes desta correção: contas ficaram como CEMIG
     db.commit()
     page = client.get(f"/units/{unit.id}").text
-    assert "1 conta(s) desta unidade estão com outro fornecedor" in page
+    assert "1 conta desta unidade está com outro fornecedor" in page
     assert client.post(f"/units/{unit.id}/align-type", {}).status_code == 303
     db.expire_all()
     assert db.query(EnergyBill).one().record_type_id == gt.id

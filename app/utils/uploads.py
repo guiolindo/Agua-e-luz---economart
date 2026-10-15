@@ -49,7 +49,7 @@ def validate_upload(filename: str, data: bytes, max_bytes: int) -> tuple[str, st
         if pages == 0:
             raise UploadError("Não foi possível abrir este PDF. Confira se o arquivo não está corrompido ou protegido por senha.")
         if pages > MAX_PDF_PAGES:
-            raise UploadError(f"O PDF tem {pages} páginas. Envie apenas a(s) página(s) da conta (até {MAX_PDF_PAGES}).")
+            raise UploadError(f"O PDF tem {pages} páginas. Envie só as páginas da conta (até {MAX_PDF_PAGES}).")
         if pdf_has_active_content(data):
             raise UploadError("Este PDF tem código embutido (JavaScript ou comando de abrir programa) e foi recusado por "
                               "segurança. Conta de energia não tem isso: baixe o PDF de novo no site da distribuidora "

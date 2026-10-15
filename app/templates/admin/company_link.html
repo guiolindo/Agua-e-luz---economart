@@ -7,8 +7,8 @@
   <input type="hidden" name="legacy_id" value="{{ old.id }}"><input type="hidden" name="official_id" value="{{ new.id }}">
   <p style="font-size:16px"><strong>{{ old.label }}</strong> (loja antiga) → <strong>{{ new.label }}</strong>{% if new.region %} · {{ new.region }}{% endif %} (lista da empresa)</p>
   <ul>
-    <li><strong>{{ summary.units }}</strong> ponto(s) de energia e <strong>{{ summary.bills }}</strong> conta(s) passam para {{ new.code }}.</li>
-    <li><strong>{{ summary.records }}</strong> lançamento(s) manual(is) passam para {{ new.code }}.</li>
+    <li><strong>{{ summary.units }}</strong> {{ "unidade" if summary.units == 1 else "unidades" }} e <strong>{{ summary.bills }}</strong> {{ "conta" if summary.bills == 1 else "contas" }} passam para {{ new.code }}.</li>
+    <li><strong>{{ summary.records }}</strong> {{ "lançamento manual" if summary.records == 1 else "lançamentos manuais" }} passam para {{ new.code }}.</li>
     <li>O código e o nome antigos ({{ old.label }}) viram apelidos de {{ new.code }}, para a leitura das contas continuar reconhecendo.</li>
     <li>A loja antiga <strong>{{ old.code }}</strong> deixa de existir.</li>
   </ul>

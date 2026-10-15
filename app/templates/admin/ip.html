@@ -3,7 +3,7 @@
 {% block title %}Rede da empresa · Economart Energia{% endblock %}
 {% block content %}
 <div class="page-head"><div><div class="crumbs"><a href="/admin/audit">Auditoria</a> /</div><h1>Rede da empresa</h1>
-  <div class="muted">Cada evento da auditoria anota se veio da rede da empresa, pelo IP do link de internet. Só informação: nada é bloqueado.</div></div></div>
+  <div class="muted">Pelo IP do link de internet, cada evento da auditoria fica marcado como na empresa ou fora. Nada é bloqueado.</div></div></div>
 
 <div class="grid cols-2">
 <section class="card">
@@ -13,7 +13,7 @@
     <div class="sub">{% if not configured %}<span class="muted">nenhum IP da empresa cadastrado ainda</span>{% elif company_ip %}<span class="badge ok">Na empresa</span>{% else %}<span class="badge warn">Fora da empresa</span>{% endif %}</div></div>
   {% if not company_ip %}<form method="post" action="/admin/rede" class="inline-form">{{ csrf(csrf_token) }}
     <input type="hidden" name="cidr" value="{{ chosen }}">
-    <div class="field"><label for="lbl-me">Nome (opcional)</label><input id="lbl-me" name="label" placeholder="Ex.: Link Algar escritório" maxlength="80"></div>
+    <div class="field"><label for="lbl-me">Nome (opcional)</label><input type="text" id="lbl-me" name="label" placeholder="Ex.: Link Algar escritório" maxlength="80"></div>
     <button class="btn primary">Cadastrar este IP como da empresa</button></form>{% endif %}
   <details class="muted small" style="margin-top:12px"><summary>Detalhes técnicos</summary>
     <table class="dense"><tbody>
@@ -32,8 +32,8 @@
     {% for e in env %}<tr><td class="mono">{{ e }}</td><td class="muted small">variável COMPANY_NETWORKS do Railway</td><td></td></tr>{% endfor %}
   </tbody></table>{% else %}<p class="muted">Nenhum IP cadastrado.</p>{% endif %}
   <form method="post" action="/admin/rede" class="inline-form" style="margin-top:12px">{{ csrf(csrf_token) }}
-    <div class="field"><label for="cidr">IP ou faixa</label><input id="cidr" name="cidr" required placeholder="187.32.111.41 ou 186.248.0.0/16" maxlength="64"></div>
-    <div class="field"><label for="lbl">Nome (opcional)</label><input id="lbl" name="label" placeholder="Ex.: Link American Tower" maxlength="80"></div>
+    <div class="field"><label for="cidr">IP ou faixa</label><input type="text" id="cidr" name="cidr" inputmode="decimal" autocomplete="off" required placeholder="Ex.: 187.32.111.41" maxlength="64"></div>
+    <div class="field"><label for="lbl">Nome (opcional)</label><input type="text" id="lbl" name="label" placeholder="Ex.: Link American Tower" maxlength="80"></div>
     <button class="btn">Cadastrar</button></form>
   <p class="hint">Empresa com dois links de internet tem dois IPs: cadastre os dois. Funciona com IP fixo; se a operadora trocar o IP, o novo aparece abaixo.</p>
 </section>

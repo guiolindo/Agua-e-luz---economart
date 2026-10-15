@@ -348,7 +348,7 @@ def store_profile(data: dict, store_id: int) -> dict | None:
     if row.get("demand_use") is not None:
         txt = f"Usa {fmt.pct(row['demand_use'])} da demanda contratada"
         if row.get("demand_over"):
-            out.append({"tone": "bad", "text": txt + f" e ultrapassou o contratado em {row['demand_over']} mês(es) (pode gerar cobrança de ultrapassagem)."})
+            out.append({"tone": "bad", "text": txt + f" e ultrapassou o contratado em {row['demand_over']} {'mês' if row['demand_over'] == 1 else 'meses'} (pode gerar cobrança de ultrapassagem)."})
         elif row["demand_use"] < 60:
             out.append({"tone": "info", "text": txt + ": o contrato pode estar maior que o necessário."})
     return {"rank": rank, "n": n, "row": row, "kwh_diff": kwh_diff, "avg_kwh": avg, "focus_label": focus, "prev_label": prev, "insights": out}

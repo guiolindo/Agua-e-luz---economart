@@ -64,7 +64,7 @@ def test_wrong_password_says_wrong_password_and_lockout_says_locked(client, db):
         r = _login(c, "maria", "errada-errada-1")
         assert r.status_code == 401 and "incorretos" in r.text and LOCKED not in r.text
     third = _login(c, "maria", "errada-errada-1")       # a que estoura o limite já avisa do bloqueio
-    assert third.status_code == 401 and LOCKED in third.text and "15 minuto(s)" in third.text
+    assert third.status_code == 401 and LOCKED in third.text and "15 minutos" in third.text
     r = _login(c, "maria", pw)                          # senha CERTA, mas conta bloqueada
     assert r.status_code == 401 and LOCKED in r.text
     db.expire_all()

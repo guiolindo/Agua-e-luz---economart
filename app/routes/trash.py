@@ -14,7 +14,7 @@ from app.models import TrashItem, User
 from app.models.mixins import utcnow
 from app.security import admin_required, verify_csrf, writer_required
 from app.services import trash_service
-from app.web import flash, render
+from app.web import flash, plural, render
 
 router = APIRouter()
 
@@ -89,8 +89,8 @@ def trash_restore_all(request: Request, deleted_by: int = Form(...), confirm_pas
         except trash_service.TrashError:
             again += 1
     db.commit()
-    msg = f"{ok} item(ns) restaurado(s)."
+    msg = f"{plural(ok, 'item restaurado', 'itens restaurados')}."
     if again:
-        msg += f" {again} não precisaram: o mesmo mês já foi lançado de novo."
+        msg += f" {plural(again, 'não precisou', 'não precisaram')}: o mesmo mês já foi lançado de novo."
     flash(request, msg)
     return RedirectResponse(f"/lixeira?por={deleted_by}", status_code=303)
