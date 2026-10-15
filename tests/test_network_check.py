@@ -47,3 +47,10 @@ def test_outside_is_shown_as_such_and_requires_csrf(client, db, monkeypatch):
     assert client.tc.post("/api/rede", json={"intranet": True}).status_code == 403   # sem token
     client.tc.post("/api/rede", json={"intranet": False}, headers={"X-CSRF-Token": client.token})
     assert "Fora da empresa" in client.get("/admin").text
+
+
+def test_ip_page_offers_a_live_test_when_configured(client, monkeypatch):
+    assert "net-live" not in client.get("/admin/ip").text
+    monkeypatch.setattr(get_settings(), "intranet_probe_url", "http://lupus.intranet/")
+    html = client.get("/admin/ip").text
+    assert 'id="net-live" data-url="http://lupus.intranet/"' in html and "Testar agora" in html

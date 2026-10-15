@@ -13,6 +13,9 @@
     <tr><th>Teste da intranet</th><td>{% if probe %}{{ probe }} · {{ 'esta sessão: na empresa' if net == 1 else 'esta sessão: fora' if net == 0 else 'ainda não testado nesta sessão' }}{% else %}<span class="muted">desligado (INTRANET_PROBE_URL)</span>{% endif %}</td></tr>
     <tr><th>Regra em uso</th><td>{{ 'X-Real-IP (Railway)' if src.source != 'xff' else 'X-Forwarded-For contado do fim' }}</td></tr>
   </tbody></table>
+  {% if probe %}<div class="net-live" id="net-live" data-url="{{ probe }}">
+    <button class="btn" type="button" id="net-live-go">Testar agora</button>
+    <pre class="small mono" id="net-live-out" hidden></pre></div>{% endif %}
   <p class="hint">Se o IP registrado não for o seu, me passe esta tela: a regra é ajustada pela variável <span class="mono">CLIENT_IP_SOURCE</span> no Railway.</p>
 </div>
 {% endblock %}

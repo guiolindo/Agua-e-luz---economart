@@ -817,3 +817,4 @@ kbd { display: inline-block; min-width: 22px; padding: 2px 7px; border: 1px soli
 .bridge dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; }
 .bridge dt { color: var(--ink-2); } .bridge dd { margin: 0; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
 .bridge dd.up { color: var(--bad); } .bridge dd.down { color: var(--ok); }
+.net-live { margin: 14px 0 0; } .net-live pre { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; margin: 10px 0 0; }

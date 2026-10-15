@@ -627,3 +627,27 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   fetch(url, { mode: 'no-cors', cache: 'no-store', credentials: 'omit', signal: ctrl.signal, targetAddressSpace: 'local' })
     .then(() => true, () => false).then((ok) => { clearTimeout(timer); send(ok); });
 })();
+
+// "Conferir meu IP" → Testar agora: roda o teste da intranet na hora e mostra o motivo exato de uma falha.
+(() => {
+  const box = document.getElementById('net-live'); if (!box) return;
+  const out = document.getElementById('net-live-out'), url = box.dataset.url;
+  const ua = navigator.userAgentData ? navigator.userAgentData.brands.map((b) => b.brand + ' ' + b.version).join(', ') : navigator.userAgent;
+  document.getElementById('net-live-go').addEventListener('click', async () => {
+    const lines = ['Endereço: ' + url, 'Navegador: ' + ua, 'Página segura (HTTPS): ' + (location.protocol === 'https:' ? 'sim' : 'não')];
+    try {
+      const st = await navigator.permissions.query({ name: 'local-network-access' });
+      lines.push('Permissão "rede local": ' + st.state);
+    } catch (e) { lines.push('Permissão "rede local": o navegador não conhece (Chrome/Edge anterior ao 142?)'); }
+    out.hidden = false; out.textContent = lines.concat('Testando…').join('\n');
+    const t0 = performance.now(), ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 20000);
+    try {
+      const r = await fetch(url, { mode: 'no-cors', cache: 'no-store', credentials: 'omit', signal: ctrl.signal, targetAddressSpace: 'local' });
+      lines.push('Resultado: RESPONDEU (tipo ' + r.type + ') em ' + Math.round(performance.now() - t0) + ' ms → máquina da empresa');
+    } catch (e) {
+      lines.push('Resultado: FALHOU em ' + Math.round(performance.now() - t0) + ' ms → ' + (e.name || '') + ': ' + (e.message || e));
+      lines.push('Dica: abra o console (F12) para ver se aparece "Mixed Content" ou "Local Network Access".');
+    }
+    clearTimeout(timer); out.textContent = lines.join('\n');
+  });
+})();
