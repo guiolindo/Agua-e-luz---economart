@@ -620,7 +620,10 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   const send = (intranet) => fetch('/api/rede', { method: 'POST', credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token || '' }, body: JSON.stringify({ intranet }) }).catch(() => {});
   if (!url) { send(null); return; }
-  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 4000);
-  fetch(url, { mode: 'no-cors', cache: 'no-store', credentials: 'omit', signal: ctrl.signal })
+  // targetAddressSpace "local" (Chrome 142+): avisa que o destino é da rede local; com isso o Chrome libera endereço
+  // http:// (ex.: IIS interno sem HTTPS) a partir deste site HTTPS, depois de a pessoa (ou a política da TI) permitir.
+  // Navegadores que não conhecem a opção a ignoram. Prazo longo: a pessoa pode demorar a responder o pedido.
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 20000);
+  fetch(url, { mode: 'no-cors', cache: 'no-store', credentials: 'omit', signal: ctrl.signal, targetAddressSpace: 'local' })
     .then(() => true, () => false).then((ok) => { clearTimeout(timer); send(ok); });
 })();
