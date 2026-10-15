@@ -1,8 +1,7 @@
-"""De onde a pessoa está acessando: IP de um dos links da empresa e/ou máquina que enxerga a intranet.
+"""Rede da empresa pelo IP do link de internet (COMPANY_NETWORKS). Só informativo (auditoria e Painel admin).
 
-Só informativo (auditoria e Painel admin), nunca bloqueia: o teste da intranet roda no navegador da pessoa e o
-resultado pode ser falseado; o IP depende de a empresa ter IP fixo (o link Algar tem). Dois links de internet são
-normais: cada site pode ver a empresa saindo por um deles.
+Não pede nada ao usuário: o servidor já vê o IP em todo acesso. Dois links de internet são normais (cada site pode ver
+a empresa saindo por um deles): cadastre os dois. Só funciona com IP fixo (o link Algar é fixo).
 """
 import ipaddress
 from functools import lru_cache
@@ -35,13 +34,5 @@ def is_company_ip(ip: str | None) -> bool:
     return any(addr in n for n in nets)
 
 
-def label(details: dict | None) -> tuple[str, str]:
-    """(texto, tom) para mostrar um registro "network_check"."""
-    d = details or {}
-    if d.get("intranet"):
-        return "Máquina da empresa", "ok"
-    if d.get("ip_empresa"):
-        return "Rede da empresa", "ok"
-    if d.get("intranet") is False and get_settings().intranet_probe_url:
-        return "Fora da empresa", "warn"
-    return "Fora da rede da empresa", "warn"
+def label(ip: str | None) -> tuple[str, str]:
+    return ("Rede da empresa", "ok") if is_company_ip(ip) else ("Fora da rede da empresa", "warn")

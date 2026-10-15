@@ -1,10 +1,8 @@
-"""Máquina/rede da empresa: só registro (auditoria e Painel admin), nunca bloqueia."""
-from fastapi.testclient import TestClient
-
+"""Rede da empresa pelo IP do link (COMPANY_NETWORKS): só registro, nada pedido ao usuário nem bloqueado."""
 from app.config import get_settings
-from app.main import app
-from app.models import AuditLog
 from app.services import network_service
+from tests.test_security import _new_client
+from tests.test_security import _login
 
 
 def test_company_ip_accepts_single_ips_and_ranges(monkeypatch):
@@ -13,44 +11,27 @@ def test_company_ip_accepts_single_ips_and_ranges(monkeypatch):
     assert not network_service.is_company_ip("169.150.224.129") and not network_service.is_company_ip("x")
 
 
-def test_disabled_by_default_and_csp_unchanged(client):
-    html = client.get("/").text
-    assert "data-net-check" not in html
-    assert "connect-src 'self';" in client.get("/").headers["content-security-policy"]
-
-
-def test_probe_url_is_allowed_in_csp_and_sent_to_the_page(client, monkeypatch):
-    monkeypatch.setattr(get_settings(), "intranet_probe_url", "https://lupus.intranet/ping")
+def test_no_browser_probe_and_csp_untouched(client):
     r = client.get("/")
-    assert 'data-net-check="https://lupus.intranet/ping"' in r.text
-    assert "connect-src 'self' https://lupus.intranet;" in r.headers["content-security-policy"]
-    monkeypatch.setattr(get_settings(), "intranet_probe_url", "https://x.intranet'; script-src *")
-    assert "script-src *" not in client.get("/").headers["content-security-policy"]   # nada injetado na CSP
+    assert "data-net-check" not in r.text and "/api/rede" not in r.text
+    assert "connect-src 'self';" in r.headers["content-security-policy"]
 
 
-def test_result_is_recorded_once_per_session(client, db, monkeypatch):
-    monkeypatch.setattr(get_settings(), "intranet_probe_url", "https://lupus.intranet/")
+def test_panel_marks_each_person_by_the_ip_of_the_last_login(client, monkeypatch):
+    assert "<th>Rede</th>" not in client.get("/admin").text                         # sem IPs cadastrados: sem coluna
     monkeypatch.setattr(get_settings(), "company_networks", "187.32.111.41")
-    h = {"X-CSRF-Token": client.token, "X-Real-IP": "187.32.111.41"}
-    assert client.tc.post("/api/rede", json={"intranet": True}, headers=h).status_code == 200
-    assert client.tc.post("/api/rede", json={"intranet": False}, headers=h).status_code == 200   # repetido: ignorado
-    rows = db.query(AuditLog).filter_by(action="network_check").all()
-    assert len(rows) == 1 and rows[0].details["intranet"] is True and rows[0].details["ip_empresa"] is True
-    assert "data-net-check" not in client.get("/").text                            # já testou nesta sessão
+    inside = _new_client()
+    inside.tc.headers["X-Real-IP"] = "187.32.111.41"
+    _login(inside, "admin", "admin-pass-123")
     panel = client.get("/admin").text
-    assert "<th>Rede</th>" in panel and "Máquina da empresa" in panel
-    assert TestClient(app).post("/api/rede", json={"intranet": True}, follow_redirects=False).status_code in (303, 401, 403)
+    assert "<th>Rede</th>" in panel and "Rede da empresa" in panel
+    outside = _new_client()
+    outside.tc.headers["X-Real-IP"] = "200.10.10.10"
+    _login(outside, "admin", "admin-pass-123")
+    assert "Fora da rede da empresa" in client.get("/admin").text
 
 
-def test_outside_is_shown_as_such_and_requires_csrf(client, db, monkeypatch):
-    monkeypatch.setattr(get_settings(), "intranet_probe_url", "https://lupus.intranet/")
-    assert client.tc.post("/api/rede", json={"intranet": True}).status_code == 403   # sem token
-    client.tc.post("/api/rede", json={"intranet": False}, headers={"X-CSRF-Token": client.token})
-    assert "Fora da empresa" in client.get("/admin").text
-
-
-def test_ip_page_offers_a_live_test_when_configured(client, monkeypatch):
-    assert "net-live" not in client.get("/admin/ip").text
-    monkeypatch.setattr(get_settings(), "intranet_probe_url", "http://lupus.intranet/")
-    html = client.get("/admin/ip").text
-    assert 'id="net-live" data-url="http://lupus.intranet/"' in html and "Testar agora" in html
+def test_ip_page_tells_whether_the_ip_is_the_companys(client, monkeypatch):
+    monkeypatch.setattr(get_settings(), "company_networks", "187.32.111.41")
+    html = client.get("/admin/ip", headers={"X-Real-IP": "187.32.111.41"}).text
+    assert "IP da empresa?" in html and "Sim" in html and "Testar agora" not in html

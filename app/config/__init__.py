@@ -27,9 +27,8 @@ class Settings(BaseSettings):
     document_encryption_key: str = ""   # Fernet; várias chaves separadas por vírgula = rotação (a 1ª cifra)
     pseudonym_key: str = ""             # HMAC dos IPs no log de auditoria (LGPD); cai em SECRET_KEY se vazio
     trusted_proxy_count: int = 1        # nº de proxies à frente, usado quando não há X-Real-IP (ver security.client_ip)
-    # Máquina/rede da empresa (só informativo na auditoria e no Painel admin; nada é bloqueado):
+    # Rede da empresa pelo IP do link de internet (só informativo: auditoria e Painel admin; nada é bloqueado):
     company_networks: str = ""          # IPs/faixas públicas da empresa (CSV), ex.: "187.32.111.41,186.248.0.0/16"
-    intranet_probe_url: str = ""        # endereço que só abre dentro da empresa, ex.: "https://lupus.intranet/" (vazio = desligado)
     client_ip_source: str = "real-ip"   # "real-ip" (X-Real-IP do Railway) ou "xff" (X-Forwarded-For contado do fim)
     max_login_attempts: int = 5
     login_block_minutes: int = 15

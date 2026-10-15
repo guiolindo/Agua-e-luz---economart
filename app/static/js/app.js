@@ -551,7 +551,7 @@ const session = (() => {
     return orig(input, init).then((r) => {
       if (own) { net.ok(); if (r.ok && !r.redirected) session.touch(); }
       return r;
-    }, (err) => { if (own && !(err && err.name === 'AbortError')) net.error(); throw err; });   // outros endereços (teste da intranet): não é "servidor fora"
+    }, (err) => { if (own && !(err && err.name === 'AbortError')) net.error(); throw err; });   // falha ao chamar outro endereço não é "servidor fora"
   };
 })();
 
@@ -611,43 +611,3 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
 }
 
-// Máquina da empresa (só registro na auditoria, nunca bloqueia): uma vez por sessão o navegador tenta abrir um endereço
-// que só existe dentro da empresa (ex.: https://lupus.intranet/). Respondeu = está na rede interna. O resultado vai
-// para o servidor junto com o IP (que também diz se é um dos links da empresa).
-(() => {
-  const b = document.body; if (!('netCheck' in b.dataset)) return;
-  const url = b.dataset.netCheck, token = (document.querySelector('meta[name="csrf-token"]') || {}).content;
-  const send = (intranet) => fetch('/api/rede', { method: 'POST', credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token || '' }, body: JSON.stringify({ intranet }) }).catch(() => {});
-  if (!url) { send(null); return; }
-  // targetAddressSpace "local" (Chrome 142+): avisa que o destino é da rede local; com isso o Chrome libera endereço
-  // http:// (ex.: IIS interno sem HTTPS) a partir deste site HTTPS, depois de a pessoa (ou a política da TI) permitir.
-  // Navegadores que não conhecem a opção a ignoram. Prazo longo: a pessoa pode demorar a responder o pedido.
-  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 20000);
-  fetch(url, { mode: 'no-cors', cache: 'no-store', credentials: 'omit', signal: ctrl.signal, targetAddressSpace: 'local' })
-    .then(() => true, () => false).then((ok) => { clearTimeout(timer); send(ok); });
-})();
-
-// "Conferir meu IP" → Testar agora: roda o teste da intranet na hora e mostra o motivo exato de uma falha.
-(() => {
-  const box = document.getElementById('net-live'); if (!box) return;
-  const out = document.getElementById('net-live-out'), url = box.dataset.url;
-  const ua = navigator.userAgentData ? navigator.userAgentData.brands.map((b) => b.brand + ' ' + b.version).join(', ') : navigator.userAgent;
-  document.getElementById('net-live-go').addEventListener('click', async () => {
-    const lines = ['Endereço: ' + url, 'Navegador: ' + ua, 'Página segura (HTTPS): ' + (location.protocol === 'https:' ? 'sim' : 'não')];
-    try {
-      const st = await navigator.permissions.query({ name: 'local-network-access' });
-      lines.push('Permissão "rede local": ' + st.state);
-    } catch (e) { lines.push('Permissão "rede local": o navegador não conhece (Chrome/Edge anterior ao 142?)'); }
-    out.hidden = false; out.textContent = lines.concat('Testando…').join('\n');
-    const t0 = performance.now(), ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 20000);
-    try {
-      const r = await fetch(url, { mode: 'no-cors', cache: 'no-store', credentials: 'omit', signal: ctrl.signal, targetAddressSpace: 'local' });
-      lines.push('Resultado: RESPONDEU (tipo ' + r.type + ') em ' + Math.round(performance.now() - t0) + ' ms → máquina da empresa');
-    } catch (e) {
-      lines.push('Resultado: FALHOU em ' + Math.round(performance.now() - t0) + ' ms → ' + (e.name || '') + ': ' + (e.message || e));
-      lines.push('Dica: abra o console (F12) para ver se aparece "Mixed Content" ou "Local Network Access".');
-    }
-    clearTimeout(timer); out.textContent = lines.join('\n');
-  });
-})();

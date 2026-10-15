@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.models import AuditLog, EnergyBill, Import, ManualRecord, User
 from app.models.mixins import utcnow
 
@@ -77,9 +78,11 @@ def build(db: Session) -> dict:
 
     from app.services import network_service
 
-    last_net: dict[int, dict] = {}
-    for a in db.scalars(select(AuditLog).where(AuditLog.action == "network_check").order_by(AuditLog.id.desc()).limit(2000)):
-        last_net.setdefault(a.user_id, {"label": network_service.label(a.details), "at": _aware(a.at)})
+    last_net: dict[int, dict] = {}                     # rede do último login, pelo IP (COMPANY_NETWORKS)
+    if get_settings().company_networks:
+        for a in db.scalars(select(AuditLog).where(AuditLog.action.in_(("login", "login_2fa"))).order_by(AuditLog.id.desc()).limit(2000)):
+            if a.user_id not in last_net and (a.details or {}).get("ip"):
+                last_net[a.user_id] = {"label": network_service.label(a.details["ip"]), "at": _aware(a.at)}
     people = []
     for u in users:
         people.append({"user": u, "role": ROLE_LABELS.get(u.role, u.role), "online": is_online(u, now),
