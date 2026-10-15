@@ -1,17 +1,49 @@
 {% extends "base.html" %}
-{% block title %}Conferir meu IP · Economart Energia{% endblock %}
+{% from "macros.html" import csrf %}
+{% block title %}Rede da empresa · Economart Energia{% endblock %}
 {% block content %}
-<div class="page-head"><div><div class="crumbs"><a href="/admin/audit">Auditoria</a> /</div><h1>Conferir meu IP</h1>
-  <div class="muted">Compare com o IP que aparece em um site como <strong>meuip.com.br</strong>, aberto neste mesmo computador.</div></div></div>
-<div class="card" style="max-width:760px">
-  <div class="kpi alt" style="margin-bottom:16px"><div class="label">IP que o sistema registra para você</div><div class="value mono">{{ chosen }}</div></div>
-  <table class="dense"><tbody>
-    <tr><th>X-Real-IP</th><td class="mono">{{ src.x_real_ip or '—' }}</td></tr>
-    <tr><th>X-Forwarded-For</th><td class="mono">{{ src.x_forwarded_for|join(' → ') if src.x_forwarded_for else '—' }}</td></tr>
-    <tr><th>Conexão direta</th><td class="mono">{{ src.peer or '—' }}</td></tr>
-    <tr><th>IP da empresa?</th><td>{% if nets %}{{ 'Sim' if company_ip else 'Não' }} <span class="muted small">(cadastrados: {{ nets }})</span>{% else %}<span class="muted">nenhum IP cadastrado (COMPANY_NETWORKS)</span>{% endif %}</td></tr>
-    <tr><th>Regra em uso</th><td>{{ 'X-Real-IP (Railway)' if src.source != 'xff' else 'X-Forwarded-For contado do fim' }}</td></tr>
-  </tbody></table>
-  <p class="hint">Se o IP registrado não for o seu, me passe esta tela: a regra é ajustada pela variável <span class="mono">CLIENT_IP_SOURCE</span> no Railway.</p>
+<div class="page-head"><div><div class="crumbs"><a href="/admin/audit">Auditoria</a> /</div><h1>Rede da empresa</h1>
+  <div class="muted">Cada evento da auditoria anota se veio da rede da empresa, pelo IP do link de internet. Só informação: nada é bloqueado.</div></div></div>
+
+<div class="grid cols-2">
+<section class="card">
+  <h2>Você agora</h2>
+  <div class="kpi {{ 'alt' if configured and not company_ip }}" style="margin-bottom:14px"><div class="label">IP que o sistema registra</div>
+    <div class="value mono">{{ chosen }}</div>
+    <div class="sub">{% if not configured %}<span class="muted">nenhum IP da empresa cadastrado ainda</span>{% elif company_ip %}<span class="badge ok">Na empresa</span>{% else %}<span class="badge warn">Fora da empresa</span>{% endif %}</div></div>
+  {% if not company_ip %}<form method="post" action="/admin/rede" class="inline-form">{{ csrf(csrf_token) }}
+    <input type="hidden" name="cidr" value="{{ chosen }}">
+    <div class="field"><label for="lbl-me">Nome (opcional)</label><input id="lbl-me" name="label" placeholder="Ex.: Link Algar escritório" maxlength="80"></div>
+    <button class="btn primary">Cadastrar este IP como da empresa</button></form>{% endif %}
+  <details class="muted small" style="margin-top:12px"><summary>Detalhes técnicos</summary>
+    <table class="dense"><tbody>
+      <tr><th>X-Real-IP</th><td class="mono">{{ src.x_real_ip or '—' }}</td></tr>
+      <tr><th>X-Forwarded-For</th><td class="mono">{{ src.x_forwarded_for|join(' → ') if src.x_forwarded_for else '—' }}</td></tr>
+      <tr><th>Conexão direta</th><td class="mono">{{ src.peer or '—' }}</td></tr>
+      <tr><th>Regra em uso</th><td>{{ 'X-Real-IP (Railway)' if src.source != 'xff' else 'X-Forwarded-For contado do fim' }}</td></tr>
+    </tbody></table></details>
+</section>
+
+<section class="card">
+  <h2>IPs da empresa</h2>
+  {% if rows or env %}<table class="dense"><tbody>
+    {% for r in rows %}<tr><td class="mono">{{ r.cidr[:-3] if r.cidr.endswith('/32') else r.cidr }}</td><td>{{ r.label or '' }}<div class="muted small">por {{ names.get(r.created_by, '—') }} em {{ r.created_at|dt_br }}</div></td>
+      <td class="right"><form method="post" action="/admin/rede/{{ r.id }}/remover" data-confirm="Remover {{ r.cidr }} dos IPs da empresa? O histórico da auditoria não muda.">{{ csrf(csrf_token) }}<button class="btn sm danger">Remover</button></form></td></tr>{% endfor %}
+    {% for e in env %}<tr><td class="mono">{{ e }}</td><td class="muted small">variável COMPANY_NETWORKS do Railway</td><td></td></tr>{% endfor %}
+  </tbody></table>{% else %}<p class="muted">Nenhum IP cadastrado.</p>{% endif %}
+  <form method="post" action="/admin/rede" class="inline-form" style="margin-top:12px">{{ csrf(csrf_token) }}
+    <div class="field"><label for="cidr">IP ou faixa</label><input id="cidr" name="cidr" required placeholder="187.32.111.41 ou 186.248.0.0/16" maxlength="64"></div>
+    <div class="field"><label for="lbl">Nome (opcional)</label><input id="lbl" name="label" placeholder="Ex.: Link American Tower" maxlength="80"></div>
+    <button class="btn">Cadastrar</button></form>
+  <p class="hint">Empresa com dois links de internet tem dois IPs: cadastre os dois. Funciona com IP fixo; se a operadora trocar o IP, o novo aparece abaixo.</p>
+</section>
 </div>
+
+{% if unknown %}<section class="card flush">
+  <div style="padding:14px 18px 0"><h2>IPs de login frequentes que não estão cadastrados <span class="muted small">· últimos 7 dias</span></h2>
+    <p class="muted small" style="margin:-4px 0 8px">Se a operadora trocou o IP da empresa, ele aparece aqui com várias pessoas. IP de casa ou de celular também aparece: só cadastre o que for da empresa.</p></div>
+  <div class="tablewrap"><table class="dense stack"><thead><tr><th>IP</th><th class="num">Logins</th><th class="num">Pessoas</th><th>Último</th><th class="right"><span class="sr">Ação</span></th></tr></thead><tbody>
+    {% for u in unknown %}<tr><td class="mono" data-label="IP">{{ u.ip }}</td><td class="num" data-label="Logins">{{ u.logins }}</td><td class="num" data-label="Pessoas">{{ u.people }}</td><td data-label="Último">{{ u.last|dt_br }}</td>
+      <td class="right"><form method="post" action="/admin/rede" data-confirm="Cadastrar {{ u.ip }} como IP da empresa?">{{ csrf(csrf_token) }}<input type="hidden" name="cidr" value="{{ u.ip }}"><button class="btn sm">Cadastrar como da empresa</button></form></td></tr>{% endfor %}
+  </tbody></table></div></section>{% endif %}
 {% endblock %}

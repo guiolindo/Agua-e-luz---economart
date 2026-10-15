@@ -6,7 +6,7 @@
   <div class="muted">Últimos 300 eventos.</div></div>
   <div class="actions">
     <form method="post" action="/admin/audit/verify" style="display:inline">{{ csrf(csrf_token) }}<button class="btn">Verificar integridade</button></form>
-    <a class="btn" href="/admin/ip">Conferir meu IP</a>
+    <a class="btn" href="/admin/ip">Rede da empresa</a>
     <a class="btn" href="/admin/audit/export.csv{{ '?action=' ~ action if action }}">Baixar CSV</a>
   </div></div>
 <form method="get" class="filterbar"><label for="a">Filtrar por evento</label>
@@ -17,7 +17,7 @@
   <div class="small muted" style="margin-top:4px">Selo final: <span class="mono">{{ integrity.head[:16] }}…</span> Guarde uma cópia deste código: se os últimos registros forem apagados, só ele revela.</div></div>
 {% else %}<div class="flash error" role="alert"><strong>Adulteração detectada no evento #{{ integrity.broken_id }}.</strong> {{ integrity.reason|capitalize }}. Os eventos a partir dele não são confiáveis; preserve uma cópia do banco e investigue.</div>{% endif %}{% endif %}
 <div class="card flush"><div class="tablewrap"><table class="stack"><thead><tr><th>Quando</th><th>Usuário</th><th>Evento</th><th>Registro</th><th>Detalhes</th></tr></thead><tbody>
-  {% for r in rows %}<tr><td class="nowrap mono small" data-label="Quando">{{ r.at|dt_br(seconds=true) }}</td><td data-label="Usuário">{{ names.get(r.user_id, '—') }}</td>
+  {% for r in rows %}<tr><td class="nowrap mono small" data-label="Quando">{{ r.at|dt_br(seconds=true) }}</td><td data-label="Usuário">{{ names.get(r.user_id, '—') }}{% set rede = (r.details or {}).get('rede') %}{% if rede %} <span class="badge {{ 'ok' if rede == 'empresa' else 'warn' }}" title="De onde veio o acesso, pelo IP">{{ 'na empresa' if rede == 'empresa' else 'fora' }}</span>{% endif %}</td>
     <td data-label="Evento"><span class="badge {{ 'bad' if r.action in bad else 'ok' if r.action in good else '' }}">{{ label(r.action, r.entity) }}</span></td>
     <td class="small" data-label="Registro">{% if entities.get(r.entity) %}{{ entities[r.entity]|capitalize }}{% if r.entity_id %} #{{ r.entity_id }}{% endif %}{% else %}<span class="muted">—</span>{% endif %}</td>
     <td class="small muted" data-label="Detalhes" style="max-width:420px;overflow-wrap:anywhere">{{ describe(r.details) }}</td></tr>

@@ -25,10 +25,11 @@ PNG = bytes.fromhex("89504e470d0a1a0a0000000d49484452000000010000000108060000001
 
 @pytest.fixture(autouse=True)
 def _fresh_rate_limits():
-    from app.services import demand_flag
+    from app.services import demand_flag, network_service
 
     reset_rate_limits()
     demand_flag.reset()
+    network_service.reset()
     yield
 
 

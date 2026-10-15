@@ -11,7 +11,7 @@ from app.models.mixins import utcnow
 from app.database import get_db
 from app.models import AuditLog, TrashItem, User
 from app.security import admin_required, verify_csrf
-from app.services import audit_service, auth_service, totp_service, trash_service
+from app.services import audit_service, auth_service, network_service, totp_service, trash_service
 from app.web import flash, render
 
 router = APIRouter()
@@ -174,12 +174,12 @@ ACTION_LABELS = {
     "import": "Conta importada", "cancel": "Importação descartada", "purge": "Arquivos antigos apagados",
     "role_change": "Perfil alterado", "activate": "Usuário reativado", "deactivate": "Usuário desativado",
     "view": "Abriu a apresentação do sistema", "link": "Loja vinculada à lista", "due_ack": "Marcada como paga", "alert_ack": "Alerta conferido", "replace": "Conta substituída", "create": "Criação", "update": "Alteração", "delete": "Exclusão",
-    "restore": "Restaurado da lixeira", "network_check": "Verificação de rede", "delete_blocked": "Exclusões pausadas (muitas em sequência)",
+    "restore": "Restaurado da lixeira", "network_add": "IP da empresa cadastrado", "network_remove": "IP da empresa removido", "network_check": "Verificação de rede", "delete_blocked": "Exclusões pausadas (muitas em sequência)",
 }
 ENTITY_LABELS = {"store": "loja", "consumer_unit": "unidade", "energy_bill": "conta", "manual_record": "lançamento",
                  "record_type": "tipo de registro", "user": "usuário", "import": "importação", "document": "documento",
                  "bills": "contas", "audit": "auditoria", "auth": "", "alert": "alerta",
-                 "presentation": "apresentação", "company_stores": "lista de lojas", "trash": "lixeira"}
+                 "presentation": "apresentação", "company_stores": "lista de lojas", "trash": "lixeira", "network": "rede da empresa"}
 BAD_ACTIONS = {"login_failed", "login_2fa_failed", "2fa_disable_failed", "2fa_setup_failed", "login_blocked", "account_locked",
                "password_change_failed", "import_rejected", "login_temp_expired", "delete", "deactivate", "delete_blocked"}
 OK_ACTIONS = {"login", "login_2fa", "password_changed", "account_unlocked", "2fa_enabled", "restore"}
@@ -195,7 +195,7 @@ def details_text(details: dict | None) -> str:
     """Detalhes legíveis: IP em claro, usuário digitado oculto (pseudonimizado), antes/depois ficam de fora."""
     parts = []
     for k, v in (details or {}).items():
-        if k in ("before", "after") or v in (None, "", False):
+        if k in ("before", "after", "rede") or v in (None, "", False):
             continue
         if k == "ip":
             parts.append("IP anonimizado (registro antigo)" if str(v).startswith("h:") else f"IP {v}")
@@ -285,7 +285,7 @@ def admin_panel(request: Request, mes: str | None = None, user: User = Depends(a
                   month=month, this_month=m.this_month(), r=m.ranking(db, month), daily=m.daily(db, month),
                   f=m.imports_funnel(db, month), logins=m.logins_by_day(db, 30),
                   online_minutes=panel.ONLINE_MINUTES, label=action_label, bad=BAD_ACTIONS, good=OK_ACTIONS,
-                  net_on=bool(get_settings().company_networks),
+                  net_on=network_service.configured(),
                   legacy_count=len(company_stores.legacy_stores(db)), delete_blocks=trash_service.recent_blocks(db),
                   trash_week=db.scalar(select(func.count()).select_from(TrashItem)
                                        .where(TrashItem.deleted_at >= utcnow() - timedelta(days=7))) or 0)
@@ -321,11 +321,47 @@ def trash_old_address(por: int | None = None, user: User = Depends(admin_require
 
 
 @router.get("/admin/ip")
-def my_ip(request: Request, user: User = Depends(admin_required)):
-    """Conferência do IP registrado na auditoria: o que chegou em cada cabeçalho e qual o sistema usa."""
-    from app.services import network_service
+def my_ip(request: Request, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    """Rede da empresa: o IP de quem está acessando, os IPs cadastrados como da empresa e os IPs frequentes que
+    ainda não estão (ex.: a operadora trocou o IP do link)."""
+    from app.models import CompanyNetwork
 
     chosen = security.client_ip(request)
+    env = [n.strip() for n in get_settings().company_networks.split(",") if n.strip()]
     return render(request, "admin/ip.html", user=user, chosen=chosen, src=security.client_ip_sources(request),
-                  company_ip=network_service.is_company_ip(chosen), nets=get_settings().company_networks)
+                  company_ip=network_service.is_company_ip(chosen), configured=network_service.configured(),
+                  rows=list(db.scalars(select(CompanyNetwork).order_by(CompanyNetwork.created_at))), env=env,
+                  unknown=network_service.frequent_unknown(db), names={u.id: u.username for u in db.scalars(select(User))})
 
+
+@router.post("/admin/rede", dependencies=[Depends(verify_csrf)])
+def network_add(request: Request, cidr: str = Form(..., max_length=64), label: str = Form("", max_length=80),
+                user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    from app.models import CompanyNetwork
+
+    net = network_service.parse(cidr)
+    if net is None or net.prefixlen < (8 if net.version == 4 else 32):
+        flash(request, "IP inválido. Use um IP (ex.: 187.32.111.41) ou uma faixa (ex.: 186.248.0.0/16).", "error")
+    elif db.scalar(select(CompanyNetwork).where(CompanyNetwork.cidr == str(net))):
+        flash(request, f"{net} já está cadastrado.", "info")
+    else:
+        db.add(CompanyNetwork(cidr=str(net), label=label.strip() or None, created_by=user.id))
+        audit_service.log(db, user.id, "network_add", "network", None, {"cidr": str(net), "nome": label.strip()})
+        db.commit()
+        network_service.reset()
+        flash(request, f"{net} cadastrado como rede da empresa.")
+    return RedirectResponse("/admin/ip", status_code=303)
+
+
+@router.post("/admin/rede/{net_id}/remover", dependencies=[Depends(verify_csrf)])
+def network_remove(request: Request, net_id: int, user: User = Depends(admin_required), db: Session = Depends(get_db)):
+    from app.models import CompanyNetwork
+
+    row = db.get(CompanyNetwork, net_id)
+    if row:
+        audit_service.log(db, user.id, "network_remove", "network", None, {"cidr": row.cidr, "nome": row.label})
+        db.delete(row)
+        db.commit()
+        network_service.reset()
+        flash(request, f"{row.cidr} removido. O histórico da auditoria continua como foi gravado.", "info")
+    return RedirectResponse("/admin/ip", status_code=303)

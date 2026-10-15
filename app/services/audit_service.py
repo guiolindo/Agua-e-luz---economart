@@ -23,7 +23,18 @@ _LOCK_KEY = 7461001   # advisory lock do PostgreSQL: serializa quem escreve na c
 
 
 def log(db: Session, user_id: int | None, action: str, entity: str, entity_id: int | None, details: dict | None = None):
+    rede = _rede()
+    if rede:                                         # na empresa ou fora, gravado agora (se o IP do link mudar, vale o de hoje)
+        details = {**(details or {}), "rede": rede}
     db.add(AuditLog(user_id=user_id, action=action, entity=entity, entity_id=entity_id, details=details))
+
+
+def _rede() -> str | None:
+    from app.middleware import client_ip_var
+    from app.services import network_service
+
+    ip = client_ip_var.get()
+    return network_service.where(ip) if ip else None
 
 
 def _key() -> bytes:

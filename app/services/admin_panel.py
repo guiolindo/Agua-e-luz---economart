@@ -6,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
 from app.models import AuditLog, EnergyBill, Import, ManualRecord, User
 from app.models.mixins import utcnow
 
@@ -78,11 +77,12 @@ def build(db: Session) -> dict:
 
     from app.services import network_service
 
-    last_net: dict[int, dict] = {}                     # rede do último login, pelo IP (COMPANY_NETWORKS)
-    if get_settings().company_networks:
-        for a in db.scalars(select(AuditLog).where(AuditLog.action.in_(("login", "login_2fa"))).order_by(AuditLog.id.desc()).limit(2000)):
-            if a.user_id not in last_net and (a.details or {}).get("ip"):
-                last_net[a.user_id] = {"label": network_service.label(a.details["ip"]), "at": _aware(a.at)}
+    last_net: dict[int, dict] = {}                     # rede do último login (gravada no evento)
+    for a in db.scalars(select(AuditLog).where(AuditLog.action.in_(("login", "login_2fa"))).order_by(AuditLog.id.desc()).limit(2000)):
+        if a.user_id not in last_net:
+            lab = network_service.label((a.details or {}).get("rede"))
+            last_net[a.user_id] = {"label": lab, "at": _aware(a.at)} if lab else None
+    last_net = {k: v for k, v in last_net.items() if v}
     people = []
     for u in users:
         people.append({"user": u, "role": ROLE_LABELS.get(u.role, u.role), "online": is_online(u, now),

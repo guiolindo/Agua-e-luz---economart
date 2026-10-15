@@ -232,6 +232,7 @@ import contextvars  # noqa: E402
 import logging  # noqa: E402
 
 request_id_var: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="")
+client_ip_var: contextvars.ContextVar[str] = contextvars.ContextVar("client_ip", default="")   # para a auditoria
 _access_log = logging.getLogger("app.requests")
 SLOW_MS = 2000
 
@@ -250,6 +251,10 @@ class RequestIdMiddleware:
             return await self.app(scope, receive, send)
         rid = secrets.token_hex(4)
         request_id_var.set(rid)
+        try:
+            client_ip_var.set(client_ip(Request(scope)))
+        except Exception:  # noqa: BLE001 — sem IP legível: a auditoria só não marca a rede
+            client_ip_var.set("")
         scope.setdefault("state", {})["request_id"] = rid
         t0, status = time.perf_counter(), 500
 
