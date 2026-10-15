@@ -257,3 +257,17 @@ def test_admin_can_check_the_recorded_ip(client):
     html = client.get("/admin/ip", headers={"X-Real-IP": "186.248.1.2", "X-Forwarded-For": "186.248.1.2, 169.150.224.129"}).text
     assert "IP que o sistema registra" in html and "186.248.1.2" in html and "169.150.224.129" in html
     assert "/admin/ip" in client.get("/admin/audit").text
+
+
+def test_logged_in_limits_count_per_person_not_per_shared_ip(client, monkeypatch):
+    """Escritório/CGNAT: todos saem pelo mesmo IP público. Com login, o limite é de cada pessoa."""
+    from app import middleware
+    from tests.test_director import _user
+    small = tuple(middleware.Policy(p.name, p.methods, p.pattern, 5 if p.name == "pages" else p.max_requests, p.window)
+                  for p in middleware.POLICIES)
+    other = _user(client, "colega1", "operator")                                   # mesmo IP ("testclient")
+    middleware.reset_rate_limits()
+    monkeypatch.setattr(middleware, "POLICIES", small)
+    codes = [client.get("/ajuda").status_code for _ in range(6)]
+    assert codes[:5] == [200] * 5 and codes[5] == 429                              # o admin passou do limite dele
+    assert other.get("/ajuda").status_code == 200                                  # o colega no mesmo IP, não

@@ -118,7 +118,7 @@ usuário inexistente (a mensagem não revela se a conta existe).
 
 ### Recebo 429 "Muitas tentativas" ao entrar
 
-Limite por IP, em memória: 10 logins/min, 10 códigos de 2FA/min, 20
+Limite em memória: 30 logins/min e 30 códigos de 2FA/min por IP; com login, os demais limites contam por usuário; 20
 uploads/min etc. (`app/middleware.py`). Se **todos** os usuários
 aparecem com o mesmo IP, confira `TRUSTED_PROXY_COUNT` (Railway = 1).
 

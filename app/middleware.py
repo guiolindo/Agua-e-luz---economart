@@ -133,8 +133,10 @@ class Policy:
 
 
 POLICIES = (
-    Policy("login", frozenset({"POST"}), re.compile(r"^/login$"), 10, 60),
-    Policy("login2fa", frozenset({"POST"}), re.compile(r"^/login/2fa$"), 10, 60),
+    # por IP, com folga para um escritório inteiro entrando de manhã atrás do mesmo IP; senha errada repetida já bloqueia
+    # a CONTA (5 tentativas), independentemente do IP
+    Policy("login", frozenset({"POST"}), re.compile(r"^/login$"), 30, 60),
+    Policy("login2fa", frozenset({"POST"}), re.compile(r"^/login/2fa$"), 30, 60),
     Policy("password", frozenset({"POST"}), re.compile(r"^/account/password$"), 10, 600),
     Policy("upload", frozenset({"POST"}), re.compile(r"^/import$"), 20, 60),
     Policy("documents", frozenset({"GET"}), re.compile(r"^/documents/"), 60, 60),
@@ -160,7 +162,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             policy = next((p for p in POLICIES if request.method.upper() in p.methods and p.pattern.match(request.url.path)), None)
             if policy:
                 now = time.monotonic()
-                q = _buckets[f"{policy.name}:{client_ip(request)}"]
+                # Com login, o limite é por PESSOA: num escritório (ou numa operadora com CGNAT) todo mundo sai pelo mesmo IP
+                # público, e contar por IP somaria a empresa inteira. Sem login (tela de entrar), por IP.
+                uid = request.scope.get("session", {}).get("uid") if "session" in request.scope else None
+                who = f"u{uid}" if uid and policy.name not in ("login", "login2fa") else client_ip(request)
+                q = _buckets[f"{policy.name}:{who}"]
                 while q and q[0] <= now - policy.window:
                     q.popleft()
                 if len(q) >= policy.max_requests:

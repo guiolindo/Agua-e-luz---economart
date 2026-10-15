@@ -355,7 +355,7 @@ A foto/PDF original é removida do banco após `DOCUMENT_RETENTION_DAYS`
 | "Limite de uso do Gemini atingido" | 429 do Google. Aguardar ~1 min; reduzir `GEMINI_MAX_CONCURRENCY` se recorrente |
 | Gemini fora do ar | Após 5 falhas seguidas o disjuntor abre e rejeita na hora por 30 s, depois testa uma chamada. Enquanto isso, use *Lançamento manual* |
 | Importação presa em "processando" | Passados `STALE_IMPORT_MINUTES` (10) vira falha com "Tentar novamente" |
-| "Muitas tentativas" (429) | Limite por IP e por processo (ex.: 10 logins/min). Todos os usuários aparecendo com o mesmo IP indica `TRUSTED_PROXY_COUNT` errado |
+| "Muitas tentativas" (429) | Limite por processo: login 30/min por IP; com login, por usuário. Todos os usuários aparecendo com o mesmo IP indica `TRUSTED_PROXY_COUNT` errado |
 | Usuário bloqueado por tentativas erradas | *Usuários → Desbloquear* (ou esperar `LOGIN_BLOCK_MINUTES`) |
 | Esqueceu a senha | *Usuários → Redefinir senha* (provisória de 4 dígitos, 48 h) |
 | Administrador perdeu o celular do 2FA | Ver [Reset de 2FA](#reset-de-2fa) |

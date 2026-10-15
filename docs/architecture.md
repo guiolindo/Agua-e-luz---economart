@@ -260,7 +260,7 @@ Registrados em `create_app()`. O último `add_middleware` é o mais externo; a o
   CSP não é definida para caminhos que começam com `/documents/`; a rota define a sua própria para imagens
   (`default-src 'none'; … sandbox`). Respostas fora de `/static/` recebem `Cache-Control: no-store`.
 - **RateLimitMiddleware.** Janela deslizante em memória, por processo e por IP (`client_ip`, que respeita
-  `TRUSTED_PROXY_COUNT`). Políticas: login 10/60 s, login 2FA 10/60 s, troca de senha 10/600 s, upload (`POST /import`)
+  `TRUSTED_PROXY_COUNT`). Políticas: login 30/60 s e login 2FA 30/60 s (por IP); as demais, com login, contam por usuário (escritório e CGNAT saem pelo mesmo IP); troca de senha 10/600 s, upload (`POST /import`)
   20/60 s, `GET /documents/*` 60/60 s, `GET /api/*` 240/60 s, demais mutações 120/60 s. Resposta 429 com
   `Retry-After`. Desligável com `RATE_LIMIT_ENABLED=false`. Vale para uma instância; com várias seria preciso
   um armazenamento compartilhado (o código cita Redis; não existe no repositório).

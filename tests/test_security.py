@@ -137,8 +137,8 @@ def test_lockout_expires(client, db):
 
 def test_login_rate_limit_per_ip(client):
     c = _new_client()
-    codes = [_login(c, "x", "y").status_code for _ in range(12)]
-    assert codes[:9] == [401] * 9 and codes[9:] == [429] * 3      # a fixture já gastou 1 das 10 tentativas/min
+    codes = [_login(c, "x", "y").status_code for _ in range(32)]
+    assert 429 not in codes[:29] and codes[29:] == [429] * 3      # a fixture já gastou 1 das 30 tentativas/min
 
 
 def test_failed_login_audit_stores_real_ip_but_not_typed_username(client, db):

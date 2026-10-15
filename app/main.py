@@ -91,11 +91,11 @@ def create_app() -> FastAPI:
     install_request_id_logging()
     app = FastAPI(title="Economart · Controle de Energia", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     # Ordem: o último adicionado é o mais externo (cabeçalhos envolvem tudo; a sessão fica por dentro).
+    app.add_middleware(RateLimitMiddleware)          # por dentro da sessão: com login, o limite é por pessoa (não por IP)
     app.add_middleware(SessionMiddleware, secret_key=secret, session_cookie="energia_session",
                        https_only=not settings.debug, same_site="strict", max_age=settings.session_max_hours * 3600)
     app.add_middleware(CSRFOriginMiddleware)
     app.add_middleware(BodySizeLimitMiddleware)
-    app.add_middleware(RateLimitMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(DropEmptyQueryParamsMiddleware)
     app.add_middleware(RequestIdMiddleware)          # o mais externo: o código vale até para o erro 500
