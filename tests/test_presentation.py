@@ -100,7 +100,7 @@ def test_claims_in_the_slides_are_precise(client, until):
 def test_summary_mode_has_eight_slides_and_a_toggle(client, until):
     until("2999-01-01T00:00:00-03:00")
     html = client.get("/apresentacao").text
-    assert html.count('<section class="slide') >= 25 and len(re.findall(r'<section class="slide[^>]*data-sum', html)) == 8
+    assert html.count('<section class="slide') >= 25 and len(re.findall(r'<section class="slide[^>]*data-sum', html)) == 9
     assert 'id="mode"' in html and 'role="tab"' not in html and 'role="tablist"' not in html          # sem papéis ARIA incompletos
     assert '<div class="deck" id="deck" aria-hidden' not in html                                       # o deck não é escondido de leitores de tela
     js = open("app/static/js/presentation.js", encoding="utf-8").read()

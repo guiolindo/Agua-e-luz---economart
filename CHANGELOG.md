@@ -5,6 +5,8 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-15
 
+- **Apresentação do sistema atualizada (27 → 31 slides).** Novas capturas do Painel executivo em abas (Visão geral e Lojas) e slides novos: **Gasto evitável** (entra também na versão resumida, agora com 9 slides), **Contratos**, **Ano / por que o gasto mudou** e, no capítulo do funcionário, **Excluiu errado? Desfazer** (botão Desfazer e Lixeira de 30 dias). Em números, "5 abas no painel da diretoria" no lugar dos formatos de impressão; em Segurança, aviso antes de a sessão expirar e o cartão "Nada se perde" (auditoria, lixeira e barreira contra exclusão em massa).
+
 - **Painel executivo em abas, com três telas novas.** Pesquisa de mercado (EnergyCAP, IBM Envizi, Arcadia, Schneider Resource Advisor, Enel X/Via Varejo): os sistemas separam a visão do diretor por assunto, mostram o gasto evitável em R$ e só projetam o ano com 12 meses de histórico. O painel virou cinco abas, com os mesmos filtros:
   - **Visão geral** (destaques, indicadores, gasto mensal, ranking, pendências) e **Lojas** (variação, composição, evolução, custo por kWh, demanda média, comparar duas lojas, mapa de calor, comparativo) — o que já existia, separado. O custo por kWh de cada loja agora é comparado com a média da **própria distribuidora** (tarifas de CEMIG, COELBA e Energisa são diferentes).
   - **Gasto evitável:** soma, pelos itens da fatura, ultrapassagem de demanda, energia reativa excedente (inclusive as abreviações da COELBA, como "Cons.Real.Exc.") e juros/multa por atraso; por loja, por mês e os maiores itens com link para a conta. Diz em quantas contas se baseia (contas lançadas à mão não têm itens).

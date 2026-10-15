@@ -110,7 +110,7 @@
         <div class="stats">
           <div class="stat rv" style="--i:2"><b data-count="8">8</b><span>tipos de conta e de lançamento</span></div>
           <div class="stat rv" style="--i:3"><b data-count="4">4</b><span>perfis de acesso</span></div>
-          <div class="stat rv" style="--i:4"><b data-count="2">2</b><span>formatos de impressão do painel: A4 e A3</span></div>
+          <div class="stat rv" style="--i:4"><b data-count="5">5</b><span>abas no painel da diretoria</span></div>
           <div class="stat rv" style="--i:5"><b data-count="3">3</b><span>jeitos de levar o painel: papel, planilha e PowerPoint</span></div>
           <div class="stat rv" style="--i:6"><b data-count="1">1</b><span>conferência antes de qualquer conta ser salva</span></div>
         </div>
@@ -194,6 +194,12 @@
       {{ dev('func-contas', 'Lista de contas e lançamentos com campo de busca', 'Contas e lançamentos') }}
     </section>
 
+    <section class="slide s-split" data-chapter="func" aria-label="Desfazer exclusão">
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · lixeira</p>{{ lines(['Excluiu errado?', '<em>Desfazer</em>']) }}
+        <ul class="rv" style="--i:2"><li>Logo depois de excluir aparece o botão <b>Desfazer</b>.</li><li>Viu depois? Na <b>Lixeira</b>, o que você excluiu fica 30 dias, com a foto da conta.</li><li>Sem depender de ninguém: restaurar volta tudo como estava.</li></ul></div>
+      {{ dev('func-desfazer', 'Aviso de conta excluída com o botão Desfazer', 'Conta excluída · Desfazer', [{'x':85,'y':10,'t':'Desfazer na hora','side':'l'}]) }}
+    </section>
+
     <section class="slide s-split rev" data-chapter="func" aria-label="Alertas">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Funcionário · alertas</p>{{ lines(['O sistema', 'avisa <em>antes</em>']) }}
         <ul class="rv" style="--i:2"><li>Conta fora do padrão da própria unidade.</li><li>Demanda acima da contratada, com tolerância de 5%.</li><li>Nota repetida e vencimentos do dia.</li><li>É um aviso para conferir, não um veredito.</li></ul></div>
@@ -212,25 +218,43 @@
 
     <section class="slide s-split" data-chapter="dir" data-sum aria-label="Painel executivo">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · painel</p>{{ lines(['Tudo o que importa,', 'em <em>frases</em>']) }}
-        <ul class="rv" style="--i:2"><li>O que subiu, o que caiu e quem foge do padrão.</li><li>Total do período, último mês, custo por kWh e pendências.</li><li>Filtro por período e por região.</li></ul></div>
-      {{ dev('dir-painel', 'Painel executivo com destaques e indicadores', 'Painel executivo', [{'x':52,'y':30,'t':'Resumo em frases','side':'l'},{'x':30,'y':74,'t':'Indicadores do mês','side':'r'},{'x':91,'y':21,'t':'Imprime em A4 ou A3','side':'l'}]) }}
+        <ul class="rv" style="--i:2"><li>O que subiu, o que caiu e por quê: consumo ou custo por kWh.</li><li>Cinco abas: Visão geral, Lojas, Gasto evitável, Contratos e Ano.</li><li>Filtro por período e por região, valendo para todas.</li></ul></div>
+      {{ dev('dir-painel', 'Painel executivo com abas, destaques e indicadores', 'Painel executivo', [{'x':30,'y':26,'t':'Cinco abas','side':'r'},{'x':56,'y':42,'t':'Resumo em frases','side':'l'},{'x':91,'y':14,'t':'Imprime em A4 ou A3','side':'l'}]) }}
     </section>
 
     <section class="slide s-split rev" data-chapter="dir" aria-label="Gráficos">
-      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · gráficos</p>{{ lines(['Comparar lojas', 'num <em>relance</em>']) }}
-        <ul class="rv" style="--i:2"><li>Gasto por mês e por fornecedor.</li><li>Ranking de lojas e variação contra o mês anterior.</li><li>Composição do gasto de cada loja.</li><li>Cada barra traz o código e o nome da loja.</li></ul></div>
-      {{ dev('dir-graficos', 'Gráficos de gasto por mês, ranking e variação', 'Painel executivo · gráficos') }}
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · aba Lojas</p>{{ lines(['Comparar lojas', 'num <em>relance</em>']) }}
+        <ul class="rv" style="--i:2"><li>Variação de cada loja contra o mês anterior.</li><li>Composição do gasto por fornecedor.</li><li>Clique na barra e a loja abre.</li><li>Cada barra traz o código e o nome da loja.</li></ul></div>
+      {{ dev('dir-graficos', 'Aba Lojas: variação e composição do gasto por loja', 'Painel executivo · Lojas') }}
     </section>
 
     <section class="slide s-split" data-chapter="dir" aria-label="Evolução e comparação">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · evolução</p>{{ lines(['Evolução', 'e <em>demanda</em>']) }}
-        <ul class="rv" style="--i:2"><li>Marque as lojas que quer ver na linha do tempo.</li><li>Custo efetivo por kWh contra a média da empresa.</li><li>Uso da demanda contratada, loja a loja.</li><li>Mapa de calor e comparação entre duas lojas.</li></ul></div>
+        <ul class="rv" style="--i:2"><li>Marque as lojas que quer ver na linha do tempo.</li><li>Custo por kWh contra a média da <b>mesma distribuidora</b> (CEMIG, COELBA e Energisa têm tarifas diferentes).</li><li>Uso médio da demanda contratada.</li><li>Mapa de calor e comparação entre duas lojas.</li></ul></div>
       {{ dev('dir-graficos-2', 'Evolução das lojas e outros gráficos do painel', 'Painel executivo · evolução') }}
+    </section>
+
+    <section class="slide s-split rev" data-chapter="dir" data-sum aria-label="Gasto evitável">
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · gasto evitável</p>{{ lines(['O que se paga', '<em>à toa</em>']) }}
+        <ul class="rv" style="--i:2"><li>Ultrapassagem de demanda, energia reativa excedente, juros e multa por atraso.</li><li>Somados direto dos itens de cada fatura.</li><li>Por loja, por mês e os maiores itens, com a conta a um clique.</li></ul></div>
+      {{ dev('dir-evitavel', 'Aba Gasto evitável com o total por tipo e por mês', 'Painel executivo · Gasto evitável', [{'x':22,'y':40,'t':'Total evitável no período','side':'r'},{'x':55,'y':66,'t':'Mês a mês, por tipo','side':'l'}]) }}
+    </section>
+
+    <section class="slide s-split" data-chapter="dir" aria-label="Contratos">
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · contratos</p>{{ lines(['A demanda', 'está <em>certa</em>?']) }}
+        <ul class="rv" style="--i:2"><li>Contratada contra a maior demanda medida em 12 meses.</li><li>Quem passou do limite: avaliar aumento.</li><li>Quem usa menos de 80%: avaliar redução.</li><li>Com pouco histórico, o sistema avisa em vez de recomendar.</li></ul></div>
+      {{ dev('dir-contratos', 'Aba Contratos com a situação da demanda de cada unidade', 'Painel executivo · Contratos') }}
+    </section>
+
+    <section class="slide s-split rev" data-chapter="dir" aria-label="Ano">
+      <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · ano</p>{{ lines(['Por que o gasto', '<em>mudou</em>?']) }}
+        <ul class="rv" style="--i:2"><li>Quanto da variação veio do consumo e quanto do custo por kWh.</li><li>Acumulado do ano mês a mês.</li><li>Comparação com o ano anterior e projeção de fechamento aparecem sozinhas com 12 meses de contas.</li></ul></div>
+      {{ dev('dir-ano', 'Aba Ano com o acumulado, a projeção e a explicação da variação', 'Painel executivo · Ano') }}
     </section>
 
     <section class="slide s-split rev" data-chapter="dir" aria-label="Impressão">
       <div class="copy"><p class="eyebrow rv" style="--i:0">Diretoria · impressão</p>{{ lines(['A4 ou A3,', 'você <em>escolhe</em>']) }}
-        <ul class="rv" style="--i:2"><li>No botão <b>Imprimir painel</b>, escolha o papel.</li><li><b>A4:</b> várias páginas, uma ideia por página.</li><li><b>A3:</b> o painel inteiro numa folha, na horizontal.</li></ul></div>
+        <ul class="rv" style="--i:2"><li>No botão <b>Imprimir painel</b>, escolha o papel.</li><li><b>A4:</b> várias páginas, uma ideia por página.</li><li><b>A3:</b> o painel inteiro numa folha, na horizontal.</li><li>Gasto evitável, Contratos e Ano têm o próprio botão de imprimir.</li></ul></div>
       {{ dev('dir-imprimir', 'Menu de impressão do painel com as opções A4 e A3', 'Imprimir painel') }}
     </section>
 
@@ -265,9 +289,9 @@
         {{ lines(['Pensado para os dados', 'da <em>empresa</em>']) }}
         <div class="cards">
           <article class="rv" style="--i:2"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 11l2 2 3-4"/></svg></span><h3>Acesso por perfil</h3><p>Cada pessoa vê e faz só o que o seu perfil permite.</p></article>
-          <article class="rv" style="--i:3"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><h3>Login protegido</h3><p>Bloqueio após tentativas erradas e sessão que expira por inatividade.</p></article>
+          <article class="rv" style="--i:3"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><h3>Login protegido</h3><p>Bloqueio após tentativas erradas; a sessão expira por inatividade, com aviso 5 minutos antes.</p></article>
           <article class="rv" style="--i:4"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span><h3>Arquivos cifrados</h3><p>As imagens das contas ficam cifradas e saem do banco após 6 meses; os dados lidos permanecem.</p></article>
-          <article class="rv" style="--i:5"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></span><h3>Histórico de tudo</h3><p>Trilha de auditoria de quem fez o quê, com selo contra adulteração.</p></article>
+          <article class="rv" style="--i:5"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></span><h3>Nada se perde</h3><p>Auditoria de quem fez o quê, com selo contra adulteração. O que é excluído vai para a lixeira; exclusão em massa é barrada.</p></article>
           <article class="rv" style="--i:6"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span><h3>Duas etapas</h3><p>{% if require_2fa %}Verificação em duas etapas obrigatória para os administradores.{% else %}Verificação em duas etapas disponível para os administradores.{% endif %}</p></article>
           <article class="rv" style="--i:7"><span class="ci"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><h3>Conferência humana</h3><p>A leitura automática nunca salva sozinha: o funcionário confere.</p></article>
         </div>
