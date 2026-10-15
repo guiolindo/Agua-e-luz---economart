@@ -99,7 +99,7 @@ padrão são os do código.
 | `SECRET_KEY` | vazio | Assina a sessão e o selo da auditoria. Em produção, mínimo 32 caracteres e fora da lista de valores fracos (`changeme`, `secret`, `trocar`, `troque-em-producao`, `test-secret`) |
 | `DOCUMENT_ENCRYPTION_KEY` | vazio | Chave(s) Fernet que cifram foto/PDF e o segredo do 2FA. Várias chaves separadas por vírgula = rotação (a primeira cifra, todas decifram). Obrigatória em produção |
 | `PSEUDONYM_KEY` | vazio | Chave do HMAC que pseudonimiza o usuário digitado em login falho e entra no selo da auditoria. Vazio: usa `SECRET_KEY` |
-| `TRUSTED_PROXY_COUNT` | `1` | Quantos proxies existem na frente do app (Railway = 1). O IP real é a N-ésima entrada a partir do fim de `X-Forwarded-For` |
+| `TRUSTED_PROXY_COUNT` | `1` | Usado só sem `X-Real-IP` (ou com `CLIENT_IP_SOURCE=xff`): o IP real é a N-ésima entrada a partir do fim de `X-Forwarded-For`. No Railway o padrão é `X-Real-IP`, porque há uma CDN no caminho |
 | `MAX_LOGIN_ATTEMPTS` | `5` | Falhas seguidas até bloquear a conta |
 | `LOGIN_BLOCK_MINUTES` | `15` | Duração do bloqueio |
 | `TEMP_MAX_LOGIN_ATTEMPTS` | `3` | Limite de falhas para contas ainda com senha provisória |

@@ -6,6 +6,7 @@
   <div class="muted">Últimos 300 eventos.</div></div>
   <div class="actions">
     <form method="post" action="/admin/audit/verify" style="display:inline">{{ csrf(csrf_token) }}<button class="btn">Verificar integridade</button></form>
+    <a class="btn" href="/admin/ip">Conferir meu IP</a>
     <a class="btn" href="/admin/audit/export.csv{{ '?action=' ~ action if action }}">Baixar CSV</a>
   </div></div>
 <form method="get" class="filterbar"><label for="a">Filtrar por evento</label>

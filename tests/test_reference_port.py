@@ -234,3 +234,26 @@ def test_report_and_print_open_in_the_same_tab():
                 assert "/report?" not in line and "/print\"" not in line
     for f in ("stores/report.html", "bills/print.html"):
         assert "data-back>← Voltar" in (root / f).read_text(encoding="utf-8")
+
+
+# ------------------------------------------------------------ IP real atrás da CDN do Railway
+def test_client_ip_uses_railway_real_ip_and_falls_back(monkeypatch):
+    from starlette.requests import Request
+
+    from app.config import get_settings
+    from app.security import client_ip
+
+    def req(headers):
+        return Request({"type": "http", "headers": [(k.encode(), v.encode()) for k, v in headers.items()], "client": ("10.0.0.9", 1)})
+    cdn = {"x-forwarded-for": "186.248.10.20, 169.150.224.129"}
+    assert client_ip(req({**cdn, "x-real-ip": "186.248.10.20"})) == "186.248.10.20"     # antes: o IP da CDN
+    assert client_ip(req({**cdn, "x-real-ip": "lixo<script>"})) == "169.150.224.129"   # inválido: regra antiga
+    assert client_ip(req(cdn)) == "169.150.224.129"
+    monkeypatch.setattr(get_settings(), "client_ip_source", "xff")
+    assert client_ip(req({**cdn, "x-real-ip": "186.248.10.20"})) == "169.150.224.129"
+
+
+def test_admin_can_check_the_recorded_ip(client):
+    html = client.get("/admin/ip", headers={"X-Real-IP": "186.248.1.2", "X-Forwarded-For": "186.248.1.2, 169.150.224.129"}).text
+    assert "IP que o sistema registra" in html and "186.248.1.2" in html and "169.150.224.129" in html
+    assert "/admin/ip" in client.get("/admin/audit").text

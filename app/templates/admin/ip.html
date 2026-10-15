@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Conferir meu IP · Economart Energia{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="crumbs"><a href="/admin/audit">Auditoria</a> /</div><h1>Conferir meu IP</h1>
+  <div class="muted">Compare com o IP que aparece em um site como <strong>meuip.com.br</strong>, aberto neste mesmo computador.</div></div></div>
+<div class="card" style="max-width:760px">
+  <div class="kpi alt" style="margin-bottom:16px"><div class="label">IP que o sistema registra para você</div><div class="value mono">{{ chosen }}</div></div>
+  <table class="dense"><tbody>
+    <tr><th>X-Real-IP</th><td class="mono">{{ src.x_real_ip or '—' }}</td></tr>
+    <tr><th>X-Forwarded-For</th><td class="mono">{{ src.x_forwarded_for|join(' → ') if src.x_forwarded_for else '—' }}</td></tr>
+    <tr><th>Conexão direta</th><td class="mono">{{ src.peer or '—' }}</td></tr>
+    <tr><th>Regra em uso</th><td>{{ 'X-Real-IP (Railway)' if src.source != 'xff' else 'X-Forwarded-For contado do fim' }}</td></tr>
+  </tbody></table>
+  <p class="hint">Se o IP registrado não for o seu, me passe esta tela: a regra é ajustada pela variável <span class="mono">CLIENT_IP_SOURCE</span> no Railway.</p>
+</div>
+{% endblock %}

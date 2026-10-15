@@ -119,10 +119,35 @@ def configure(secret: str) -> None:
     _runtime_secret = secret
 
 
+def _valid_ip(value: str) -> str | None:
+    import ipaddress
+
+    try:
+        return str(ipaddress.ip_address(value.strip()))
+    except ValueError:
+        return None
+
+
+def client_ip_sources(request: Request) -> dict:
+    """Tudo o que chegou sobre o IP de quem acessa (tela "Conferir meu IP" do administrador)."""
+    xff = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
+    return {"x_real_ip": request.headers.get("x-real-ip", ""), "x_forwarded_for": xff,
+            "peer": request.client.host if request.client else "", "source": get_settings().client_ip_source}
+
+
 def client_ip(request: Request) -> str:
-    """IP do cliente. Atrás de N proxies (Railway = 1) vale a entrada N-ésima a partir do FIM de X-Forwarded-For:
-    entradas à esquerda podem ser forjadas pelo cliente, a última foi escrita pelo proxy de confiança."""
-    count = get_settings().trusted_proxy_count
+    """IP de quem acessa.
+
+    No Railway há uma CDN (Datacamp/CDN77) entre a pessoa e o servidor: o último item de X-Forwarded-For é o IP da CDN,
+    não o da pessoa (todo mundo aparecia com o mesmo IP americano). O Railway informa o IP real em X-Real-IP.
+    CLIENT_IP_SOURCE: "real-ip" (padrão: X-Real-IP; sem ele, cai no X-Forwarded-For) ou "xff" (N-ésima entrada a partir
+    do FIM de X-Forwarded-For, N = TRUSTED_PROXY_COUNT; entradas à esquerda podem ser forjadas)."""
+    s = get_settings()
+    if s.client_ip_source != "xff":
+        real = _valid_ip(request.headers.get("x-real-ip", ""))
+        if real:
+            return real[:64]
+    count = s.trusted_proxy_count
     xff = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
     if count > 0 and len(xff) >= count:
         return xff[-count][:64]

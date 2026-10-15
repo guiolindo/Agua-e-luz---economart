@@ -317,3 +317,9 @@ def admin_user_page(request: Request, user_id: int, mes: str | None = None, user
 @router.get("/admin/lixeira")
 def trash_old_address(por: int | None = None, user: User = Depends(admin_required)):
     return RedirectResponse("/lixeira" + (f"?por={por}" if por else ""), status_code=303)
+
+
+@router.get("/admin/ip")
+def my_ip(request: Request, user: User = Depends(admin_required)):
+    """Conferência do IP registrado na auditoria: o que chegou em cada cabeçalho e qual o sistema usa."""
+    return render(request, "admin/ip.html", user=user, chosen=security.client_ip(request), src=security.client_ip_sources(request))
