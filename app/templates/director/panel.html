@@ -3,7 +3,7 @@
 {% macro delta(v) %}{% if v and v.pct is not none %}<span class="var var-{{ v.direction }}">{{ v.text }}</span>{% else %}<span class="muted">—</span>{% endif %}{% endmacro %}
 {% block title %}Painel executivo · Economart Energia{% endblock %}
 {% block content %}
-<div class="dirpanel" data-stores="{{ rows|length }}">
+<div class="dirpanel" data-stores="{{ rows|length }}" data-aba="{{ aba }}">
 <style id="page-a4">@page { size: A4 landscape; margin: 8mm; }</style>
 <style id="page-a3" media="not all">@page { size: 420mm 297mm; margin: 8mm; }</style>
 <header class="print-head" aria-hidden="true">
@@ -23,15 +23,18 @@
     </span>
   </span>
 {% endcall %}
+<nav class="dir-tabs no-print" aria-label="Telas do painel">
+  {% for key, name, hint in tabs %}<a href="?{{ base_qs ~ ('&' if base_qs else '') }}aba={{ key }}" data-aba-link="{{ key }}" {% if aba == key %}aria-current="page"{% endif %} title="{{ hint }}">{{ name }}{% if key == 'evitavel' and avoid.total %} <span class="tab-badge">{{ avoid.total|brl(0) }}</span>{% elif key == 'contratos' and contracts.counts.bad %} <span class="tab-badge bad">{{ contracts.counts.bad }}</span>{% endif %}</a>{% endfor %}
+</nav>
 
 
-{% if insights %}<section class="card insights a3-5" aria-labelledby="ins-h">
+{% if insights %}<section class="card insights a3-5" aria-labelledby="ins-h" data-tab="geral">
   <div class="card-head" style="margin:0 0 8px"><h2 id="ins-h" style="margin:0">Destaques{{ " de " ~ focus_label if focus_label }}</h2><button class="btn sm no-print" type="button" data-copy-insights>Copiar resumo</button></div>
   <ul>{% for i in insights %}<li class="ins-{{ i.tone }}"><span class="ins-dot" aria-hidden="true">{{ '▲' if i.tone == 'bad' else '▼' if i.tone == 'good' else '●' }}</span><span>{{ i.text }}</span></li>{% endfor %}</ul>
   <p class="hint">▲ atenção · ▼ melhora · ● informação</p>
 </section>{% endif %}
 {% if partial_labels %}<div class="flash warn no-print" role="status"><strong>Incompleto:</strong> {{ partial_labels|join(', ') }}. Marcado com * e fora das variações; os indicadores usam {{ focus_label }}.</div>{% endif %}
-<div class="grid cols-4 kpis dir-kpis a3-7">
+<div class="grid cols-4 kpis dir-kpis a3-7" data-tab="geral">
   <div class="kpi"><div class="label">Total no período</div><div class="value">{{ kpi.total|brl(0) }}</div><div class="sub">{% if kpi.vs_prev and kpi.vs_prev.pct is not none %}{{ delta(kpi.vs_prev) }} <span class="muted">média/mês vs. período anterior{% if kpi.comparable_stores %} ({{ kpi.comparable_stores }} lojas com histórico){% endif %}</span>{% else %}<span class="muted">{{ months|length }} meses no período</span>{% endif %}</div></div>
   <div class="kpi"><div class="label">Último mês ({{ focus_label }})</div><div class="value">{{ kpi.last_month|brl(0) }}</div><div class="sub">{{ delta(kpi.last_vs_prev) }} <span class="muted">vs. {{ prev_label or 'mês anterior' }}</span></div></div>
   {% if kpi.yoy %}<div class="kpi"><div class="label">Contra {{ kpi.yoy.label }}</div><div class="value">{{ kpi.yoy.cur|brl(0) }}</div><div class="sub">{{ delta(kpi.yoy.var) }} <span class="muted">mesmo mês, ano anterior ({{ plural(kpi.yoy.stores, 'loja', 'lojas') }})</span></div></div>
@@ -54,35 +57,35 @@
 </form>
 </details>
 {% if not rows %}<div class="card"><p class="muted" style="margin:0">Sem dados no período/filtros selecionados.</p></div>{% else %}
-<div class="grid cols-main2 pp-1">
+<div class="grid cols-main2 pp-1" data-tab="geral">
   <section class="card a3-4"><div class="card-head"><h2>Gasto da empresa por mês e fornecedor</h2><span class="muted small">barras = R$ · linha = variação do total</span></div><div class="dchart"><canvas id="c-month" role="img" aria-label="Gasto mensal por fornecedor"></canvas></div></section>
   <section class="card a3-3"><div class="card-head"><h2>Ranking de lojas <span class="muted small">· Top 15</span></h2><span class="muted small">total no período</span></div><div class="dchart tall"><canvas id="c-rank" role="img" aria-label="Ranking de lojas <span class="muted small">· Top 15</span> por gasto"></canvas></div></section>
 </div>
 
-<div class="grid cols-2 pp-2 pp-break">
+<div class="grid cols-2 pp-2 pp-break" data-tab="lojas">
   <section class="card a3-3"><div class="card-head"><h2>Variação em {{ focus_label }} vs. {{ prev_label }} <span class="muted small">· até 20 lojas</span></h2><span class="muted small">↑ gastou mais · ↓ gastou menos</span></div><div class="dchart tall"><canvas id="c-var" role="img" aria-label="Variação por loja no último mês"></canvas></div></section>
   <section class="card a3-2"><div class="card-head"><h2>Composição do gasto por loja <span class="muted small">· Top 15</span></h2><span class="muted small">% por fornecedor</span></div><div class="dchart tall"><canvas id="c-mix" role="img" aria-label="Composição por fornecedor"></canvas></div></section>
 </div>
 
-<section class="card pp-evol a3-4">
+<section class="card pp-evol a3-4" data-tab="lojas">
   <div class="card-head"><h2>Evolução das lojas</h2></div>
   <div class="storepick no-print" id="storepick"></div>
   <div class="dchart"><canvas id="c-line" role="img" aria-label="Evolução mensal por loja"></canvas></div>
 </section>
 
-<div class="grid cols-2 pp-3 pp-break">
-  <section class="card a3-4"><div class="card-head"><h2>Custo efetivo por kWh</h2><span class="muted small">total da conta ÷ kWh · linha = média da empresa</span></div><div class="dchart tall"><canvas id="c-kwh" role="img" aria-label="Custo por kWh por loja"></canvas></div></section>
-  <section class="card a3-4"><div class="card-head"><h2>Uso da demanda contratada</h2><span class="muted small">demanda medida ÷ contratada · acima de 105% costuma gerar cobrança por ultrapassagem (tolerância de 5%)</span></div><div class="dchart tall"><canvas id="c-util" role="img" aria-label="Uso da demanda contratada"></canvas></div></section>
+<div class="grid cols-2 pp-3 pp-break" data-tab="lojas">
+  <section class="card a3-4" data-tab="lojas"><div class="card-head"><h2>Custo efetivo por kWh</h2><span class="muted small">total da conta ÷ kWh · vermelho = acima da média da própria distribuidora</span></div><div class="dchart tall"><canvas id="c-kwh" role="img" aria-label="Custo por kWh por loja"></canvas></div></section>
+  <section class="card a3-4" data-tab="lojas"><div class="card-head"><h2>Uso da demanda contratada <span class="muted small">· média do período</span></h2><span class="muted small">demanda medida ÷ contratada, na média dos meses · o mês de pico está na aba Contratos</span></div><div class="dchart tall"><canvas id="c-util" role="img" aria-label="Uso da demanda contratada"></canvas></div></section>
 </div>
 
-<section class="card no-print">
+<section class="card no-print" data-tab="lojas">
   <div class="card-head"><h2>Comparar duas lojas</h2>
     <div class="actions no-print pair-actions"><select id="pair-a" aria-label="Loja A"></select><span class="muted">×</span><select id="pair-b" aria-label="Loja B"></select></div></div>
   <div class="dchart"><canvas id="c-pair" role="img" aria-label="Comparação entre duas lojas"></canvas></div>
   <div class="tablewrap"><table class="rtable dense" id="pair-table"></table></div>
 </section>
 
-<section class="card flush a3-7">
+<section class="card flush a3-7" data-tab="lojas">
   <div style="padding:14px 18px 0"><h2>Mapa de calor — gasto mensal por loja (R$)</h2><div class="muted small">cor mais forte = mês mais caro <em>daquela loja</em></div></div>
   <div class="tablewrap"><table class="heat">
     <thead><tr><th>Loja</th>{% for l in labels %}<th class="num">{{ l }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
@@ -94,7 +97,7 @@
   </table></div>
 </section>
 
-<section class="card flush pp-break a3-5">
+<section class="card flush pp-break a3-5" data-tab="lojas">
   <div style="padding:14px 18px 0"><h2>Comparativo entre lojas</h2></div>
   {% set ns = namespace(prev=false) %}{% for r in rows %}{% if r.vs_prev_period and r.vs_prev_period.pct is not none %}{% set ns.prev = true %}{% endif %}{% endfor %}
   <div class="tablewrap"><table class="dense">
@@ -107,12 +110,12 @@
   </table></div>
 </section>
 
-{% if pending_items %}<section class="card flush a3-7"><div style="padding:14px 18px 0"><h2>Pendências de {{ focus_label }}</h2></div>
+{% if pending_items %}<section class="card flush a3-7" data-tab="geral"><div style="padding:14px 18px 0"><h2>Pendências de {{ focus_label }}</h2></div>
   <div class="tablewrap"><table class="dense"><thead><tr><th>Loja</th><th>Fornecedor</th><th>Situação</th></tr></thead><tbody>
     {% for p in pending_items %}<tr><td><a href="/stores/{{ p.store.id }}">{{ p.store.short_label }}</a></td><td>{{ p.type.name }}{% if p.unit %} · <span class="mono">{{ p.unit.number }}</span>{% endif %}</td><td class="muted">{{ p.text }}</td></tr>{% endfor %}
   </tbody></table></div></section>{% endif %}
 {% endif %}
-<aside class="card method a3-5" aria-label="Nota metodológica"><h2>Como ler estes números</h2>
+<aside class="card method a3-5" aria-label="Nota metodológica" data-tab="geral lojas"><h2>Como ler estes números</h2>
   <ul class="small muted">
     <li><strong>Competência:</strong> contas e lançamentos manuais entram pelo mês de referência; a tabela "por vencimento" usa o vencimento só das contas de distribuidora.</li>
     <li><strong>Custo efetivo por kWh:</strong> total da conta de distribuidora ÷ kWh consumidos, com demanda, impostos e multas incluídos. Não é a tarifa da energia. Unidades no mercado livre só ficam comparáveis quando somadas a LL Energia e demais cobranças do mesmo mês.</li>
@@ -120,11 +123,86 @@
     <li><strong>Demanda:</strong> a ultrapassagem só conta acima de 5% da demanda contratada (REN ANEEL 1.000/2021, Grupo A). Unidades sem leitura de demanda não entram.</li>
     <li><strong>Variações e destaques:</strong> indicam onde conferir. A causa não é identificada pelo sistema.</li>
   </ul></aside>
-{% if rows|selectattr('name')|list %}<section class="card storekey a3-12" aria-label="Legenda das lojas"><h2>Legenda das lojas</h2>
+{% if rows|selectattr('name')|list %}<section class="card storekey a3-12" aria-label="Legenda das lojas" data-tab="lojas"><h2>Legenda das lojas</h2>
   <ul>{% for r in rows %}<li><strong>{{ r.code }}</strong> {{ r.name or '' }}{% if r.region %} <span>· {{ r.region }}</span>{% endif %}</li>{% endfor %}</ul></section>{% endif %}
+{# ======================= GASTO EVITÁVEL ======================= #}
+<section class="card tab-new" data-tab="evitavel">
+  <div class="card-head"><h2>Gasto evitável · {{ start|month_label }} a {{ end|month_label }}</h2>
+    <button class="btn sm no-print" type="button" data-print-tab="evitavel">Imprimir esta tela</button></div>
+  {% if not avoid.with_items %}
+  <p class="muted" style="margin:0">Nenhuma conta do período tem os itens da fatura detalhados ainda. Os itens vêm das contas importadas pela IA; contas lançadas à mão não têm esse detalhe.</p>
+  {% else %}
+  <div class="grid cols-4 kpis">
+    <div class="kpi alt"><div class="label">Total evitável</div><div class="value">{{ avoid.total|brl(0) }}</div><div class="sub muted">{{ avoid_share|num(1) ~ '% do gasto do período' if avoid_share is not none else '' }}</div></div>
+    {% for c in avoid.categories %}<div class="kpi"><div class="label">{{ c.label }}</div><div class="value">{{ c.total|brl(0) }}</div></div>{% endfor %}
+  </div>
+  {% if avoid.total %}<div class="dchart"><canvas id="c-avoid" role="img" aria-label="Gasto evitável por mês e tipo"></canvas></div>{% endif %}
+  <p class="hint">Base: {{ avoid.with_items }} de {{ avoid.bills }} contas do período com os itens detalhados{% if avoid.bills > avoid.with_items %} (as outras, em geral lançadas à mão, não entram){% endif %}. Itens identificados pelo nome na fatura: ultrapassagem de demanda, energia reativa excedente, juros e multa por atraso.</p>
+  {% endif %}
+</section>
+{% if avoid.rows %}<section class="card flush tab-new" data-tab="evitavel"><div style="padding:14px 18px 0"><h2>Por loja</h2></div>
+  <div class="tablewrap"><table class="dense stack"><thead><tr><th>Loja</th>{% for c in avoid.categories %}<th class="num">{{ c.label }}</th>{% endfor %}<th class="num">Total</th></tr></thead><tbody>
+  {% for r in avoid.rows %}<tr><td data-label="Loja"><a href="/stores/{{ r.id }}"><strong>{{ r.label }}</strong></a>{% if r.region %} <span class="badge">{{ r.region }}</span>{% endif %}</td>
+    {% for c in avoid.categories %}<td class="num" data-label="{{ c.label }}">{{ r[c.key]|brl(0) if r[c.key] else '—' }}</td>{% endfor %}<td class="num" data-label="Total"><strong>{{ r.total|brl(0) }}</strong></td></tr>{% endfor %}
+  </tbody></table></div></section>
+<section class="card flush tab-new" data-tab="evitavel"><div style="padding:14px 18px 0"><h2>Maiores itens</h2></div>
+  <div class="tablewrap"><table class="dense stack"><thead><tr><th>Loja</th><th>Mês</th><th>Item na fatura</th><th class="num">Valor</th><th class="right no-print"><span class="sr">Conta</span></th></tr></thead><tbody>
+  {% for i in avoid.top_items %}<tr><td data-label="Loja">{{ i.store.short_label }}</td><td data-label="Mês">{{ i.month|month_label }}</td><td data-label="Item">{{ i.description }} <span class="muted small">· {{ avoid_labels[i.key] }}</span></td>
+    <td class="num" data-label="Valor">{{ i.value|brl }}</td><td class="right no-print"><a class="btn sm" href="/bills/{{ i.bill_id }}/print?doc=1#original">Ver conta</a></td></tr>{% endfor %}
+  </tbody></table></div></section>{% endif %}
+
+{# ======================= CONTRATOS ======================= #}
+<section class="card tab-new" data-tab="contratos">
+  <div class="card-head"><h2>Demanda contratada · 12 meses até {{ contracts.end|month_label }}</h2>
+    <button class="btn sm no-print" type="button" data-print-tab="contratos">Imprimir esta tela</button></div>
+  {% if not contracts.rows %}<p class="muted" style="margin:0">Nenhuma unidade com demanda contratada nas contas (só lojas de média tensão, Grupo A, têm contrato de demanda).</p>
+  {% else %}
+  <div class="grid cols-4 kpis">
+    <div class="kpi {{ 'alt' if contracts.counts.bad }}"><div class="label">Avaliar aumento</div><div class="value">{{ contracts.counts.bad }}</div><div class="sub muted">ultrapassaram a demanda (+5%)</div></div>
+    <div class="kpi"><div class="label">Avaliar redução</div><div class="value">{{ contracts.counts.warn }}</div><div class="sub muted">máxima abaixo de 80% do contrato</div></div>
+    <div class="kpi"><div class="label">Adequadas</div><div class="value">{{ contracts.counts.ok }}</div></div>
+    <div class="kpi"><div class="label">Pouco histórico</div><div class="value">{{ contracts.counts.info }}</div><div class="sub muted">menos de 6 meses de contas</div></div>
+  </div>
+  {% endif %}
+</section>
+{% if contracts.rows %}<section class="card flush tab-new" data-tab="contratos">
+  <div class="tablewrap"><table class="dense stack"><thead><tr><th>Loja</th><th>Unidade</th><th>Modalidade</th><th class="num">Contratada</th><th class="num">Máxima medida</th><th class="num">Uso máximo</th><th class="num">Ultrapassagens</th><th class="num">Meses</th><th>Situação</th></tr></thead><tbody>
+  {% for r in contracts.rows %}<tr><td data-label="Loja"><a href="/stores/{{ r.store_id }}"><strong>{{ r.label }}</strong></a></td><td class="mono small" data-label="Unidade"><a href="/units/{{ r.unit_id }}">{{ r.unit }}</a></td>
+    <td data-label="Modalidade">{{ r.modality or '—' }}</td><td class="num" data-label="Contratada">{{ r.contracted|num(0) }} kW</td><td class="num" data-label="Máxima medida">{{ r.peak|num(0) }} kW</td>
+    <td class="num" data-label="Uso máximo">{{ r.use|num(0) }}%</td><td class="num" data-label="Ultrapassagens">{{ r.over or '—' }}</td><td class="num" data-label="Meses">{{ r.months }}</td>
+    <td data-label="Situação"><span class="badge {{ {'bad': 'bad', 'warn': 'warn', 'ok': 'ok'}.get(r.tone, '') }}">{{ r.status }}</span></td></tr>{% endfor %}
+  </tbody></table></div>
+  <p class="hint" style="padding:0 18px 14px">Ultrapassagem: demanda medida acima de 105% da contratada (REN ANEEL 1.000/2021), que costuma gerar cobrança. Redução: a maior demanda dos últimos 12 meses ficou abaixo de 80% do contrato. Antes de mudar o contrato, confirme com a distribuidora (há regras de prazo e de sazonalidade).</p></section>{% endif %}
+
+{# ======================= ANO ======================= #}
+<section class="card tab-new" data-tab="ano">
+  <div class="card-head"><h2>{{ year.year }} até {{ year.focus|month_label }}</h2>
+    <button class="btn sm no-print" type="button" data-print-tab="ano">Imprimir esta tela</button></div>
+  <div class="grid cols-3 kpis">
+    <div class="kpi"><div class="label">Acumulado de {{ year.year }}</div><div class="value">{{ year.ytd|brl(0) }}</div><div class="sub muted">{{ year.ytd_months }} {{ 'mês' if year.ytd_months == 1 else 'meses' }} (jan a {{ year.focus|month_label }})</div></div>
+    <div class="kpi"><div class="label">Contra {{ year.year - 1 }} no mesmo período</div>{% if year.ytd_prev %}<div class="value">{{ year.ytd_prev|brl(0) }}</div><div class="sub"><span class="var var-{{ 'up' if year.ytd_var > 0 else 'down' if year.ytd_var < 0 else 'flat' }}">{{ year.ytd_var|pct(signed=true) }}</span> <span class="muted">em {{ year.year }}</span></div>
+      {% else %}<div class="value sm muted">Sem base ainda</div><div class="sub muted">faltam as contas de {{ year.year - 1 }}</div>{% endif %}</div>
+    <div class="kpi"><div class="label">Projeção de fechamento de {{ year.year }}</div>{% if year.projection %}<div class="value">{{ year.projection.value|brl(0) }}</div><div class="sub muted">{% if year.projection.method == 'seasonal' %}estimativa: ritmo de {{ year.year }} aplicado aos meses que faltam de {{ year.year - 1 }}{% elif year.projection.method == 'average' %}estimativa: média dos últimos 12 meses nos meses que faltam{% else %}ano fechado{% endif %}</div>
+      {% else %}<div class="value sm muted">Disponível a partir de {{ year.available_from|month_label if year.available_from else '12 meses de contas' }}</div><div class="sub muted">precisa de 12 meses de contas (hoje: {{ year.history }})</div>{% endif %}</div>
+  </div>
+  {% if year.ytd %}<div class="dchart"><canvas id="c-year" role="img" aria-label="Gasto mês a mês: {{ year.year }} e {{ year.year - 1 }}"></canvas></div>{% endif %}
+</section>
+<section class="card tab-new" data-tab="ano"><h2>Por que o gasto mudou?</h2>
+  <p class="muted small" style="margin-top:-4px">Só contas de distribuidora com kWh na fatura. A variação se divide em <strong>consumo</strong> (mais ou menos kWh) e <strong>custo por kWh</strong> (tarifa, bandeira, impostos, demanda).</p>
+  <div class="grid cols-2">
+  {% for d, lbl in ((year.mom, year.mom_label), (year.yoy, year.yoy_label)) %}
+    <div class="bridge">{% if d %}<h3>{{ lbl[1] }} contra {{ lbl[0] }}</h3>
+      <dl><dt>Variação</dt><dd class="{{ 'up' if d.delta > 0 else 'down' }}">{{ ('+' if d.delta > 0 else '−') ~ (d.delta|abs|brl(0)) }}</dd>
+        <dt>Por consumo <span class="muted small">({{ d.kwh0|num(0) }} → {{ d.kwh1|num(0) }} kWh, {{ d.kwh_pct|pct(signed=true) }})</span></dt><dd>{{ ('+' if d.volume > 0 else '−') ~ (d.volume|abs|brl(0)) }}</dd>
+        <dt>Por custo por kWh <span class="muted small">({{ d.p0|brl(3) }} → {{ d.p1|brl(3) }}, {{ d.price_pct|pct(signed=true) }})</span></dt><dd>{{ ('+' if d.price > 0 else '−') ~ (d.price|abs|brl(0)) }}</dd></dl>
+      {% else %}<h3>{{ lbl[1] }} contra {{ lbl[0] }}</h3><p class="muted">Sem base ainda (faltam contas com kWh em {{ lbl[0] }}).</p>{% endif %}</div>
+  {% endfor %}
+  </div>
+</section>
+<script type="application/json" id="dir-extra">{{ extra_payload|tojson }}</script>
 <script type="application/json" id="dir-data">{{ payload|tojson }}</script>
 </div>
 {% endblock %}
 {% block scripts %}
-{% if rows %}<script src="/static/js/vendor/chart.umd.min.js"></script><script src="/static/js/director.js?v={{ ASSET_VERSION }}"></script>{% endif %}
+<script src="/static/js/vendor/chart.umd.min.js"></script><script src="/static/js/director.js?v={{ ASSET_VERSION }}"></script>
 {% endblock %}

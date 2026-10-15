@@ -75,13 +75,15 @@
   {# ======================= DIRETORIA ======================= #}
   {% if user.can_see_executive %}
   <section class="card" id="dir-painel"><h2>Como ler o Painel executivo</h2>
-    <ol class="steps-help">
-      <li>Abra <strong>Painel executivo</strong> no menu. No topo, escolha o <strong>período</strong>, a <strong>região</strong> ou o <strong>fornecedor</strong>.</li>
-      <li>Os quadros de cima mostram o total e o que mudou em relação ao mês anterior: <strong>↑</strong> gastou mais, <strong>↓</strong> gastou menos.</li>
-      <li>O <strong>ranking</strong> mostra quais lojas custam mais. O <strong>custo por kWh</strong> mostra quanto se paga por cada unidade de energia — quanto menor, melhor.</li>
-      <li>A <strong>demanda contratada</strong> mostra se a loja usa muito menos ou mais do que contratou. Passar do contratado gera cobrança extra; contratar demais é dinheiro parado.</li>
-    </ol>
-    <p class="hint">Mês com <strong>*</strong> ainda está incompleto (faltam contas) e não entra nas variações.</p></section>
+    <p>O painel tem cinco abas. Os filtros (período, região, fornecedor) valem para todas.</p>
+    <ul>
+      <li><strong>Visão geral:</strong> destaques em frases, o total e o que mudou (<strong>↑</strong> gastou mais, <strong>↓</strong> gastou menos), gasto mês a mês e as lojas que mais custam.</li>
+      <li><strong>Lojas:</strong> variação de cada loja, evolução, custo por kWh (vermelho = acima da média da <em>mesma distribuidora</em>; CEMIG, COELBA e Energisa têm tarifas diferentes), mapa de calor e comparação entre duas lojas.</li>
+      <li><strong>Gasto evitável:</strong> quanto se pagou de ultrapassagem de demanda, energia reativa excedente e juros/multa por atraso, por loja e por mês, com os maiores itens e o link para a conta.</li>
+      <li><strong>Contratos:</strong> para lojas de média tensão, a demanda contratada contra a maior medida em 12 meses: quem deve avaliar aumento (passou do contratado) ou redução (usa menos de 80%).</li>
+      <li><strong>Ano:</strong> acumulado do ano, comparação com o ano anterior e projeção de fechamento (aparecem sozinhas quando houver 12 meses de contas) e <strong>por que o gasto mudou</strong>: quanto veio de consumo (kWh) e quanto do custo por kWh.</li>
+    </ul>
+    <p class="hint">Mês com <strong>*</strong> ainda está incompleto (faltam contas) e não entra nas variações. "Imprimir painel" imprime a Visão geral e as Lojas; as abas Gasto evitável, Contratos e Ano têm o próprio botão de imprimir.</p></section>
   <section class="card" id="dir-comparar"><h2>Comparar duas lojas</h2>
     <p>Mais abaixo no painel, em <strong>Comparar duas lojas</strong>, escolha as duas lojas e veja mês a mês a diferença de valor e de consumo.</p>
     <p class="hint">O painel só <strong>consulta</strong>: você não precisa (nem consegue) alterar contas por aqui. Se algo parecer errado, avise o funcionário.</p></section>

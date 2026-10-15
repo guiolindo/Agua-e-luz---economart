@@ -5,22 +5,53 @@ from app.database import get_db
 from app.models import User
 from app.security import director_required
 from app.services import alert_service, executive_service
+from app.utils import formatting as fmt
 from app.utils.parsing import parse_reference
 from app.web import render
 
 router = APIRouter()
 
 
+TABS = (("geral", "Visão geral", "Quanto gastamos e se está pior"),
+        ("lojas", "Lojas", "Ranking, variação, evolução, custo por kWh e comparação entre lojas"),
+        ("evitavel", "Gasto evitável", "Ultrapassagem, energia reativa, juros e multa: o que se paga à toa"),
+        ("contratos", "Contratos", "Demanda contratada × usada: quem deve aumentar ou reduzir"),
+        ("ano", "Ano", "Acumulado do ano, projeção e por que o gasto mudou"))
+
+
 @router.get("/diretoria")
 def executive_panel(request: Request, start: str | None = None, end: str | None = None, by: str = "reference",
-                    region: str | None = None, types: list[int] | None = None,
+                    region: str | None = None, types: list[int] | None = None, aba: str = "geral",
                     user: User = Depends(director_required), db: Session = Depends(get_db)):
-    data = executive_service.build(db, parse_reference(start), parse_reference(end), "due" if by == "due" else "reference",
-                                   types or None, region or None)
-    from app.models.mixins import utcnow
+    from urllib.parse import urlencode
 
-    return render(request, "director/panel.html", user=user, payload=executive_service.client_payload(data), printed_at=utcnow(), alerts_open=alert_service.counts(db),
-                  insights=executive_service.insights(data), **data)
+    from app.models.mixins import utcnow
+    from app.services import director_extra as extra
+
+    by = "due" if by == "due" else "reference"
+    aba = aba if aba in {t[0] for t in TABS} else "geral"
+    data = executive_service.build(db, parse_reference(start), parse_reference(end), by, types or None, region or None)
+    focus = data["months"][data["focus_idx"]] if data["months"] else data["end"]
+    avoid = extra.avoidable(db, data["start"], data["end"], by, region or None, types or None)
+    contracts = extra.contracts(db, data["end"], region or None)
+    year = extra.year_view(db, focus, by, region or None, types or None)
+    insights = executive_service.insights(data)
+    why = extra.decomposition_sentence(year["mom"], *year["mom_label"])
+    if why:
+        insights.insert(1 if insights else 0, why)
+    if avoid["total"]:
+        insights.append({"tone": "bad", "text": f"Gasto evitável no período (ultrapassagem, energia reativa, juros e multa): "
+                                                f"{fmt.brl(avoid['total'], 0)}. Veja a aba Gasto evitável."})
+    base_qs = urlencode([(k, v) for k, v in request.query_params.multi_items() if k != "aba" and v])
+    extra_payload = {
+        "avoid": {"labels": avoid["labels"], "series": [{"label": s["label"], "data": s["data"]} for s in avoid["series"]]},
+        "year": {"year": year["year"], **year["chart"]},
+        "contracts": {r["label"]: r["series"] for r in contracts["rows"]},
+    }
+    return render(request, "director/panel.html", user=user, payload=executive_service.client_payload(data), printed_at=utcnow(),
+                  alerts_open=alert_service.counts(db), insights=insights, aba=aba, tabs=TABS, base_qs=base_qs,
+                  avoid=avoid, avoid_labels=extra.CAT_LABEL, contracts=contracts, year=year, extra_payload=extra_payload,
+                  avoid_share=float(avoid["total"]) / data["kpi"]["total"] * 100 if data["kpi"]["total"] else None, **data)
 
 
 @router.get("/diretoria/export.csv")

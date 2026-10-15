@@ -789,3 +789,31 @@ kbd { display: inline-block; min-width: 22px; padding: 2px 7px; border: 1px soli
 .who-pill:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); } .who-pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .trash-all { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .flash.undo { flex-wrap: wrap; } .flash.undo span { flex: 1 1 auto; } .flash.undo form { margin: 0; }
+
+/* ---------- Painel executivo em abas ---------- */
+.dir-tabs { display: flex; gap: 4px; margin: 0 0 14px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: thin; }
+.dir-tabs a { flex: none; padding: 10px 14px 9px; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.dir-tabs a:hover { color: var(--accent); text-decoration: none; background: var(--surface-2); border-radius: 6px 6px 0 0; }
+.dir-tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--orange); }
+.tab-badge { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--warn-soft); color: var(--warn-ink); border: 1px solid var(--warn-line); }
+.tab-badge.bad { background: var(--bad-soft); color: var(--bad-ink); border-color: var(--bad-line); }
+@media screen {
+  .dirpanel[data-aba="geral"] [data-tab]:not([data-tab~="geral"]),
+  .dirpanel[data-aba="lojas"] [data-tab]:not([data-tab~="lojas"]),
+  .dirpanel[data-aba="evitavel"] [data-tab]:not([data-tab~="evitavel"]),
+  .dirpanel[data-aba="contratos"] [data-tab]:not([data-tab~="contratos"]),
+  .dirpanel[data-aba="ano"] [data-tab]:not([data-tab~="ano"]) { display: none !important; }
+}
+@media print {
+  .dirpanel:not([data-print-tab]) .tab-new { display: none !important; }          /* "Imprimir painel" continua como antes */
+  .dirpanel[data-print-tab="evitavel"] [data-tab]:not([data-tab~="evitavel"]),
+  .dirpanel[data-print-tab="contratos"] [data-tab]:not([data-tab~="contratos"]),
+  .dirpanel[data-print-tab="ano"] [data-tab]:not([data-tab~="ano"]) { display: none !important; }
+  .dirpanel[data-print-tab] .flash { display: none !important; }
+}
+.dirpanel .tab-new + .tab-new, .dirpanel .tab-new { margin-bottom: 14px; }
+.bridge { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface-2); }
+.bridge h3 { text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--text); margin: 0 0 8px; }
+.bridge dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; }
+.bridge dt { color: var(--ink-2); } .bridge dd { margin: 0; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bridge dd.up { color: var(--bad); } .bridge dd.down { color: var(--ok); }

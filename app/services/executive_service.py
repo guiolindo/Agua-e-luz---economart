@@ -62,6 +62,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
     color_of = {t.id: TYPE_COLORS[i % len(TYPE_COLORS)] for i, t in enumerate(types)}
     use_types = set(type_ids) if type_ids else {t.id for t in types}
     type_code = {t.id: t.code for t in types}
+    type_name = {t.id: t.name for t in types}
 
     qs, qe = _fetch_range(prev_start, end, by)
     bills = list(db.scalars(select(EnergyBill).options(joinedload(EnergyBill.unit))
@@ -81,6 +82,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
     # da distribuidora: são a mesma energia.
     energy_month = defaultdict(lambda: {"value": Decimal(0), "kwh_dist": Decimal(0), "kwh_gen": Decimal(0)})
     util = defaultdict(list)                             # store -> [demanda / contratada]
+    dist_val = defaultdict(lambda: defaultdict(Decimal))  # store -> distribuidora -> valor (para agrupar o R$/kWh)
 
     def add(store_id: int, type_id: int, month: date, value: Decimal) -> None:
         if store_id not in store_ids or type_id not in use_types:
@@ -103,6 +105,8 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
             cell["value"] += b.total_value
             if kwh and kwh > 0:
                 cell["kwh_gen" if type_code.get(b.record_type_id) in NO_OWN_KWH_TYPES else "kwh_dist"] += kwh
+                if type_code.get(b.record_type_id) not in NO_OWN_KWH_TYPES:
+                    dist_val[b.unit.store_id][b.record_type_id] += b.total_value
             if b.contracted_demand and b.contracted_demand > 0:
                 measured = max(b.demand_hp or Decimal(0), b.demand_hfp or Decimal(0))
                 if measured > 0:
@@ -168,6 +172,8 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
             "demand_use": _f(sum(u, Decimal(0)) / len(u) * 100) if u else None,
             "demand_over": sum(1 for x in (u or []) if x > DEMAND_TOLERANCE),
             "mix": {str(t): _f(v) for t, v in mix[s.id].items()},
+            # distribuidora principal: tarifas diferem entre CEMIG, COELBA, Energisa; o R$/kWh só se compara dentro dela
+            "dist": type_name[max(dist_val[s.id], key=dist_val[s.id].get)] if dist_val.get(s.id) else None,
         })
     rows.sort(key=lambda r: r["total"], reverse=True)
     for r in rows:  # intensidade 0..1 por loja (mostra a sazonalidade de cada uma)
@@ -175,6 +181,13 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
         lo, hi = (min(present), max(present)) if present else (0, 0)
         r["heat"] = [None if v is None else (0.5 if hi == lo else (v - lo) / (hi - lo)) for v in r["values"]]
 
+    dist_acc = defaultdict(lambda: [Decimal(0), Decimal(0)])          # distribuidora -> [valor, kWh]
+    for r in rows:
+        e = eff.get(r["id"])
+        if r["dist"] and e and e["kwh"]:
+            dist_acc[r["dist"]][0] += e["value"]
+            dist_acc[r["dist"]][1] += e["kwh"]
+    dist_avg = {d: _f(v / k) for d, (v, k) in dist_acc.items() if k}
     eff_value = sum((e["value"] for e in eff.values()), Decimal(0))
     eff_kwh = sum((e["kwh"] for e in eff.values()), Decimal(0))
     like_cur = sum((Decimal(str(r["avg"])) for r in rows if r["avg_prev"] is not None), Decimal(0))
@@ -211,7 +224,7 @@ def build(db: Session, start: date | None = None, end: date | None = None, by: s
                             month_totals_opt[i] if not partial[i] else None) for i in range(n)],
         "by_type": [{"id": t.id, "name": t.name, "color": color_of[t.id], "values": [_f(v) or None for v in by_type_month[t.id]]}
                     for t in types if t.id in by_type_month and any(by_type_month[t.id])],
-        "rows": rows, "pending_items": pending[:12],
+        "rows": rows, "pending_items": pending[:12], "dist_avg": dist_avg,
     }
 
 
@@ -263,7 +276,7 @@ def insights(data: dict) -> list[dict]:
                             + ", ".join(f"{c} {fmt.pct(d, signed=True)}" for _, c, d in odd[:3]) + "."})
     over = [r["label"] for r in rows if (r.get("demand_over") or 0) > 0]
     if over:
-        out.append({"tone": "bad", "text": f"{len(over)} {'loja ultrapassou' if len(over) == 1 else 'lojas ultrapassaram'} a demanda contratada em algum mês do período (pode gerar cobrança por ultrapassagem): {names(over)}."})
+        out.append({"tone": "bad", "text": f"{len(over)} {'loja ultrapassou' if len(over) == 1 else 'lojas ultrapassaram'} a demanda contratada em algum mês do período (pode gerar cobrança por ultrapassagem): {names(over)}. Veja a aba Contratos."})
     low = [r["label"] for r in rows if r.get("demand_use") is not None and r["demand_use"] < 60]
     if low:
         out.append({"tone": "info", "text": f"Usam menos de 60% da demanda contratada (pode haver contrato maior que o necessário): {names(low)}."})
@@ -286,9 +299,9 @@ def client_payload(data: dict) -> dict:
         "by_type": data["by_type"],
         "types": {str(t.id): {"name": t.name, "color": data["colors"][t.id]} for t in data["types"]},
         "rows": [{k: r[k] for k in ("id", "code", "label", "name", "region", "values", "total", "share", "last", "before", "rs_kwh",
-                                    "demand_use", "demand_over", "mix")} | {"var_last": r["vs_last_month"]["pct"]}
+                                    "demand_use", "demand_over", "mix", "dist")} | {"var_last": r["vs_last_month"]["pct"]}
                  for r in data["rows"]],
-        "avg_rs_kwh": data["kpi"]["rs_kwh"],
+        "avg_rs_kwh": data["kpi"]["rs_kwh"], "dist_avg": data.get("dist_avg", {}),
     }
 
 

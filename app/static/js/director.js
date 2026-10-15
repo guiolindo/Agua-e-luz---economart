@@ -3,6 +3,7 @@
   if (typeof Chart === 'undefined') return;
   const D = JSON.parse(document.getElementById('dir-data').textContent);
   const rows = D.rows;
+  if (!rows.length) return;                       // sem dados no período: as abas novas cuidam de si (abaixo)
   const nfBRL0 = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
   const nfBRL3 = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 3, maximumFractionDigits: 3 });
   const nfN = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
@@ -80,8 +81,11 @@
 
   // 6) R$/kWh e 7) uso da demanda
   const ek = rows.filter((r) => r.rs_kwh).sort((a, b) => b.rs_kwh - a.rs_kwh);
-  hbar('c-kwh', ek.map(lab), ek.map((r) => r.rs_kwh), ek.map((r) => D.avg_rs_kwh && r.rs_kwh > D.avg_rs_kwh ? UP : '#9aa5b4'),
-       (v) => nfBRL3.format(v) + '/kWh', { tick: (v) => nfBRL3.format(v), refs: D.avg_rs_kwh ? [refLine(D.avg_rs_kwh, BLUE, 'média ' + nfBRL3.format(D.avg_rs_kwh))] : [] });
+  // Tarifas diferem entre distribuidoras (CEMIG, COELBA, Energisa): cada loja é comparada com a média da SUA distribuidora.
+  const distAvg = (r) => (r.dist && D.dist_avg && D.dist_avg[r.dist]) || D.avg_rs_kwh;
+  hbar('c-kwh', ek.map(lab), ek.map((r) => r.rs_kwh), ek.map((r) => distAvg(r) && r.rs_kwh > distAvg(r) * 1.05 ? UP : '#9aa5b4'),
+       (v, i) => nfBRL3.format(v) + '/kWh' + (ek[i].dist ? ' · média ' + ek[i].dist + ': ' + nfBRL3.format(distAvg(ek[i])) : ''),
+       { tick: (v) => nfBRL3.format(v), options: clickTo(ek) });
   const eu = rows.filter((r) => r.demand_use != null).sort((a, b) => b.demand_use - a.demand_use);
   hbar('c-util', eu.map(lab), eu.map((r) => r.demand_use), eu.map((r) => r.demand_use > 100 ? UP : r.demand_use < 70 ? '#c9a227' : '#5b9a6b'),
        (v, i) => nfN.format(v) + '% da demanda contratada' + (eu[i].demand_over ? ' · ' + eu[i].demand_over + (eu[i].demand_over === 1 ? ' conta acima' : ' contas acima') : ''),
@@ -141,4 +145,50 @@
     sizeCharts(a3);
   });
   window.addEventListener('afterprint', () => { setMixLegend(true, false); setLineLegend(false); sizeCharts(false); });
+})();
+
+
+// Abas do Painel executivo (Visão geral, Lojas, Gasto evitável, Contratos, Ano) e os gráficos das abas novas.
+(function () {
+  const panel = document.querySelector('.dirpanel'); if (!panel) return;
+  const cur = document.querySelector('[data-aba-link][aria-current]');
+  if (cur && cur.parentNode.scrollWidth > cur.parentNode.clientWidth) cur.parentNode.scrollLeft = cur.offsetLeft - 16;   // celular: a aba aberta fica à vista
+  document.querySelectorAll('[data-aba-link]').forEach((a) => a.addEventListener('click', (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey) return;              // abrir em outra aba continua funcionando
+    e.preventDefault();
+    const key = a.dataset.abaLink;
+    panel.dataset.aba = key;
+    document.querySelectorAll('[data-aba-link]').forEach((x) => { if (x === a) x.setAttribute('aria-current', 'page'); else x.removeAttribute('aria-current'); });
+    history.replaceState(null, '', a.getAttribute('href'));
+    window.scrollTo({ top: Math.min(window.scrollY, panel.querySelector('.dir-tabs').offsetTop - 8) });
+    window.dispatchEvent(new Event('resize'));                     // gráficos que estavam escondidos tomam o tamanho certo
+  }));
+  // Imprimir só a aba (as novas não entram no "Imprimir painel", que continua igual)
+  document.querySelectorAll('[data-print-tab]').forEach((b) => b.addEventListener('click', () => {
+    panel.dataset.printTab = b.dataset.printTab; window.print();
+  }));
+  window.addEventListener('afterprint', () => { delete panel.dataset.printTab; });
+
+  if (typeof Chart === 'undefined') return;
+  const X = JSON.parse((document.getElementById('dir-extra') || {}).textContent || '{}');
+  const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  // Mesma paleta validada do Painel admin (daltonismo e contraste): azul, laranja, roxo.
+  const SERIES = ['#2e6bb0', '#d9661a', '#7a5cc9'], GRID = '#eceff3', PREV = '#a9b3c1';
+  const bar = { borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: 'bottom', maxBarThickness: 24, borderColor: '#fff', borderWidth: { top: 0, left: 1, right: 1, bottom: 2 } };
+  const avoid = document.getElementById('c-avoid');
+  if (avoid && X.avoid) {
+    new Chart(avoid, { type: 'bar', data: { labels: X.avoid.labels, datasets: X.avoid.series.map((s, i) => ({ label: s.label, data: s.data.map((v) => v || null), backgroundColor: SERIES[i], stack: 'a', ...bar })) },
+      options: { responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
+        scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, grid: { color: GRID }, ticks: { callback: (v) => brl.format(v) } } },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } }, tooltip: { callbacks: { label: (i) => i.dataset.label + ': ' + brl.format(i.raw || 0) } } } } });
+  }
+  const year = document.getElementById('c-year');
+  if (year && X.year) {
+    const ds = [{ label: String(X.year.year), data: X.year.cur, backgroundColor: SERIES[0], ...bar }];
+    if (X.year.prev.some((v) => v != null)) ds.push({ label: String(X.year.year - 1), data: X.year.prev, backgroundColor: PREV, ...bar });
+    new Chart(year, { type: 'bar', data: { labels: X.year.labels, datasets: ds },
+      options: { responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
+        scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: GRID }, ticks: { callback: (v) => brl.format(v) } } },
+        plugins: { legend: { display: ds.length > 1, position: 'bottom', labels: { boxWidth: 12 } }, tooltip: { callbacks: { label: (i) => i.dataset.label + ': ' + (i.raw == null ? '—' : brl.format(i.raw)) } } } } });
+  }
 })();

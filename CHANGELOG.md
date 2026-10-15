@@ -3,6 +3,15 @@
 Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada item corresponde a commits em
 `ccr-9b4b2f9b-4bk1nd`. O motivo das decisões maiores está em [`DECISIONS.md`](DECISIONS.md).
 
+## 2026-10-15
+
+- **Painel executivo em abas, com três telas novas.** Pesquisa de mercado (EnergyCAP, IBM Envizi, Arcadia, Schneider Resource Advisor, Enel X/Via Varejo): os sistemas separam a visão do diretor por assunto, mostram o gasto evitável em R$ e só projetam o ano com 12 meses de histórico. O painel virou cinco abas, com os mesmos filtros:
+  - **Visão geral** (destaques, indicadores, gasto mensal, ranking, pendências) e **Lojas** (variação, composição, evolução, custo por kWh, demanda média, comparar duas lojas, mapa de calor, comparativo) — o que já existia, separado. O custo por kWh de cada loja agora é comparado com a média da **própria distribuidora** (tarifas de CEMIG, COELBA e Energisa são diferentes).
+  - **Gasto evitável:** soma, pelos itens da fatura, ultrapassagem de demanda, energia reativa excedente (inclusive as abreviações da COELBA, como "Cons.Real.Exc.") e juros/multa por atraso; por loja, por mês e os maiores itens com link para a conta. Diz em quantas contas se baseia (contas lançadas à mão não têm itens).
+  - **Contratos:** por unidade de média tensão, demanda contratada × maior medida em 12 meses, ultrapassagens e situação (avaliar aumento, avaliar redução, adequada, pouco histórico; "indicativo" com menos de 12 meses).
+  - **Ano:** acumulado do ano; comparação com o mesmo período do ano anterior e projeção de fechamento aparecem sozinhas quando houver 12 meses de contas (antes, a tela diz a partir de quando). **Por que o gasto mudou:** a variação das contas de distribuidora dividida em efeito consumo (kWh) e efeito custo por kWh, contra o mês anterior e contra o mesmo mês do ano anterior; a frase também entra nos Destaques.
+  - Gráficos novos com a paleta validada para daltonismo e contraste do Painel admin (azul `#2e6bb0`, laranja `#d9661a`, roxo `#7a5cc9`). "Imprimir painel" continua igual; as abas novas têm impressão própria.
+
 ## 2026-10-14
 
 - **Lixeira pessoal e Desfazer.** Excluir por engano não depende mais do administrador: logo depois de excluir aparece **Desfazer**, e a **Lixeira** (menu de quem lança contas) mostra o que a pessoa excluiu nos últimos 30 dias, para ela mesma restaurar. Depois de 30 dias o item continua só na lixeira do administrador (até 180 dias). Se o mesmo mês já foi lançado de novo, o item sai da lixeira pessoal (não há o que restaurar) e a restauração é recusada sem duplicar nem sobrescrever; se a conta nova for excluída, a antiga volta a ser restaurável. Para o administrador, o item aparece como "Lançada de novo". A tela foi de `/admin/lixeira` para `/lixeira` (o endereço antigo redireciona). O limite de 15 exclusões por hora continua.
