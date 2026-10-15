@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/static/css/app.css?v={{ ASSET_VERSION }}">
   {% if user %}<script nonce="{{ csp_nonce }}">try{if(sessionStorage.getItem('economart_splash')==='{{ login_stamp }}'||matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('no-splash')}catch(e){}</script>{% endif %}
 </head>
-<body data-login="{{ login_stamp }}"{% if user and session_idle %} data-idle="{{ session_idle }}" data-max-left="{{ session_max_left }}"{% endif %}>
+<body data-login="{{ login_stamp }}"{% if user and session_idle %} data-idle="{{ session_idle }}" data-max-left="{{ session_max_left }}"{% endif %}{% if user and net_check %} data-net-check="{{ net_probe }}"{% endif %}>
 <a class="skip" href="#content">Ir para o conteúdo</a>
 {% if user %}
 {# Abertura do sistema: ~0,3 s com a marca, uma vez por login e por aba. Visível desde o primeiro desenho (sem piscar o sistema antes). #}

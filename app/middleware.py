@@ -17,6 +17,16 @@ MUTATIONS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
 
 # ------------------------------------------------------------ cabeçalhos
+def _probe_origin() -> str:
+    """Origem do teste "máquina da empresa" (INTRANET_PROBE_URL), liberada no connect-src da CSP."""
+    from urllib.parse import urlsplit
+
+    url = get_settings().intranet_probe_url.strip()
+    parts = urlsplit(url) if url else None
+    if not parts or parts.scheme not in ("http", "https") or not parts.netloc or any(c in parts.netloc for c in " ;'\""):
+        return ""
+    return f" {parts.scheme}://{parts.netloc}"
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         nonce = secrets.token_urlsafe(16)
@@ -36,7 +46,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             # scripts só do próprio site ou com o nonce desta resposta (sem 'unsafe-inline' em script)
             h["Content-Security-Policy"] = (
                 f"default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'; "
-                "img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src 'self'; "
+                f"img-src 'self' data: blob:; font-src 'self'; connect-src 'self'{_probe_origin()}; frame-src 'self'; "
                 "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'")
         if not path.startswith("/static/") and "Cache-Control" not in h:
             h["Cache-Control"] = "no-store"  # dados da empresa: nada fica no cache/bfcache do navegador

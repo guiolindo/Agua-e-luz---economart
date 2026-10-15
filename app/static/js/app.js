@@ -546,11 +546,13 @@ const session = (() => {
 // Toda chamada ao servidor feita pela página renova o prazo da sessão e informa a faixa de conexão.
 (() => {
   const orig = window.fetch.bind(window);
-  window.fetch = (input, init) => orig(input, init).then((r) => {
-    const url = new URL(typeof input === 'string' ? input : input.url, location.href);
-    if (url.origin === location.origin) { net.ok(); if (r.ok && !r.redirected) session.touch(); }
-    return r;
-  }, (err) => { if (!(err && err.name === 'AbortError')) net.error(); throw err; });
+  window.fetch = (input, init) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, location.href), own = url.origin === location.origin;
+    return orig(input, init).then((r) => {
+      if (own) { net.ok(); if (r.ok && !r.redirected) session.touch(); }
+      return r;
+    }, (err) => { if (own && !(err && err.name === 'AbortError')) net.error(); throw err; });   // outros endereços (teste da intranet): não é "servidor fora"
+  };
 })();
 
 // Formulários longos (conferência da conta, lançamento manual, lote): avisa antes de sair da tela sem salvar.
@@ -608,3 +610,17 @@ const session = (() => {
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
 }
+
+// Máquina da empresa (só registro na auditoria, nunca bloqueia): uma vez por sessão o navegador tenta abrir um endereço
+// que só existe dentro da empresa (ex.: https://lupus.intranet/). Respondeu = está na rede interna. O resultado vai
+// para o servidor junto com o IP (que também diz se é um dos links da empresa).
+(() => {
+  const b = document.body; if (!('netCheck' in b.dataset)) return;
+  const url = b.dataset.netCheck, token = (document.querySelector('meta[name="csrf-token"]') || {}).content;
+  const send = (intranet) => fetch('/api/rede', { method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token || '' }, body: JSON.stringify({ intranet }) }).catch(() => {});
+  if (!url) { send(null); return; }
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 4000);
+  fetch(url, { mode: 'no-cors', cache: 'no-store', credentials: 'omit', signal: ctrl.signal })
+    .then(() => true, () => false).then((ok) => { clearTimeout(timer); send(ok); });
+})();

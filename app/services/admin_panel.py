@@ -75,11 +75,16 @@ def build(db: Session) -> dict:
     def count_since(model, since):
         return db.scalar(select(func.count()).select_from(model).where(model.created_at >= since)) or 0
 
+    from app.services import network_service
+
+    last_net: dict[int, dict] = {}
+    for a in db.scalars(select(AuditLog).where(AuditLog.action == "network_check").order_by(AuditLog.id.desc()).limit(2000)):
+        last_net.setdefault(a.user_id, {"label": network_service.label(a.details), "at": _aware(a.at)})
     people = []
     for u in users:
         people.append({"user": u, "role": ROLE_LABELS.get(u.role, u.role), "online": is_online(u, now),
                        "last_login": _aware(u.last_login), "last_seen": _aware(u.last_seen_at),
-                       "seen_presentation": last_view.get(u.id)})
+                       "seen_presentation": last_view.get(u.id), "net": last_net.get(u.id)})
     people.sort(key=lambda p: (not p["online"], -(p["last_seen"] or p["last_login"] or datetime.min.replace(tzinfo=timezone.utc)).timestamp()))
 
     return {

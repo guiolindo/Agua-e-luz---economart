@@ -10,7 +10,7 @@ from app.config import get_settings
 from app.models.mixins import utcnow
 from app.database import get_db
 from app.models import AuditLog, TrashItem, User
-from app.security import admin_required, verify_csrf
+from app.security import admin_required, current_user, verify_csrf
 from app.services import audit_service, auth_service, totp_service, trash_service
 from app.web import flash, render
 
@@ -174,7 +174,7 @@ ACTION_LABELS = {
     "import": "Conta importada", "cancel": "Importação descartada", "purge": "Arquivos antigos apagados",
     "role_change": "Perfil alterado", "activate": "Usuário reativado", "deactivate": "Usuário desativado",
     "view": "Abriu a apresentação do sistema", "link": "Loja vinculada à lista", "due_ack": "Marcada como paga", "alert_ack": "Alerta conferido", "replace": "Conta substituída", "create": "Criação", "update": "Alteração", "delete": "Exclusão",
-    "restore": "Restaurado da lixeira", "delete_blocked": "Exclusões pausadas (muitas em sequência)",
+    "restore": "Restaurado da lixeira", "network_check": "Verificação de rede", "delete_blocked": "Exclusões pausadas (muitas em sequência)",
 }
 ENTITY_LABELS = {"store": "loja", "consumer_unit": "unidade", "energy_bill": "conta", "manual_record": "lançamento",
                  "record_type": "tipo de registro", "user": "usuário", "import": "importação", "document": "documento",
@@ -285,6 +285,7 @@ def admin_panel(request: Request, mes: str | None = None, user: User = Depends(a
                   month=month, this_month=m.this_month(), r=m.ranking(db, month), daily=m.daily(db, month),
                   f=m.imports_funnel(db, month), logins=m.logins_by_day(db, 30),
                   online_minutes=panel.ONLINE_MINUTES, label=action_label, bad=BAD_ACTIONS, good=OK_ACTIONS,
+                  net_on=bool(get_settings().company_networks or get_settings().intranet_probe_url),
                   legacy_count=len(company_stores.legacy_stores(db)), delete_blocks=trash_service.recent_blocks(db),
                   trash_week=db.scalar(select(func.count()).select_from(TrashItem)
                                        .where(TrashItem.deleted_at >= utcnow() - timedelta(days=7))) or 0)
@@ -322,4 +323,31 @@ def trash_old_address(por: int | None = None, user: User = Depends(admin_require
 @router.get("/admin/ip")
 def my_ip(request: Request, user: User = Depends(admin_required)):
     """Conferência do IP registrado na auditoria: o que chegou em cada cabeçalho e qual o sistema usa."""
-    return render(request, "admin/ip.html", user=user, chosen=security.client_ip(request), src=security.client_ip_sources(request))
+    from app.services import network_service
+
+    chosen = security.client_ip(request)
+    return render(request, "admin/ip.html", user=user, chosen=chosen, src=security.client_ip_sources(request),
+                  company_ip=network_service.is_company_ip(chosen), nets=get_settings().company_networks,
+                  probe=get_settings().intranet_probe_url, net=request.session.get("net"))
+
+
+@router.post("/api/rede")
+async def network_check(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Resultado do teste "máquina da empresa" feito pelo navegador (uma vez por sessão). Só registra."""
+    from app.services import network_service
+
+    await verify_csrf(request)
+    if request.session.get("net") is not None:
+        return {"ok": True}
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001 — corpo ilegível: trata como teste sem resposta
+        body = {}
+    intranet = body.get("intranet") if get_settings().intranet_probe_url else None
+    intranet = intranet if isinstance(intranet, bool) else None
+    ip = security.client_ip(request)
+    details = {"intranet": intranet, "ip_empresa": network_service.is_company_ip(ip), "ip": ip}
+    request.session["net"] = 1 if (intranet or details["ip_empresa"]) else 0
+    audit_service.log(db, user.id, "network_check", "auth", None, details)
+    db.commit()
+    return {"ok": True}

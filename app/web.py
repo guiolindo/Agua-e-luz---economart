@@ -78,5 +78,8 @@ def render(request: Request, name: str, status_code: int = 200, **ctx):
     ctx["path"] = request.url.path
     s, iat = get_settings(), request.session.get("iat")
     ctx["session_idle"] = s.session_idle_minutes * 60 if iat else 0           # aviso de "sessão vai terminar" (app.js)
+    # teste "máquina/rede da empresa": uma vez por sessão, se configurado (INTRANET_PROBE_URL e/ou COMPANY_NETWORKS)
+    ctx["net_check"] = bool(iat and request.session.get("net") is None and (s.intranet_probe_url or s.company_networks))
+    ctx["net_probe"] = s.intranet_probe_url.strip()
     ctx["session_max_left"] = max(0, int(iat) + s.session_max_hours * 3600 - int(time.time())) if iat else 0
     return templates.TemplateResponse(request, name, ctx, status_code=status_code)
