@@ -9,8 +9,8 @@
 
 {% if user.is_admin %}
 {% set blocked = {} %}{% for b in blocks %}{% if b.user_id not in blocked %}{% set _ = blocked.update({b.user_id: b}) %}{% endif %}{% endfor %}
-{% if blocked %}<div class="flash error" role="alert"><div><strong>Exclusão em massa barrada.</strong>
-  {% for uid, b in blocked.items() %}<div>{{ names.get(uid, '—') }} tentou excluir mais de {{ limit }} itens em uma hora (última vez em {{ b.at|dt_br }}). <a href="/lixeira?por={{ uid }}">Ver o que foi excluído</a></div>{% endfor %}
+{% if blocked %}<div class="flash error" role="alert"><div><strong>Muitas exclusões seguidas.</strong>
+  {% for uid, b in blocked.items() %}<div>{{ names.get(uid, '—') }} passou de {{ limit }} exclusões em uma hora (última vez em {{ b.at|dt_br }}). <a href="/lixeira?por={{ uid }}">Ver o que foi excluído</a></div>{% endfor %}
 </div></div>{% endif %}
 
 {% if week %}<div class="card"><h2>Quem excluiu nos últimos 7 dias</h2>

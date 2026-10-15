@@ -1,7 +1,7 @@
 """Lixeira: excluir uma conta ou lançamento guarda a linha inteira; o administrador restaura com um clique.
 
-Também barra a exclusão em massa: quem não é administrador pode excluir até `max_deletes_per_hour` itens por hora.
-Passou disso (ex.: alguém apagando tudo antes de sair da empresa), a exclusão é recusada, fica registrada na
+Também pausa exclusões em sequência (proteção contra engano): quem não é administrador pode excluir até `max_deletes_per_hour` itens por hora.
+Passou disso, a exclusão é recusada, fica registrada na
 auditoria e aparece no Painel admin e na Lixeira.
 """
 from __future__ import annotations
@@ -65,7 +65,7 @@ def deletes_last_hour(db: Session, user_id: int) -> int:
 
 
 def check_can_delete(db: Session, user: User) -> None:
-    """Barra exclusão em massa (administrador fica de fora: é quem restaura)."""
+    """Pausa exclusões em sequência (o administrador fica de fora: é quem restaura)."""
     limit = get_settings().max_deletes_per_hour
     if user.is_admin or limit <= 0:
         return

@@ -174,7 +174,7 @@ ACTION_LABELS = {
     "import": "Conta importada", "cancel": "Importação descartada", "purge": "Arquivos antigos apagados",
     "role_change": "Perfil alterado", "activate": "Usuário reativado", "deactivate": "Usuário desativado",
     "view": "Abriu a apresentação do sistema", "link": "Loja vinculada à lista", "due_ack": "Marcada como paga", "alert_ack": "Alerta conferido", "replace": "Conta substituída", "create": "Criação", "update": "Alteração", "delete": "Exclusão",
-    "restore": "Restaurado da lixeira", "delete_blocked": "Exclusão em massa barrada",
+    "restore": "Restaurado da lixeira", "delete_blocked": "Exclusões pausadas (muitas em sequência)",
 }
 ENTITY_LABELS = {"store": "loja", "consumer_unit": "unidade", "energy_bill": "conta", "manual_record": "lançamento",
                  "record_type": "tipo de registro", "user": "usuário", "import": "importação", "document": "documento",

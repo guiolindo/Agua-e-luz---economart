@@ -1,5 +1,5 @@
 """Lixeira. Quem lança contas vê e restaura o que ELE excluiu nos últimos 30 dias (erro simples se desfaz sem
-depender de ninguém). O administrador vê tudo, por 180 dias, e pode desfazer de uma vez o que uma pessoa apagou."""
+depender de ninguém). O administrador vê tudo, por 180 dias, e pode restaurar de uma vez o que uma pessoa excluiu."""
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -75,7 +75,7 @@ def trash_restore(request: Request, item_id: int, next: str = Form("/lixeira"), 
 @router.post("/lixeira/restaurar-de", dependencies=[Depends(verify_csrf)])
 def trash_restore_all(request: Request, deleted_by: int = Form(...), confirm_password: str = Form(""),
                       user: User = Depends(admin_required), db: Session = Depends(get_db)):
-    """Desfaz de uma vez tudo o que uma pessoa excluiu (o caso de quem saiu apagando)."""
+    """Restaura de uma vez tudo o que uma pessoa excluiu."""
     if not security.verify_password(confirm_password, user.password_hash):
         flash(request, "Senha incorreta: restaurar tudo de uma vez precisa da confirmação da sua senha.", "error")
         return RedirectResponse(f"/lixeira?por={deleted_by}", status_code=303)

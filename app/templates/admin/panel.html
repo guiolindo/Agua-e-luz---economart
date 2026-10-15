@@ -8,8 +8,8 @@
   <a class="btn on-dark" href="/admin/users">Usuários</a><a class="btn on-dark" href="/admin/audit">Auditoria completa</a>
 {% endcall %}
 
-{% if delete_blocks %}<div class="flash error" role="alert"><div><strong>Exclusão em massa barrada:</strong>
-  {% for uid in delete_blocks|map(attribute='user_id')|unique %}{{ p.names.get(uid, '—') }}{{ ', ' if not loop.last }}{% endfor %} tentou excluir muitas contas em pouco tempo.
+{% if delete_blocks %}<div class="flash error" role="alert"><div><strong>Muitas exclusões seguidas:</strong>
+  {% for uid in delete_blocks|map(attribute='user_id')|unique %}{{ p.names.get(uid, '—') }}{{ ', ' if not loop.last }}{% endfor %} excluiu muitos itens em pouco tempo e as novas exclusões foram pausadas.
   <a href="/lixeira"><strong>Ver na Lixeira</strong></a></div></div>
 {% elif trash_week %}<div class="flash info" role="status">{{ trash_week }} conta(s)/lançamento(s) excluído(s) nos últimos 7 dias. <a href="/lixeira">Lixeira</a></div>{% endif %}
 <div class="grid cols-4" style="margin-bottom:16px">

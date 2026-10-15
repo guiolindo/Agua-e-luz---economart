@@ -1,4 +1,4 @@
-"""Lixeira, barreira contra exclusão em massa e limite de acesso por IP."""
+"""Lixeira, pausa de exclusões em sequência e limite de acesso por IP."""
 from app.models import AuditLog, Document, EnergyBill, ManualRecord, RecordType, TrashItem
 from tests.test_app_flow import _form_from_review, _make_store, _upload
 from tests.test_director import _user
@@ -57,17 +57,17 @@ def test_mass_deletion_is_blocked_and_admin_undoes_everything(client, db, monkey
     for m in range(1, 6):
         client.post("/manual/lote", {"store_ids": [str(store_id)], "type_id": ll.id, "reference": f"2026-0{m}", "value": str(100 * m)})
     ids = [r.id for r in db.query(ManualRecord).order_by(ManualRecord.id)]
-    func = _user(client, "vingativo", "operator")
+    func = _user(client, "func9", "operator")
     for rid in ids[:3]:
         assert func.post(f"/manual/records/{rid}/delete", {}).status_code == 303
     r = func.post(f"/manual/records/{ids[3]}/delete", {})
     assert "Exclusão bloqueada" in func.get(r.headers["location"]).text
     db.expire_all()
     assert db.query(ManualRecord).count() == 2 and db.query(TrashItem).count() == 3
-    assert "Exclusão em massa barrada" in client.get("/admin").text
+    assert "Muitas exclusões seguidas" in client.get("/admin").text
     uid = db.query(TrashItem).first().deleted_by
     page = client.get(f"/lixeira?por={uid}").text
-    assert "Restaurar tudo de vingativo" in page and "vingativo tentou excluir mais de 3" in page
+    assert "Restaurar tudo de func9" in page and "func9 passou de 3 exclusões" in page
     client.post("/lixeira/restaurar-de", {"deleted_by": uid})                      # sem senha: nada
     db.expire_all()
     assert db.query(ManualRecord).count() == 2
