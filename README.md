@@ -9,7 +9,7 @@ histórico, os gráficos, a folha impressa da loja e o painel da diretoria.
 [![Python](https://img.shields.io/badge/Python-3.12+-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Railway-336791)](https://www.postgresql.org/)
-[![Testes](https://img.shields.io/badge/testes-450%20passando-brightgreen)](docs/testing.md)
+[![Testes](https://img.shields.io/badge/testes-451%20passando-brightgreen)](docs/testing.md)
 
 > **Vai usar o sistema?** [`TUTORIAL.md`](TUTORIAL.md) ([PDF](docs/Tutorial_Controle_de_Energia.pdf)) e a tela
 > **Ajuda** dentro do sistema, diferente para cada perfil.
@@ -288,7 +288,7 @@ docs/                  documentação técnica
 ## Testes e CI
 
 ```bash
-pytest -q                            # 450 testes, SQLite, sem chamar o Gemini
+pytest -q                            # 451 testes, SQLite, sem chamar o Gemini
 TEST_DATABASE_URL=postgresql://usuario@localhost:5432/banco_teste pytest -q   # contra PostgreSQL (UTF-8)
 ```
 

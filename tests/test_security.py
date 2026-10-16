@@ -514,3 +514,18 @@ def test_goodbye_overlay_is_in_the_shell_and_login_shows_the_notice(client):
     assert 'id="bye"' in client.get("/").text and "Até logo," in client.get("/").text
     c = _new_client()
     assert "Sessão encerrada." in c.get("/login?saiu=1").text and "Sessão encerrada." not in c.get("/login").text
+
+
+def test_navegador_so_preenche_a_senha_no_login(client):
+    """Dentro do sistema (confirmações, trocar senha) o campo de senha nasce travado para o preenchimento
+    automático; só a tela de login aceita a senha salva no navegador."""
+    login = _new_client().tc.get("/login").text
+    assert 'autocomplete="current-password"' in login and "data-no-autofill" not in login
+    for page in ("/admin/users", "/account/password"):
+        html = client.get(page).text
+        for tag in re.findall(r"<input[^>]*type=\"password\"[^>]*>", html):
+            if 'autocomplete="new-password"' in tag:
+                continue                                    # senha nova: o navegador pode sugerir/salvar, não preenche
+            assert "data-no-autofill" in tag and " readonly" in tag, (page, tag)
+        assert 'autocomplete="current-password"' not in html
+    assert "data-no-autofill" in open("app/static/js/app.js", encoding="utf-8").read()   # janela "Confirme com a sua senha"

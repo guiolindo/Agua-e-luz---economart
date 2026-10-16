@@ -57,6 +57,15 @@ vazamento (não existe aqui).
 uma verificação scrypt contra um hash-isca (`verify_dummy`), para que o tempo de resposta não revele se o nome
 existe.
 
+**Preenchimento automático só no login**: a tela de login usa `autocomplete="current-password"`, e o navegador pode
+preencher a senha salva. Dentro do sistema, os campos de senha (confirmar ação com a sua senha, senha atual na troca
+de senha, desativar o 2FA, criar administrador) nascem só-leitura (`data-no-autofill`), o que faz o navegador e os
+gerenciadores de senha não preencherem sozinhos; o campo libera no toque, no clique ou no foco (`app.js`). Ao enviar,
+a senha segue num campo oculto e o visível é esvaziado, para o navegador não oferecer "salvar senha" ligada a outro
+usuário (o formulário de criar usuário tem o nome do usuário novo ao lado). Os campos de senha nova usam
+`new-password`: o navegador pode sugerir e salvar, mas não preenche com a senha antiga. Ao clicar no campo, o
+navegador ainda pode mostrar a lista de senhas salvas; nada é preenchido sem a pessoa escolher.
+
 ### Senha provisória
 
 Usuário novo e senha redefinida pelo administrador recebem uma **senha de 4 dígitos** (`generate_temp_password`):

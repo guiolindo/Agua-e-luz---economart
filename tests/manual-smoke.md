@@ -1,7 +1,7 @@
 # Teste manual no navegador: checklist
 
 O que conferir com os próprios olhos depois de mexer em tela, CSS, JavaScript, login ou permissões, e depois de
-cada deploy. Complementa os 450 testes automáticos (`pytest`), que não abrem um navegador de verdade. Leva cerca
+cada deploy. Complementa os 451 testes automáticos (`pytest`), que não abrem um navegador de verdade. Leva cerca
 de 15 minutos.
 
 ## Como rodar

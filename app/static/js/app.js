@@ -13,13 +13,14 @@ document.addEventListener('click', (e) => {
 window.addEventListener('afterprint', () => document.documentElement.classList.remove('sheet-only'));
 // Confirmações numa janela do próprio sistema (no lugar do confirm()/prompt() do navegador, que mostrava a senha
 // digitada em texto aberto). Roda na captura: segura o envio, pergunta e, se confirmado, envia de novo.
+const NO_FILL = 'autocomplete="off" readonly data-no-autofill data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"';
 const ask = (msg, { password = false, danger = false, ok = 'Confirmar' } = {}) => new Promise((resolve) => {
   let d = document.getElementById('ask-dialog');
   if (!d) {
     d = document.createElement('dialog'); d.id = 'ask-dialog'; d.className = 'dialog ask';
     d.setAttribute('aria-labelledby', 'ask-msg');
     d.innerHTML = '<form method="dialog"><p class="ask-msg" id="ask-msg"></p>'
-      + '<div class="field ask-pw"><label for="ask-pw">Sua senha</label><input type="password" id="ask-pw" autocomplete="current-password"></div>'
+      + '<div class="field ask-pw"><label for="ask-pw">Sua senha</label><input type="password" id="ask-pw" ' + NO_FILL + '></div>'
       + '<div class="ask-actions"><button class="btn" type="submit" value="no">Cancelar</button><button class="btn primary" type="submit" value="ok" id="ask-ok"></button></div></form>';
     document.body.appendChild(d);
     d.querySelector('#ask-pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (e.target.value) d.close('ok'); } });
@@ -30,7 +31,33 @@ const ask = (msg, { password = false, danger = false, ok = 'Confirmar' } = {}) =
   d.querySelector('.ask-pw').hidden = !password; pw.value = '';
   d.returnValue = '';
   d.addEventListener('close', () => resolve(d.returnValue === 'ok' ? (password ? pw.value : true) : null), { once: true });
+  pw.readOnly = true;                   // trava de novo: o navegador não preenche a cada vez que a janela abre
   d.showModal(); (password ? pw : okb).focus();
+});
+// Senha pedida DENTRO do sistema (confirmar ação, trocar senha, 2FA): o navegador não preenche sozinho; só no login.
+// O campo nasce só-leitura (o preenchimento automático pula esses campos) e libera no toque, no clique ou no foco.
+// Ao enviar, a senha segue num campo oculto e o visível fica vazio: o navegador não oferece "salvar senha" com o
+// usuário errado (ex.: o formulário de criar usuário, que tem o nome do usuário novo ao lado).
+const unlockPw = (e) => {
+  const t = e.target; if (!t || !t.closest) return;
+  if (t.matches('input[data-no-autofill]')) { t.readOnly = false; return; }
+  // campo só-leitura fica fora da validação ("required"): libera antes de o formulário ser conferido no envio
+  const f = (e.type === 'keydown' ? e.key === 'Enter' || (e.key === ' ' && !!t.closest('button')) : !!t.closest('button, input[type=submit]')) && t.closest('form');
+  if (f) f.querySelectorAll('input[data-no-autofill]').forEach((i) => { i.readOnly = false; });
+};
+document.addEventListener('pointerdown', unlockPw, true);
+document.addEventListener('keydown', unlockPw, true);
+document.addEventListener('focusin', unlockPw);
+window.addEventListener('submit', (e) => {
+  if (e.defaultPrevented) return;
+  e.target.querySelectorAll('input[data-no-autofill][name]').forEach((i) => {
+    const h = document.createElement('input'); h.type = 'hidden'; h.name = i.name; h.value = i.value; h.dataset.pwCarry = '';
+    i.form.appendChild(h); i.dataset.name = i.name; i.removeAttribute('name'); i.value = ''; i.readOnly = true;
+  });
+});
+window.addEventListener('pageshow', () => {           // voltou pelo histórico: o campo volta a ter nome, sem senha
+  document.querySelectorAll('input[data-pw-carry]').forEach((h) => h.remove());
+  document.querySelectorAll('input[data-no-autofill][data-name]').forEach((i) => { i.name = i.dataset.name; delete i.dataset.name; });
 });
 const isDanger = (el) => !!(el && (el.classList.contains('danger') || el.querySelector && el.querySelector('.danger')));
 const setHidden = (f, name, value) => {
