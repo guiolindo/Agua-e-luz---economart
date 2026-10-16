@@ -248,6 +248,29 @@ período anterior se teve pelo menos 3 meses de dado lá (ou o tamanho do perío
 (UF da loja), tipos de registro e agrupamento por referência ou vencimento. Exporta o comparativo em CSV
 (`/diretoria/export.csv`).
 
+### Abas do painel
+
+O painel tem cinco abas com os mesmos filtros (`aba` na URL): **Visão geral** e **Lojas** usam
+`executive_service.build`; as outras três vêm de `director_extra`:
+
+- **Gasto evitável** (`avoidable`): cada item da fatura é classificado por palavras-chave (`classify`), porque cada
+  distribuidora escreve de um jeito: *ultrapassagem de demanda*, *energia reativa excedente* (inclui `UFER`, `DMCR`,
+  "Cons.Real.Exc." da COELBA) e *juros e multa por atraso*. Só contas lidas por foto/PDF têm itens; a tela diz em
+  quantas contas o número se baseia.
+- **Contratos** (`contracts`): por unidade com demanda contratada, nos 12 meses até o fim do período. Ultrapassagem
+  é medida acima de 105% da contratada (tolerância da REN ANEEL 1.000/2021). Situação: *pouco histórico* (menos de
+  6 meses), *avaliar aumento* (alguma ultrapassagem), *avaliar redução* (máxima abaixo de 80% da contratada),
+  *adequada*. Com menos de 12 meses, as recomendações levam "(indicativo)".
+- **Ano** (`year_view`): acumulado do ano. Comparação com o ano anterior e projeção de fechamento só com 12 meses de
+  histórico (projeção sazonal pelo ano anterior quando há dado, senão pela média dos últimos 12 meses).
+  **Por que o gasto mudou** (`decompose`) divide a variação das contas de distribuidora em efeito consumo (kWh) e
+  efeito preço (R$/kWh).
+
+### Demanda só quando existe
+
+`demand_flag.demand_in_use` é verdadeiro se alguma conta tem demanda contratada ou medida (cache de 60 s, renovado ao
+salvar uma conta). Falso, o assunto some de todas as telas, exportações e da ajuda, inclusive a aba Contratos.
+
 ## Central de Alertas
 
 `alert_service.compute` lê as contas dos últimos 10 meses, compara a conta mais recente de cada unidade com as
@@ -292,6 +315,16 @@ sucesso também é barrado no upload. O prompt manda a IA devolver todos os camp
 Outros estados de uma importação: `processing` → `ready` → `confirmed` ou `cancelled`; `processing` → `failed`
 (erro, ou parada por mais de 10 minutos), que permite "Tentar novamente".
 
+## Lixeira e Desfazer
+
+Excluir conta ou lançamento manual move a linha inteira para `trash_items`. Logo depois aparece **Desfazer**. Quem
+excluiu restaura sozinho por 30 dias (`TRASH_PERSONAL_DAYS`); o administrador, por 180 (`TRASH_DAYS`), e pode
+restaurar de uma vez tudo o que uma pessoa excluiu (com a própria senha). Se o mesmo mês da mesma unidade já foi
+lançado de novo (`trash_service.relaunched`), restaurar é recusado: não duplica nem sobrescreve. O item some da
+lixeira pessoal e aparece para o administrador como "Lançada de novo"; se a conta nova for excluída, a antiga volta a
+ser restaurável. Acima de 15 exclusões por hora (`MAX_DELETES_PER_HOUR`), por pessoa e exceto admin, as exclusões
+pausam e a auditoria registra `delete_blocked`.
+
 ## Retenção de documentos
 
 O arquivo original (foto ou PDF) fica cifrado no banco por `DOCUMENT_RETENTION_DAYS` dias (padrão 183, cerca de 6
@@ -307,3 +340,23 @@ Toda criação, alteração, exclusão, importação, extração, rejeição, ex
 uma linha em `audit_log`. Os eventos de autenticação gravam o IP real do cliente (`client_ip`); só o nome de
 usuário digitado em tentativas falhas é pseudonimizado (HMAC), por decisão do projeto. A cadeia de hash que protege essa tabela está em
 [database.md](database.md#cadeia-de-hash-da-auditoria).
+
+Cada evento também grava em `details.rede` se o IP era de um link da empresa (`empresa`/`fora`), pela lista de
+*Auditoria → Rede da empresa* no momento do evento. É só informativo.
+
+## Onde isso vive no código
+
+| Assunto | Arquivo |
+|---|---|
+| Perfis e permissões | `app/security.py` (`writer_required`, `admin_required`, `director_required`...) |
+| Lojas, unidades, tipos | `app/models/store.py`, `app/models/record_type.py`, `app/routes/stores.py`, `app/routes/types.py` |
+| Leitura da conta e conferência | `app/services/import_service.py`, `app/services/matching_service.py`, `app/services/duplicate_service.py` |
+| Lançamento manual | `app/routes/manual.py`, `app/routes/manual_batch.py` |
+| Vencimentos e pontos | `app/services/due_service.py`, `app/routes/points.py` |
+| Agrupamento e folha da loja | `app/services/chart_service.py`, `app/templates/stores/report.html` |
+| Painel executivo | `app/services/executive_service.py`, `app/services/director_extra.py`, `app/routes/director.py` |
+| Demanda em uso | `app/services/demand_flag.py` |
+| Alertas | `app/services/alert_service.py`, `app/routes/alerts.py` |
+| Lixeira | `app/services/trash_service.py`, `app/routes/trash.py` |
+| Retenção | `app/services/retention_service.py` |
+| Auditoria e rede da empresa | `app/services/audit_service.py`, `app/services/network_service.py` |

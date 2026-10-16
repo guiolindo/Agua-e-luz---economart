@@ -1,220 +1,339 @@
-# Controle de Energia
+# Economart — Controle de Energia
 
-Sistema web para controlar as contas de energia (CEMIG e outras despesas) por loja. O usuário envia a **foto da conta**,
-a IA (Gemini) lê os dados, o sistema descobre sozinho a **loja e a unidade consumidora**, mostra uma tela de
-**conferência** e, ao confirmar, atualiza o histórico e os gráficos.
+Sistema web para controlar as contas de energia (CEMIG, COELBA, Energisa e outras despesas de energia) de cada loja
+da Economart Atacadista. Quem lança envia a **foto ou o PDF da conta**, a IA (Gemini) lê os dados, o sistema acha
+sozinho a **unidade consumidora e a loja**, mostra a **conferência** ao lado da imagem e, ao confirmar, atualiza o
+histórico, os gráficos, a folha impressa da loja e o painel da diretoria.
 
-Stack: Python · FastAPI · SQLAlchemy 2 · Jinja2 · Chart.js (embutido em `static/js/vendor`) · SQLite (dev) / PostgreSQL (produção).
+[![Deploy on Railway](https://img.shields.io/badge/Deploy-Railway-violet)](https://railway.app)
+[![Python](https://img.shields.io/badge/Python-3.12+-blue)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Railway-336791)](https://www.postgresql.org/)
+[![Testes](https://img.shields.io/badge/testes-450%20passando-brightgreen)](docs/testing.md)
 
-> **Tutorial passo a passo (Railway + uso diário por perfil):** [`TUTORIAL.md`](TUTORIAL.md) · [PDF](docs/Tutorial_Controle_de_Energia.pdf).
+> **Vai usar o sistema?** [`TUTORIAL.md`](TUTORIAL.md) ([PDF](docs/Tutorial_Controle_de_Energia.pdf)) e a tela
+> **Ajuda** dentro do sistema, diferente para cada perfil.
+> **Vai programar nele?** [`docs/README.md`](docs/README.md) (documentação técnica) e [`AGENTS.md`](AGENTS.md)
+> ("para fazer X, leia Y", para pessoas e agentes de IA).
+> **Segurança:** [`SECURITY.md`](SECURITY.md) e [`docs/security.md`](docs/security.md).
 
-> **Documentação técnica completa:** [`docs/README.md`](docs/README.md). Mapa para agentes e novos desenvolvedores: [`AGENTS.md`](AGENTS.md).
+---
 
-> **Segurança:** veja [`SECURITY.md`](SECURITY.md). Em produção (`DEBUG=false`) o servidor só inicia com `SECRET_KEY`, `DOCUMENT_ENCRYPTION_KEY` e PostgreSQL configurados.
+## Sumário
 
-## Novidades de segurança e uso
+- [Visão geral](#visão-geral)
+- [Stack tecnológica](#stack-tecnológica)
+- [Perfis de usuário](#perfis-de-usuário)
+- [Funcionalidades](#funcionalidades)
+- [Fluxo de uma conta](#fluxo-de-uma-conta)
+- [Segurança e LGPD](#segurança-e-lgpd)
+- [Setup local](#setup-local)
+- [Deploy no Railway](#deploy-no-railway)
+- [Configurações](#configurações)
+- [Endpoints HTTP](#endpoints-http)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Testes e CI](#testes-e-ci)
+- [Convenções de código](#convenções-de-código)
+- [Limitações conhecidas](#limitações-conhecidas)
+- [Mudanças recentes](#mudanças-recentes)
+- [Licença e créditos](#licença-e-créditos)
 
-- **2FA do administrador** (TOTP/Google Authenticator): *Verificação em 2 etapas* no menu; `REQUIRE_ADMIN_2FA=true` obriga. Perdeu o celular: `python -m scripts.reset_2fa <usuario>`.
-- **Auditoria à prova de adulteração:** cada evento é selado em cadeia; *Auditoria → Verificar integridade* aponta qualquer alteração feita fora do sistema.
-- **Arquivo que não é conta de energia** é barrado na importação e os bytes são apagados (o Gemini classifica e o servidor confere).
-- **Disjuntor do Gemini:** depois de 5 falhas seguidas do Google, o sistema falha rápido por 30 s em vez de esperar timeouts.
-- **Planilhas XLSX formatadas:** o painel executivo baixa um arquivo com abas (Resumo, Lojas, Mês a mês, Fornecedores, Pendências) e *Contas* baixa o que está filtrado, ambos com valores numéricos, totais e filtros. O CSV de Contas continua disponível.
-- **Migrações do banco (Alembic):** aplicadas ao subir; bancos antigos são adotados sem perder dados. Veja `docs/operations.md`.
-- **Central de Alertas:** cada conta nova é comparada com o histórico da própria unidade (valor, custo por kWh, demanda acima do contratado (com a tolerância de 5%), nota fiscal repetida, itens que não fecham com o total, período de leitura estranho). Quem confere marca "Conferido" e o alerta some; fica na auditoria.
-- **Ajuda por perfil** (administrador, funcionário, diretoria, consulta).
+---
 
-## Fluxo principal
+## Visão geral
 
-```
-Importar conta → foto/PDF → Gemini extrai (JSON validado) → unidade consumidora → loja
-→ conferência (imagem ao lado, campos editáveis) → confirmar → histórico + gráficos
-```
+O sistema substitui a planilha "ENERGIA — GRÁFICO POR LOJA", montada à mão. A folha impressa por loja mantém o
+formato e os números da planilha (o Total Geral bate ao centavo; `tests/test_report_sheet.py`).
 
-Reenviar o **mesmo arquivo** (mesmo hash) de uma conta já salva é recusado antes de chamar o Gemini. PDFs (a maioria dos casos) vão ao Gemini intactos; fotos são pré-processadas (rotação/tamanho).
+A IA nunca grava sozinha: toda leitura passa pela tela de conferência. Unidade desconhecida não descarta a conta
+(cadastrar ou associar), e duplicidades (mesma unidade + mês, ou mesma nota fiscal) pedem decisão: substituir ou
+salvar como nova. Arquivo que não é conta de energia é recusado e apagado. O original (foto/PDF) fica cifrado no
+banco por 6 meses; os números lidos ficam para sempre.
 
-A IA nunca grava sozinha: tudo passa pela tela de conferência. Unidade desconhecida não descarta a conta (cadastrar
-ou associar), e duplicidades (mesma unidade + mês, ou mesma nota) exigem decisão: substituir ou salvar como novo.
+## Stack tecnológica
 
-## Perfis de usuário e painel executivo
-
-| Perfil | O que faz |
+| Camada | Tecnologia |
 |---|---|
-| **Administrador** | Cria e gerencia usuários e perfis (senha provisória de 4 dígitos, redefinir, desativar) e acompanha a auditoria. Também pode operar o sistema, mas o dia a dia é do funcionário. |
-| **Funcionário** | **Responsável por toda a gestão de energia**: cadastra lojas/filiais, unidades e fornecedores; envia as contas (foto/PDF); lança manualmente; corrige/exclui; cuida dos vencimentos; imprime. Não vê o painel executivo nem a administração de usuários. |
-| **Diretoria** | Só consulta. Ao entrar cai no **Painel executivo** (`/diretoria`) e pode abrir lojas e imprimir; não importa nem edita nada. |
-| **Consulta** | Só visualiza e imprime. |
+| Backend | FastAPI 0.115+, Uvicorn |
+| ORM e migrações | SQLAlchemy 2, Alembic (aplicadas ao subir) |
+| Banco | PostgreSQL (Railway) / SQLite (dev local) |
+| Templates | Jinja2 (autoescape), sem framework de JavaScript |
+| Gráficos | Chart.js embutido em `static/js/vendor` (sem CDN) |
+| Leitura das contas | Google Gemini (`google-genai`), com modo `mock` para dev e testes |
+| PDF e imagem | pypdfium2 (páginas), pypdf (conteúdo ativo), Pillow (rotação/tamanho) |
+| Exportações | openpyxl (XLSX), python-pptx (PowerPoint), CSV |
+| Criptografia | `cryptography` (Fernet) para os originais e o segredo do 2FA |
+| 2FA | TOTP (Google Authenticator) para administradores; QR com `segno` |
+| Deploy | Railway (Nixpacks, `railway.json`, `Procfile`) |
 
-O **painel executivo** compara as lojas: KPIs (total, último mês, média, custo médio R$/kWh, maior gasto/alta/queda, pendências),
-gasto da empresa por mês e fornecedor, ranking de lojas, variação do último mês por loja, composição por fornecedor, evolução
-(com seleção de lojas), custo por kWh, uso da demanda contratada, **comparação de duas lojas** (com diferença em R$ e %),
-mapa de calor loja × mês e tabela comparativa. Filtros: período, mês de referência/vencimento, **região** (campo “Região/UF” da loja) e
-fornecedores. Para não enganar: um mês em que poucas lojas já lançaram é marcado com `*` e fica fora das variações (os indicadores usam o
-último mês completo), e “vs. período anterior” compara a **média mensal** só das lojas com histórico. `python -m scripts.seed_demo_company`
-cria lojas **fictícias** para visualizar o painel.
+## Perfis de usuário
 
-## Vencimentos, novo ponto de energia e usabilidade
+| Perfil | Código | O que faz |
+|---|---|---|
+| **Administrador** | `admin` | Usuários e perfis, auditoria, lista oficial de lojas, rede da empresa, lixeira geral. Pode operar o sistema, mas o dia a dia é do funcionário |
+| **Funcionário** | `operator` | Toda a gestão de energia: lojas, unidades, fornecedores, envio das contas, lançamento manual (também em lote), correções, vencimentos, impressão |
+| **Diretoria** | `director` | Só consulta. Entra direto no **Painel executivo** (`/diretoria`), abre lojas e imprime |
+| **Consulta** | `viewer` | Só visualiza e imprime |
 
-- **+ Novo ponto de energia** (canto superior direito, em qualquer tela; admin e funcionário): loja, nº da unidade consumidora,
-  distribuidora e **data de vencimento**. O ponto passa a vencer todo mês nesse dia (dia 31 em mês curto cai no último dia).
-  Contas importadas ou lançadas também ensinam o dia de vencimento ao ponto.
-- **Editar unidade e vencimento:** abra a unidade → **Editar unidade** (ou **Editar** na lista da loja). O cadastro pela loja também tem o dia de vencimento (opcional); unidades sem vencimento seguem funcionando e aparecem no painel do funcionário com o convite para definir.
-- **Aviso de vencimento:** (somente para o **funcionário**) ao entrar no sistema, aparece um aviso do lado — “Vence hoje” (e “Venceu há N dias”, por até 15 dias) —
-  que **some sozinho em 15 segundos** (passar o mouse ou focar com o teclado pausa; aparece uma vez por login por dia). O **sino**
-  guarda a lista (inclui “vence amanhã/em N dias”); **Já paguei** dá baixa daquele vencimento. “Hoje” é o dia do Brasil
-  (America/Sao_Paulo), não o do servidor. Administrador, diretoria e consulta não recebem os avisos.
-- **Usabilidade/acessibilidade:** link “Ir para o conteúdo”, navegação por teclado com foco visível, rótulos em todos os campos,
-  mensagens de erro/sucesso anunciadas a leitores de tela (sucessos somem sozinhos), botões que mostram “Salvando…” e não permitem
-  duplo clique, busca nas listas, estados vazios com orientação, página **Ajuda** por perfil e respeito a `prefers-reduced-motion`.
-  Houve uma auditoria automática de acessibilidade (axe-core, WCAG 2.1 A/AA) em 18 telas, mas ela não está no repositório e não foi refeita depois das mudanças de design. Isso não substitui
-  teste com usuários nem leitor de tela real.
+## Funcionalidades
 
-## Distribuidoras, anotação à mão, retenção e impressão
+### Para o funcionário
+- **Importar conta** por foto ou PDF: leitura pelo Gemini, unidade e loja identificadas pelo número da unidade
+  consumidora (com sugestão quando a leitura erra um dígito), conferência com a imagem ao lado.
+- **Anotação à mão** na folha (ex.: "CD 300") é lida e comparada com o código, o nome e os apelidos da loja.
+- **Lançamento manual** (uma conta ou várias em lote) para fornecedores sem conta lida por foto.
+- **+ Novo ponto de energia** em qualquer tela: loja, unidade, distribuidora e dia de vencimento.
+- **Vencimentos**: aviso ao entrar ("Vence hoje", "Venceu há N dias"), sino com a lista e **Já paguei**.
+- **Excluiu errado?** Botão **Desfazer** na hora e **Lixeira** pessoal de 30 dias.
+- **Folha de impressão** por loja (A4 paisagem, formato da planilha, agrupada por referência ou vencimento) e
+  **ficha da conta** com três gráficos dos últimos 12 meses.
 
-- **Várias distribuidoras:** CEMIG, COELBA (testada com a conta real “Neoenergia Coelba” de Feira de Santana) e ENERGISA (baixa tensão, consumo único em kWh) já vêm cadastradas como tipos de conta. A IA lê a distribuidora da própria
-  conta; ao cadastrar uma unidade nova pela importação, o tipo é definido por ela. Para outra distribuidora, o admin cria
-  um tipo “Conta de distribuidora” em *Tipos de registro* (o nome deve aparecer na conta, ex.: ENERGISA). Contas sem
-  separação ponta/fora ponta usam o campo “Consumo único (kWh)”.
-- **Anotação à mão (ex.: “CD 300” escrito na folha):** a IA a copia, e o sistema compara com o código/nome/apelidos da loja
-  (*Cadastro da loja → Apelidos*). Serve para pré-selecionar a loja de uma unidade nova e para **avisar** quando a loja
-  citada à mão difere da loja da unidade encontrada. A identificação oficial continua sendo pelo número da unidade.
-- **Retenção:** a foto/PDF fica no PostgreSQL por 6 meses e então é apagada automaticamente (rotina na subida e a cada
-  6 h; manual: `python -m scripts.purge_documents`). Os dados lidos, valores e gráficos permanecem; a tela mostra
-  “Original expirado”.
-- **Fornecedores da planilha atual:** já vêm cadastrados CEMIG (distribuição), COELBA, ENERGISA, CEMIG Geração e Transmissão (conta lida por foto, com unidade consumidora própria; os lançamentos manuais antigos continuam somando), LL Energia,
-  Câmara de Comercialização de Energia (CCEE), Compra de combustível para gerador e Manutenção de Gerador. O relatório e o
-  resumo mensal podem **agrupar por mês de referência (competência) ou por mês de vencimento** — a planilha impressa usa o
-  vencimento (a conta de SET/2026, que vence em outubro, cai na coluna out/2026). Lançamentos manuais aceitam “Vencimento”
-  opcional; sem ele, entram no mês de referência. O relatório também filtra por fornecedor. `python -m scripts.seed_demo`
-  reproduz a folha do CD300 (o teste confere o Total Geral ao centavo).
-- **Folha de impressão:** é a mesma para qualquer fornecedor (CEMIG, Coelba, LL Energia…). Traz indicadores resumidos, destaque do último mês com dados, consumo e demanda quando há leitura, e rodapé.
-- **Folha de impressão (uma página A4 paisagem)**, no formato da planilha atual: cabeçalho da loja, *Resumo mensal* de todos os
-  fornecedores com Total Geral, o *Imóvel/fornecedor* escolhido com faixa de informações da última conta, gráfico de barras com
-  linha de variação e a tabela Valor da fatura / Dias / Variação. Em *Histórico da loja → Imprimir relatório*; dá para escolher
-  o fornecedor e agrupar por referência ou vencimento (“um por folha” imprime uma folha para cada fornecedor). O conteúdo é
-  reduzido automaticamente só o necessário para caber em uma página.
-- **Imprimir uma conta com gráficos:** em *Unidade → Contas → Imprimir* (ou `/bills/<id>/print`). A ficha (uma página A4) traz os dados
-  da conta, o comparativo com o mês anterior, os itens faturados e três gráficos dos últimos 12 meses (valor com linha de
-  variação, consumo HP/HFP e demanda com a contratada), com o mês escolhido em destaque. Na própria tela dá para trocar
-  de conta/mês e marcar “Incluir foto/PDF original” (se ainda não expirou).
-- **Impressão:** em *Histórico da loja → Imprimir relatório* (A4 paisagem): resumo mensal, gráfico de barras com linha de
-  variação e tabela Valor / Dias / Variação por tipo, no formato do relatório atual.
-- **Limites e travamentos do Gemini (também do lancamento-automatico):** fotos grandes são reduzidas (lado maior ≤ 3000 px)
-  e giradas conforme o EXIF antes do envio (o original guardado não muda); PDFs com mais de 10 páginas são recusados;
-  no máximo 2 análises simultâneas (cota gratuita ~15/min), com retentativa em 429/5xx; importação “processando” há
-  mais de 10 min vira falha com botão “Tentar novamente” (cobre reinício do servidor no meio da análise); chaves são
-  redigidas de qualquer log; modelos descontinuados (2.0-flash-exp, 2.5-flash, 2.5-flash-lite, 1.0-pro…) em
-  `GEMINI_MODEL` são trocados automaticamente por `gemini-3.5-flash-lite`.
-- **Gemini (lições do projeto lancamento-automatico):** erros traduzidos para português sem expor chave/URL, retentativa
-  em 429/5xx, timeout de 120 s, “zero chute” e parsing tolerante do JSON.
+### Para a diretoria — Painel executivo em 5 abas
+- **Visão geral:** destaques, indicadores, gasto mensal da empresa, ranking e pendências.
+- **Lojas:** variação, composição por fornecedor, evolução, custo por kWh comparado com a média da própria
+  distribuidora, comparação de duas lojas, mapa de calor loja × mês e tabela comparativa.
+- **Gasto evitável:** ultrapassagem de demanda, energia reativa excedente e juros/multa, somados a partir dos itens
+  da fatura, por loja e por mês.
+- **Contratos:** demanda contratada × maior medida em 12 meses (aparece só quando alguma conta tem demanda).
+- **Ano:** acumulado, comparação com o ano anterior e projeção (com 12 meses de histórico) e "por que o gasto
+  mudou", separando efeito consumo e efeito preço.
+- Filtros de período, região e fornecedor; exportação em **XLSX**, **PowerPoint** e CSV; impressão.
 
-## Requisitos
+### Para o administrador
+- Usuários com senha provisória de 4 dígitos (48 h), redefinição, desbloqueio, troca de perfil e desativação;
+  ações sobre outro administrador pedem a senha de quem age.
+- **Painel admin:** uso do sistema por pessoa, quem está on-line, coluna **Rede** (último login na empresa ou fora).
+- **Auditoria** à prova de adulteração, com filtro, exportação CSV, *Verificar integridade* e a marca "na
+  empresa"/"fora" em cada evento.
+- **Rede da empresa:** cadastro dos IPs dos links da empresa; IPs de login frequentes ainda não cadastrados
+  aparecem para cadastrar com um clique.
+- **Lista oficial de lojas** (importada pela tela, não fica no repositório) e vínculo das lojas do sistema.
+- **Lixeira geral** (180 dias), com "restaurar tudo de uma pessoa".
 
+### Recursos transversais
+- **Central de alertas:** cada conta nova é comparada com o histórico da própria unidade (valor, R$/kWh, demanda
+  acima do contratado com tolerância de 5%, nota fiscal repetida, itens que não fecham, período de leitura estranho).
+- **Demanda só aparece quando existe:** sem nenhuma conta com demanda, o assunto some de todas as telas, exportações
+  e da ajuda.
+- **Ajuda por perfil** e atalhos de teclado (`?` mostra a lista).
+- **Sem tela branca entre páginas** (View Transitions) e relatórios abertos na mesma aba com **Voltar**.
+- **Fora do ar:** faixa avisando que o servidor não respondeu e página offline (service worker só para ela).
+- **Aviso antes de a sessão expirar** e proteção contra sair de um formulário com alterações não salvas.
+- **Acessibilidade:** "Ir para o conteúdo", foco visível, rótulos em todos os campos, mensagens anunciadas a
+  leitores de tela, `prefers-reduced-motion`.
+
+## Fluxo de uma conta
+
+```
+  Foto/PDF ──► validação (tipo real, tamanho, ≤10 páginas, PDF sem JavaScript)
+                 │  mesmo arquivo já salvo? ──► recusado sem chamar o Gemini
+                 ▼
+          ┌──────────────┐   não é conta   ┌──────────┐
+          │  processing  │ ──────────────► │ rejected │  bytes apagados
+          └──────┬───────┘                 └──────────┘
+                 │ Gemini lê → JSON validado → unidade → loja
+                 ▼                 erro ──► failed (Tentar novamente)
+          ┌──────────────┐
+          │    ready     │  conferência: imagem ao lado, campos editáveis,
+          └──────┬───────┘  duplicidade (substituir / salvar como nova)
+        confirma │ cancela ──► cancelled
+                 ▼
+          ┌──────────────┐
+          │  confirmed   │ ──► histórico, gráficos, alertas, folha, painel
+          └──────────────┘
+```
+
+Importação parada em `processing` por mais de 10 minutos vira `failed` (cobre reinício do servidor no meio da
+leitura). No máximo 2 leituras simultâneas no Gemini, com retentativa em 429/5xx e disjuntor depois de 5 falhas.
+
+## Segurança e LGPD
+
+Resumo; o detalhe está em [`docs/security.md`](docs/security.md).
+
+- **Senhas** com scrypt; bloqueio após 5 erros por 15 min (3 para senha provisória). **2FA** (TOTP) para
+  administradores, obrigatório com `REQUIRE_ADMIN_2FA=true`.
+- **Sessão** em cookie assinado (`Secure` em produção), 60 min de inatividade e 12 h no máximo; logout, troca de
+  senha e mudança de perfil derrubam as outras sessões.
+- **CSRF** por token e por origem; **CSP** com nonce; HSTS e demais cabeçalhos.
+- **Limite de requisições** por usuário com login (por IP antes do login), limite de corpo da requisição.
+- **IP real** pelo `X-Real-IP` do Railway (há uma CDN no caminho); tela para conferir.
+- **Auditoria encadeada** (HMAC): qualquer alteração feita fora do sistema aparece em *Verificar integridade*.
+- **Originais cifrados** (Fernet) no banco, com rotação de chave; apagados depois de 6 meses.
+- **Upload:** tipo conferido pelos bytes, PDF com JavaScript ou ação automática recusado, chaves nunca em log.
+- **Nada se perde:** exclusões vão para a lixeira e podem ser restauradas.
+- **Produção não sobe** sem `SECRET_KEY`, `DOCUMENT_ENCRYPTION_KEY`, PostgreSQL e senha forte do admin.
+
+## Setup local
+
+### Pré-requisitos
 - Python 3.12+ (testado em 3.13)
-- Uma chave da API do Gemini (https://aistudio.google.com/apikey) — opcional para desenvolvimento (use o modo mock)
+- Chave do Gemini (<https://aistudio.google.com/apikey>), opcional em dev: o modo `mock` não chama a API
 
-## Instalação e execução local
+### Instalação
 
 ```bash
+git clone https://github.com/guiolindo/Agua-e-luz---economart.git
+cd Agua-e-luz---economart
 python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 cp .env.example .env                 # Windows: copy .env.example .env
 ```
 
-Edite o `.env`:
+No `.env`, para começar basta:
 
-| Variável | Para quê |
-|---|---|
-| `GEMINI_API_KEY` | Chave do Gemini. **Só no `.env`/variáveis do servidor, nunca no código.** |
-| `GEMINI_MODEL` | Padrão `gemini-3.5-flash-lite`. Para trocar (ex.: `gemini-3.5-flash`) basta mudar aqui. |
-| `EXTRACTION_PROVIDER` | `gemini` (real) ou `mock` (responde sempre com `tests/fixtures/cemig_set_2026.json`, sem custo). |
-| `DATABASE_URL` | `sqlite:///app.db` (dev) ou a URL do PostgreSQL. `postgres://` é convertido automaticamente. |
-| `SECRET_KEY` | Obrigatória fora do `DEBUG`. Gere com `python -c "import secrets; print(secrets.token_hex(32))"`. |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Criam o administrador no primeiro start (se não existir nenhum usuário). Em produção a senha precisa ter ≥12 caracteres e não ser fraca. Em `DEBUG` sem senha, usa `admin`/`admin`. |
-| `DOCUMENT_ENCRYPTION_KEY` | Chave Fernet que criptografa fotos/PDFs no banco (obrigatória em produção). |
-| `TRUSTED_PROXY_COUNT` | Proxies à frente do app (Railway = 1), para o IP real. |
-| `TEMP_PASSWORD_HOURS` / `TEMP_MAX_LOGIN_ATTEMPTS` | Validade (padrão 48 h) e limite de tentativas (padrão 3) da senha provisória de 4 dígitos. |
-| `MAX_UPLOAD_MB` | Limite do upload (padrão 12; o envio ao Gemini vai em base64, +33%, e o teto da requisição é ~20 MB). |
-| `GEMINI_MAX_CONCURRENCY` | Chamadas simultâneas ao Gemini (padrão 2). |
-| `DOCUMENT_RETENTION_DAYS` | Dias até a foto/PDF original ser apagada do banco (padrão 183 ≈ 6 meses). |
+```env
+DEBUG=true
+EXTRACTION_PROVIDER=mock             # ou gemini + GEMINI_API_KEY
+DATABASE_URL=sqlite:///app.db
+```
+
+### Rodar
 
 ```bash
 python run.py                        # http://127.0.0.1:8000
-python -m scripts.seed_demo          # (opcional) carrega a loja CD300 com o histórico jan–ago/2026
+python -m scripts.seed_demo          # opcional: loja CD300 com o histórico jan–ago/2026
+python -m scripts.seed_demo_company  # opcional: lojas fictícias para ver o painel executivo
 ```
 
-As tabelas são criadas e atualizadas na inicialização pelas migrações do Alembic (`RUN_MIGRATIONS=true`, o padrão; `create_all` só com `RUN_MIGRATIONS=false`) e os tipos CEMIG, LL Energia, Gerador e
-Manutenção de Gerador são semeados.
+**Primeiro login:** com `DEBUG=true` e sem `ADMIN_PASSWORD`, o administrador é `admin`/`admin`. Em produção,
+`ADMIN_USERNAME`/`ADMIN_PASSWORD` criam o primeiro administrador (senha com 12+ caracteres, não fraca).
 
-## Testes
-
-```bash
-pytest
-```
-
-Para rodar contra PostgreSQL (como no Railway): `TEST_DATABASE_URL=postgresql://usuario@localhost:5432/banco_de_teste pytest` — o banco precisa ser UTF-8 e será recriado a cada teste.
-
-Cobrem variação %, parsing de valores/datas brasileiros, matching UC → loja (e sugestões para erro de leitura),
-duplicidade, parsing/validação da resposta do Gemini, upload (magic bytes), cálculos dos gráficos e o fluxo HTTP completo
-de importação — todos sem chamar a API (o Gemini é substituído por `MockExtractor`).
+Passo a passo completo e erros comuns: [`docs/getting-started.md`](docs/getting-started.md).
 
 ## Deploy no Railway
 
-1. Crie um projeto no Railway a partir deste repositório do GitHub (build automático via Nixpacks; `railway.json` e `Procfile` já definem o start).
-2. Adicione o plugin **PostgreSQL**. No serviço web, em *Variables*, referencie `DATABASE_URL` do Postgres.
-3. Defina as variáveis do serviço web (atalho: abra *Variables → Raw Editor* e cole o conteúdo de `railway.env.example`, preenchendo `GEMINI_API_KEY`, `SECRET_KEY` e `ADMIN_PASSWORD`):
-   `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.5-flash-lite`, `EXTRACTION_PROVIDER=gemini`, `SECRET_KEY`, `DOCUMENT_ENCRYPTION_KEY`,
-   `DEBUG=false`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`.
-4. Gere um domínio público (*Settings → Networking*). O healthcheck é `/health`.
+1. Crie o projeto a partir deste repositório (Nixpacks; `railway.json` e `Procfile` já definem o start e o
+   healthcheck `/health`).
+2. Adicione o **PostgreSQL** e referencie `DATABASE_URL` no serviço web.
+3. Em *Variables → Raw Editor*, cole `railway.env.example` e preencha:
 
-As imagens das contas ficam **no banco** (tabela `documents`), então não é preciso volume e nada se perde em redeploys.
-Cookies de sessão são `Secure` quando `DEBUG=false` (o Railway serve HTTPS).
+| Variável | Valor |
+|---|---|
+| `DATABASE_URL` | Referência ao Postgres |
+| `SECRET_KEY` | `python -c "import secrets; print(secrets.token_hex(32))"` |
+| `DOCUMENT_ENCRYPTION_KEY` | `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | primeiro administrador |
+| `GEMINI_API_KEY` | chave do Gemini |
+| `DEBUG` | `false` |
+| `REQUIRE_ADMIN_2FA` | `true` (recomendado) |
 
-## Estrutura
+4. Gere o domínio público em *Settings → Networking*.
+
+Os originais ficam no banco (tabela `documents`): não há volume nem armazenamento externo. Migrações rodam sozinhas
+a cada deploy. Backup, troca de chaves e incidentes: [`docs/operations.md`](docs/operations.md).
+
+## Configurações
+
+Todas as variáveis, com padrão e efeito, estão em [`docs/operations.md`](docs/operations.md#variáveis-de-ambiente).
+As mais usadas:
+
+| Grupo | Variáveis |
+|---|---|
+| Banco e início | `DATABASE_URL`, `RUN_MIGRATIONS`, `DEBUG`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` |
+| Segurança | `SECRET_KEY`, `DOCUMENT_ENCRYPTION_KEY` (várias = rotação), `PSEUDONYM_KEY`, `REQUIRE_ADMIN_2FA`, `MAX_LOGIN_ATTEMPTS`, `LOGIN_BLOCK_MINUTES`, `SESSION_IDLE_MINUTES`, `SESSION_MAX_HOURS` |
+| IP e rede | `CLIENT_IP_SOURCE` (`real-ip`), `TRUSTED_PROXY_COUNT`, `COMPANY_NETWORKS` |
+| Gemini | `GEMINI_API_KEY`, `GEMINI_MODEL` (`gemini-3.5-flash-lite`), `EXTRACTION_PROVIDER` (`gemini`/`mock`), `GEMINI_MAX_CONCURRENCY`, `MAX_UPLOAD_MB` |
+| Retenção e lixeira | `DOCUMENT_RETENTION_DAYS` (183), `TRASH_DAYS` (180), `TRASH_PERSONAL_DAYS` (30), `MAX_DELETES_PER_HOUR` (15) |
+
+Variável com nome errado é ignorada sem aviso: confira com a tabela.
+
+## Endpoints HTTP
+
+Referência completa, com perfil exigido e códigos de resposta: [`docs/api-reference.md`](docs/api-reference.md).
+
+| Área | Caminhos principais | Perfil |
+|---|---|---|
+| Entrada | `/login`, `/login/2fa`, `/logout`, `/account/password`, `/account/2fa` | público / logado |
+| Painel | `/`, `/alertas`, `/ajuda` | logado |
+| Lojas e unidades | `/stores`, `/stores/{id}`, `/stores/{id}/report`, `/units/{id}` | logado (editar: escrita) |
+| Contas | `/notas` (+ `export.xlsx`/`.csv`), `/bills/{id}/print` | logado |
+| Importação | `/import`, `/import/{id}`, `/import/{id}/review`, `/import/{id}/confirm` | escrita |
+| Lançamento e lixeira | `/manual`, `/manual/lote`, `/points/new`, `/lixeira` | escrita |
+| Diretoria | `/diretoria?aba=geral\|lojas\|evitavel\|contratos\|ano`, `/diretoria/export.xlsx`/`.pptx`/`.csv` | diretoria, admin |
+| Administração | `/admin`, `/admin/users`, `/admin/audit`, `/admin/ip`, `/admin/lojas` | admin |
+| Infra | `/health`, `/sw.js`, `/offline`, `/static/*` | público |
+
+## Estrutura do projeto
 
 ```
 app/
-  main.py            fábrica da aplicação, middlewares, handlers
-  config/            Settings (.env)
-  database.py        engine/sessão (SQLite ↔ PostgreSQL)
-  security.py        login por sessão, CSRF, papéis (admin/operador)
-  models/            Store, ConsumerUnit, RecordType, EnergyBill, ManualRecord, Document, Import, AuditLog, User
-  schemas/           extraction.py (contrato JSON da IA) e forms.py (validação de formulários)
+  main.py              fábrica da aplicação, middlewares, handlers de erro, /health, /sw.js
+  config/              Settings (variáveis de ambiente / .env)
+  database.py          engine e sessão (SQLite ↔ PostgreSQL, keepalive)
+  db_migrate.py        aplica as migrações do Alembic ao subir
+  security.py          senha, sessão, CSRF, perfis, IP real
+  middleware.py        cabeçalhos/CSP, rate limit, limite de corpo, ID da requisição, cache do /static
+  models/              lojas, unidades, tipos, contas, lançamentos, documentos, importações, auditoria,
+                       usuários, lixeira, rede da empresa
+  schemas/             contrato JSON da IA e validação de formulários
   services/
-    gemini_service.py          ÚNICO ponto que usa o SDK do Gemini
-    extraction_service.py      escolhe Gemini ou Mock (EXTRACTION_PROVIDER)
-    import_service.py          upload → extração em background → salvar/substituir conta
-    matching_service.py        UC → unidade → loja (+ sugestões de UC parecida)
-    duplicate_service.py       detecção de duplicidade
-    calculation_service.py     variação %, intervalo de meses
-    chart_service.py           séries dos gráficos, resumo mensal, KPIs da unidade
-    dashboard_service.py       contadores e pendências
-  repositories/      consultas
-  routes/            auth, dashboard, stores/unidades, tipos, importação, manual, API de gráficos, documentos, usuários
-  templates/ static/ interface (Jinja2 + CSS próprio + Chart.js local)
-scripts/seed_demo.py dados de demonstração
-tests/               pytest + fixtures/cemig_set_2026.json
+    gemini_service.py      ÚNICO ponto que usa o SDK do Gemini (+ circuit_breaker.py)
+    import_service.py      upload → leitura em segundo plano → salvar/substituir
+    matching_service.py    unidade consumidora → loja (+ sugestões)
+    alert_service.py       central de alertas
+    executive_service.py   painel executivo; director_extra.py: gasto evitável, contratos, ano
+    trash_service.py       lixeira, Desfazer, limite de exclusões
+    network_service.py     rede da empresa
+    audit_service.py       auditoria encadeada
+    xlsx_service.py, pptx_service.py   exportações
+  routes/              uma área por arquivo (auth, imports, stores, director, admin, trash...)
+  templates/, static/  Jinja2, CSS próprio, JavaScript sem framework, Chart.js local
+migrations/versions/   0001–0007 (Alembic)
+scripts/               seed_demo, seed_demo_company, purge_documents, reset_2fa, unlock_user
+tests/                 pytest (Gemini substituído pelo MockExtractor)
+docs/                  documentação técnica
 ```
 
-## Decisões de modelagem
+## Testes e CI
 
-- **`EnergyBill`** (conta com leitura estruturada: valor, dias, consumo HP/HFP/HR, demanda, impostos, itens) e
-  **`ManualRecord`** (valor + campos numéricos definidos pelo próprio tipo) são tabelas separadas; novos tipos
-  (Água, Gás, Solar…) são criados pelo admin em *Tipos de registro* sem alterar código.
-- A UC é guardada com a formatação original **e** normalizada (só dígitos) — o matching ignora pontos/hífens.
-- Cada importação registra arquivo, resposta bruta da IA, provedor/modelo, usuário e data (`imports`); alterações e
-  substituições vão para `audit_log` com o antes/depois.
+```bash
+pytest -q                            # 450 testes, SQLite, sem chamar o Gemini
+TEST_DATABASE_URL=postgresql://usuario@localhost:5432/banco_teste pytest -q   # contra PostgreSQL (UTF-8)
+```
 
-## Limitações conhecidas / próximos passos
+O CI (`.github/workflows/ci.yml`) roda a cada push: `ruff` (erros de sintaxe e nomes), `node --check` em todo o
+JavaScript do navegador (um erro de sintaxe desligaria todos os botões da tela), `pytest` e `pip-audit` nas
+dependências. Organização da suíte e o que não é coberto: [`docs/testing.md`](docs/testing.md).
 
-- Migrações: Alembic, aplicadas ao subir (`docs/database.md`). Nunca apague uma revisão já aplicada em produção.
-- Não existe importação de vários arquivos de uma vez (existe lançamento manual em lote). Exportação em CSV existe em Contas, Diretoria e Auditoria; não há Excel nem PDF gerado pelo servidor.
-- 2FA (Google Authenticator) só para administradores; sem recuperação de senha por e-mail (o admin redefine em *Usuários*). Veja o risco residual em `SECURITY.md`.
-- A leitura por IA nunca foi validada aqui com a API real do Gemini (sem chave neste ambiente): os testes usam o mock.
-  Antes de usar em produção, importe algumas contas reais e confira a tela de revisão.
+## Convenções de código
 
-## Fuso horário
+- **Python 3.12**, type hints, `snake_case`; regras de negócio em `services/`, rotas finas.
+- **Datas:** gravadas em UTC, exibidas em Brasília (`America/Sao_Paulo`); o "hoje" dos vencimentos é o de Brasília.
+- **Texto para quem usa:** português, direto, sem jargão técnico e sem "(s)" de formulário (`plural()` no template).
+- **Auditoria:** toda ação que muda dado registra em `audit_log`, com antes/depois quando há edição.
+- **Banco:** toda mudança de esquema é uma revisão nova do Alembic; nunca apague uma revisão já aplicada.
+- **Frontend sem build:** JavaScript puro, sem CDN; scripts com nonce por causa da CSP.
+- **Segredos** só em variável de ambiente; a lista de lojas da empresa não entra no repositório.
 
-O sistema trabalha em **horário de Brasília (America/Sao_Paulo, UTC−3)**: o "hoje" dos avisos de vencimento, os períodos
-padrão de gráficos/painéis e todos os horários exibidos (auditoria, último acesso, "emitido em", importações) são
-convertidos de UTC para Brasília. O banco guarda os instantes em UTC (padrão seguro). Nada a configurar no Railway.
+## Limitações conhecidas
+
+- Uma conta por envio (não há envio de vários arquivos de uma vez; há lançamento manual em lote).
+- Sem recuperação de senha por e-mail: o administrador redefine em *Usuários*.
+- 2FA só para administradores.
+- O limite de requisições é em memória, por processo: com mais de uma instância, cada uma conta separado.
+- Leitura pelo Gemini testada com contas reais de CEMIG e COELBA. Em contas de média tensão (Grupo A, ex.: Verde),
+  a demanda e o consumo em kWh ainda podem vir vazios: a conferência mostra os campos para preencher. Distribuidora
+  nova pede atenção nas primeiras contas.
+
+Riscos residuais de segurança: [`SECURITY.md`](SECURITY.md). Próximos passos: [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+## Mudanças recentes
+
+Histórico completo, dia a dia, em [`CHANGELOG.md`](CHANGELOG.md); o porquê das decisões em
+[`DECISIONS.md`](DECISIONS.md).
+
+- **Painel executivo em 5 abas** com Gasto evitável, Contratos e Ano (projeção só com 12 meses de dados).
+- **Desfazer e lixeira:** pessoal de 30 dias para quem excluiu, geral de 180 dias para o administrador.
+- **Demanda só aparece quando existe** em alguma conta.
+- **IP real na auditoria** (`X-Real-IP`, a CDN do Railway ficava no lugar) e **rede da empresa** cadastrada pelo
+  administrador, gravada em cada evento.
+- **Limites de acesso por pessoa**, não por IP (escritório e CGNAT saem todos pelo mesmo IP).
+- **Sem tela branca entre páginas**, faixa de servidor fora do ar e página offline, aviso de sessão expirando.
+- **Limpeza de texto:** plurais certos em todas as telas e detalhes da auditoria em português.
+
+## Licença e créditos
+
+Software proprietário da Economart Atacadista, de uso interno.
+
+Autoria, origem do projeto e bibliotecas usadas: [`CREDITS.md`](CREDITS.md).

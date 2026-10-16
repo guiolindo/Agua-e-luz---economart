@@ -54,21 +54,27 @@ legado `user` é tratado como `operator`.
 
 Nas tabelas abaixo, "Logado" significa `current_user` (qualquer perfil), "Escrita" é `writer_required`.
 
-### Limites de requisições por IP (janela deslizante, em memória)
+### Limites de requisições (janela deslizante, em memória)
 
 Aplicados por `RateLimitMiddleware` (`app/middleware.py`); a primeira política que casa com método e caminho vale.
+Contam **por usuário** quando há login (`u<id>`): num escritório ou numa operadora com CGNAT todos saem pelo mesmo IP
+público. `login` e `login2fa`, que acontecem antes do login, contam por IP (`client_ip`).
 Estouro: `429` JSON `{"detail": "Muitas tentativas. Aguarde um pouco e tente novamente."}` com `Retry-After`
 igual ao tamanho da janela em segundos (não ao tempo restante).
 
 | Política | Método e caminho | Limite |
 |---|---|---|
-| `login` | `POST /login` | 10 / 60 s |
-| `login2fa` | `POST /login/2fa` | 10 / 60 s |
+| `login` | `POST /login` | 30 / 60 s (por IP) |
+| `login2fa` | `POST /login/2fa` | 30 / 60 s (por IP) |
 | `password` | `POST /account/password` | 10 / 600 s |
 | `upload` | `POST /import` | 20 / 60 s |
 | `documents` | `GET /documents/*` | 60 / 60 s |
 | `api` | `GET /api/*` | 240 / 60 s |
 | `mutations` | qualquer `POST`/`PUT`/`PATCH`/`DELETE` restante | 120 / 60 s |
+| `export` | `GET */export.csv`, `.xlsx`, `.pptx` | 10 / 60 s |
+| `pages` | demais `GET` (fora `/static`, `/health`, `/sw.js`, `/offline`) | 300 / 60 s |
+
+Em tela (navegador), o estouro mostra uma página HTML curta em vez do JSON.
 
 O limite só vale por processo e é desligável com `RATE_LIMIT_ENABLED=false`.
 
@@ -102,7 +108,7 @@ Form: `username` (até 80 caracteres), `password` (até 256), `next`, `csrf_toke
   inexistente e conta inativa são indistinguíveis).
 - Bloqueio: `401` com "Acesso bloqueado por excesso de tentativas. Tente de novo em N minuto(s) ou peça ao
   administrador para redefinir a senha." Vale também para usuário inexistente.
-- `429` pelo limite por IP.
+- `429` pelo limite de requisições.
 
 Regras de bloqueio: 5 falhas bloqueiam por 15 minutos (`MAX_LOGIN_ATTEMPTS`, `LOGIN_BLOCK_MINUTES`); conta com
 senha provisória bloqueia na 3ª (`TEMP_MAX_LOGIN_ATTEMPTS`).
@@ -115,7 +121,7 @@ usuário inativo, sem 2FA): `303` para `/login`.
 `POST`: form `code` (até 32 caracteres) com o código TOTP de 6 dígitos **ou** um código de recuperação. Sucesso:
 `303` para o destino guardado (e `/diretoria` se aplicável). Código errado ou já usado: `401` com "Código
 incorreto ou já usado. Confira o app e tente de novo." Bloqueio de conta: `401` na página de login. Limite
-10 / 60 s por IP.
+30 / 60 s por IP.
 
 ### `POST /logout`
 
@@ -140,7 +146,7 @@ sessão e responde `303` para `/login`. O JavaScript (`app.js`) chama este endpo
 Form: `current_password`, `new_password`, `confirm` (cada um até 256). Validações, nesta ordem: senha atual correta
 (senão registra `password_change_failed`), confirmação igual, nova diferente da atual, política de senha
 (`validate_password`). Erro: `400` com a página e a mensagem. Sucesso: troca o hash, incrementa a época (as outras
-sessões caem), reinicia a sessão atual, `303` para `/` com "Senha alterada." Limite 10 / 600 s por IP.
+sessões caem), reinicia a sessão atual, `303` para `/` com "Senha alterada." Limite 10 / 600 s por usuário.
 
 ### `GET /account/2fa`
 
@@ -176,6 +182,12 @@ Todas as rotas exigem **Admin**. Todo `POST` exige CSRF.
 | POST | `/admin/audit/verify` | n/a | `200` página de auditoria com o relatório de integridade |
 | GET | `/admin/audit` | query `action` (filtro) | `200`, últimos 300 eventos |
 | GET | `/admin/audit/export.csv` | query `action` | `200` CSV, até 20 mil eventos |
+| GET | `/admin` | n/a | `200` Painel admin (uso por pessoa, coluna **Rede** do último login) |
+| GET | `/admin/usuarios/{user_id}` | n/a | `200` atividade de uma pessoa |
+| GET | `/admin/ip` | n/a | `200` tela **Rede da empresa**: IP registrado agora, cabeçalhos recebidos, IPs cadastrados e IPs de login frequentes não cadastrados (7 dias) |
+| POST | `/admin/rede` | form `cidr` (IP ou faixa, prefixo mínimo /8), `label` (até 80, opcional) | `303` `/admin/ip`; IP inválido ou repetido vira *flash* de erro |
+| POST | `/admin/rede/{net_id}/remover` | n/a | `303` `/admin/ip`; o histórico da auditoria não muda |
+| GET | `/admin/lixeira` | n/a | `303` para `/lixeira` (endereço antigo) |
 
 Detalhes:
 
@@ -191,6 +203,10 @@ Detalhes:
 - **Redefinir 2FA**: só para **outro** administrador que tenha 2FA ativo; remove o 2FA e encerra as sessões dele.
 - **Verificar integridade**: percorre a cadeia de selos (ver [`security.md`](security.md)), registra
   `audit_verified` e mostra "Auditoria íntegra" com o selo final, ou o primeiro evento adulterado.
+- **Senha de quem age (step-up)**: redefinir a senha de um administrador ou diretor e desativar um administrador pedem
+  `confirm_password`; senha errada vira *flash* e nada muda.
+- **Rede da empresa**: cada evento da auditoria grava em `details.rede` se o IP era da empresa (`empresa`/`fora`), na
+  hora do evento. Cadastrar e remover IP gera `network_add`/`network_remove`. Nada é bloqueado por rede.
 - Rotas de usuário e de auditoria com `user_id` inexistente não devolvem `404`: redirecionam ou ignoram.
 
 ---
@@ -209,12 +225,30 @@ Acesso: **Diretoria** (`director`, `admin`).
 
 | Método | Caminho | Parâmetros | Resposta |
 |---|---|---|---|
-| GET | `/diretoria` | `start`, `end` (`AAAA-MM`), `by` (`reference` ou `due`; outro valor vira `reference`), `region`, `types` (repetível, ids inteiros) | `200` painel com KPIs, destaques e gráficos |
+| GET | `/diretoria` | `start`, `end` (`AAAA-MM`), `by` (`reference` ou `due`; outro valor vira `reference`), `region`, `types` (repetível, ids inteiros), `aba` (`geral`, `lojas`, `evitavel`, `contratos`, `ano`; outro valor vira `geral`) | `200` painel com KPIs, destaques e gráficos da aba |
 | GET | `/diretoria/export.xlsx` | os mesmos filtros | `200` planilha XLSX formatada (abas Resumo, Lojas, Mês a mês, Fornecedores, Pendências) |
 | GET | `/diretoria/export.pptx` | os mesmos filtros | `200` apresentação PowerPoint (capa, destaques, gráficos nativos, ranking, altas e quedas, custo por kWh, pendências e um slide por loja, até 60; transição e entrada em cascata em cada slide) |
 | GET | `/diretoria/export.csv` | os mesmos filtros | `200` CSV do comparativo entre lojas |
 
-Os dados dos gráficos vão embutidos na página em `<script type="application/json" id="dir-data">`.
+Os dados dos gráficos vão embutidos na página em `<script type="application/json" id="dir-data">`. A aba
+**Contratos** só existe quando alguma conta tem demanda contratada ou medida (`demand_flag.demand_in_use`); sem isso,
+`aba=contratos` cai em `geral`.
+
+---
+
+## `trash.py` — lixeira
+
+Acesso: **Escrita** (admin e funcionário). Todo `POST` exige CSRF.
+
+| Método | Caminho | Parâmetros | Resposta |
+|---|---|---|---|
+| GET | `/lixeira` | query `por` (admin: filtra quem excluiu) | `200`. Admin vê tudo (até 500 itens, `TRASH_DAYS`); funcionário vê só o que ele excluiu nos últimos `TRASH_PERSONAL_DAYS`, sem os meses já lançados de novo |
+| POST | `/lixeira/{item_id}/restaurar` | form `next` (caminho local; padrão `/lixeira`) | `303` para `next` com *flash*. Fora do prazo ou de outra pessoa: `303` `/lixeira` com erro. Mês já lançado de novo: recusado, sem duplicar nem sobrescrever |
+| POST | `/lixeira/restaurar-de` | form `deleted_by`, `confirm_password` | Só **Admin**: restaura tudo o que uma pessoa excluiu; `303` `/lixeira?por=…` |
+
+As exclusões de contas e lançamentos (`manual.py`) passam pela lixeira e guardam na sessão o **Desfazer** mostrado
+na tela seguinte. Acima de `MAX_DELETES_PER_HOUR` (15) exclusões por hora, por pessoa e exceto admin, a exclusão é
+recusada e registrada como `delete_blocked`.
 
 ---
 
@@ -291,7 +325,7 @@ Lê no máximo `MAX_UPLOAD_MB` + 1 byte. Respostas:
 - `409` "Este mesmo arquivo já foi importado e a conta está salva. Nada foi enviado ao Gemini." (mesmo SHA-256 de
   uma importação `confirmed` cuja conta ainda existe).
 - `413` JSON, do `BodySizeLimitMiddleware`, quando o `Content-Length` passa de `MAX_UPLOAD_MB` + 1 MB.
-- `429` acima de 20 envios por minuto por IP.
+- `429` acima de 20 envios por minuto por usuário.
 
 ### Estados da importação
 
@@ -442,7 +476,7 @@ JSON (visão `units`): `view`, `empty`, `start`, `end`, `months`, `labels`, `ind
 
 ## `documents.py` — arquivos originais
 
-Acesso: **Logado** (qualquer perfil, inclusive `viewer`). Limite `documents`: 60 / 60 s por IP.
+Acesso: **Logado** (qualquer perfil, inclusive `viewer`). Limite `documents`: 60 / 60 s por usuário.
 
 | Método | Caminho | Resposta |
 |---|---|---|
@@ -471,6 +505,8 @@ lidos da conta continuam salvos."
 |---|---|---|---|
 | GET | `/health` | público | `200` texto `ok`; `503` texto `banco indisponível` |
 | GET | `/favicon.ico` | público | `301` para `/static/img/favicon.png` |
+| GET | `/sw.js` | público | service worker; só guarda a página offline (`Service-Worker-Allowed: /`) |
+| GET | `/offline` | público | página mostrada quando o servidor não responde |
 | GET | `/static/*` | público | arquivos estáticos (CSS, JS, imagens, Chart.js) |
 
 ### `GET /health`

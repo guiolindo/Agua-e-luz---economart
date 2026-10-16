@@ -249,7 +249,13 @@ O lançamento manual vale sempre pelo mês de referência informado; o venciment
 ## Middleware
 
 Registrados em `create_app()`. O último `add_middleware` é o mais externo; a ordem efetiva de uma requisição é
-`SecurityHeaders` → `RateLimit` → `BodySizeLimit` → `CSRFOrigin` → `Session` → rota.
+`RequestId` → `DropEmptyQueryParams` → `SecurityHeaders` → `BodySizeLimit` → `CSRFOrigin` → `Session` → `RateLimit`
+→ rota. O limite de requisições fica por dentro da sessão para poder contar por usuário.
+
+- **RequestIdMiddleware.** Dá a cada requisição um código curto que vai em todas as linhas de log dela, no
+  cabeçalho `X-Request-ID` e na página de erro ("Código do erro: …"). Registra requisições lentas (2 s ou mais) e
+  erros 5xx. Guarda também o IP do cliente para a auditoria marcar se o evento veio da rede da empresa.
+- **DropEmptyQueryParamsMiddleware.** Remove parâmetros vazios da URL (`?region=&start=`), que os filtros GET mandam.
 
 - **SecurityHeadersMiddleware.** Gera um nonce por resposta (`request.state.csp_nonce`) e define
   `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`,
@@ -259,9 +265,10 @@ Registrados em `create_app()`. O último `add_middleware` é o mais externo; a o
   'self'`. Scripts inline só funcionam com o nonce, que o `render()` entrega aos templates como `csp_nonce`. A
   CSP não é definida para caminhos que começam com `/documents/`; a rota define a sua própria para imagens
   (`default-src 'none'; … sandbox`). Respostas fora de `/static/` recebem `Cache-Control: no-store`.
-- **RateLimitMiddleware.** Janela deslizante em memória, por processo e por IP (`client_ip`, que respeita
-  `TRUSTED_PROXY_COUNT`). Políticas: login 30/60 s e login 2FA 30/60 s (por IP); as demais, com login, contam por usuário (escritório e CGNAT saem pelo mesmo IP); troca de senha 10/600 s, upload (`POST /import`)
-  20/60 s, `GET /documents/*` 60/60 s, `GET /api/*` 240/60 s, demais mutações 120/60 s. Resposta 429 com
+- **RateLimitMiddleware.** Janela deslizante em memória, por processo. Políticas: login 30/60 s e login 2FA 30/60 s
+  (por IP, `client_ip`); as demais, com login, contam por usuário (escritório e CGNAT saem pelo mesmo IP); troca de
+  senha 10/600 s, upload (`POST /import`) 20/60 s, `GET /documents/*` 60/60 s, exportações 10/60 s, `GET /api/*`
+  240/60 s, demais telas 300/60 s, demais mutações 120/60 s. Resposta 429 com
   `Retry-After`. Desligável com `RATE_LIMIT_ENABLED=false`. Vale para uma instância; com várias seria preciso
   um armazenamento compartilhado (o código cita Redis; não existe no repositório).
 - **BodySizeLimitMiddleware.** Em métodos que alteram dados, recusa com 413 corpos acima de 1 MB, ou acima do
@@ -315,8 +322,9 @@ Outras limpezas oportunistas, sem tarefa própria: `auth_service` remove registr
   (a `GEMINI_API_KEY` configurada e padrões `AIza…`, `x-goog-api-key`, `?key=`) em mensagens e tracebacks.
 - A auditoria no banco (`audit_log`) é o registro de negócio e de segurança; ver
   [database.md](database.md#cadeia-de-hash-da-auditoria).
-- Não há identificador de requisição nem métricas expostas. Não verificado se há integração com algum
-  serviço externo de monitoramento além do Railway.
+- Cada requisição tem um código (`X-Request-ID`) presente em todas as linhas de log dela e na página de erro; o
+  log `app.requests` registra requisições lentas (2 s ou mais) e erros 5xx. Não há métricas expostas nem
+  integração com serviço externo de monitoramento além do Railway.
 
 ## Decisões de arquitetura
 
@@ -330,3 +338,16 @@ Outras limpezas oportunistas, sem tarefa própria: `auth_service` remove registr
   a uma instância.
 - **Horário de negócio em America/Sao_Paulo.** O banco guarda instantes em UTC; "hoje" e os vencimentos usam
   `utils/timezone.local_today`.
+
+## Onde isso vive no código
+
+| Assunto | Arquivo |
+|---|---|
+| Fábrica da aplicação, ordem dos middlewares, erros, `/health`, `/sw.js` | `app/main.py` |
+| Middlewares | `app/middleware.py` |
+| `render()` e funções dos templates | `app/web.py` |
+| Rotas (uma área por arquivo) | `app/routes/` |
+| Regras de negócio | `app/services/` |
+| Gemini (único ponto com o SDK) | `app/services/gemini_service.py`, `app/services/extraction_service.py` |
+| Rotinas periódicas (retenção, lixeira) | `app/services/retention_service.py`, `app/services/trash_service.py` |
+| Fuso horário | `app/utils/timezone.py` |

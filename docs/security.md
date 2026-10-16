@@ -12,14 +12,16 @@ Não há cadastro público, recuperação de senha por e-mail nem API para terce
 ## Visão geral das camadas
 
 ```
-Navegador ── HTTPS ──> proxy do Railway (1 salto) ──> uvicorn ──> FastAPI
+Navegador ── HTTPS ──> CDN ──> proxy do Railway ──> uvicorn ──> FastAPI
 
 Ordem dos middlewares (de fora para dentro, app/main.py):
+  RequestIdMiddleware         código da requisição (log e página de erro), IP do cliente
+  DropEmptyQueryParams        remove ?campo= vazio dos filtros
   SecurityHeadersMiddleware   nonce do CSP, cabeçalhos, Cache-Control
-  RateLimitMiddleware         janela deslizante por IP, em memória
   BodySizeLimitMiddleware     corta corpo gigante antes do parse
   CSRFOriginMiddleware        recusa mutação de outra origem
   SessionMiddleware           cookie assinado "energia_session"
+  RateLimitMiddleware         janela deslizante em memória; por usuário com login, por IP sem
   → rota: current_user / writer_required / admin_required / ... + verify_csrf
 ```
 
@@ -196,20 +198,30 @@ escapado.
 
 ## IP real, proxy e rate limit
 
-**IP do cliente** (`client_ip`): com `TRUSTED_PROXY_COUNT = N` (padrão 1, o do Railway), vale a N-ésima entrada
-**a partir do fim** de `X-Forwarded-For`. As entradas à esquerda podem ser forjadas pelo cliente; a última foi
-escrita pelo proxy de confiança. Com `N = 0`, ou com menos entradas que `N`, usa o IP da conexão. Valor truncado em
-64 caracteres. Se o app for exposto sem proxy confiável na frente, o cabeçalho passa a ser controlado pelo
-cliente e o IP, assim como o rate limit por IP, deixa de ser confiável.
+**IP do cliente** (`client_ip`, `app/security.py`): no Railway há uma CDN (Datacamp/CDN77) entre a pessoa e o
+servidor, e a última entrada de `X-Forwarded-For` é o IP da CDN, não o da pessoa. Por isso o padrão
+(`CLIENT_IP_SOURCE=real-ip`) é o `X-Real-IP`, que o Railway preenche com o IP real; o valor é validado como IP.
+Sem `X-Real-IP` (ou com `CLIENT_IP_SOURCE=xff`) vale a regra antiga: com `TRUSTED_PROXY_COUNT = N` (padrão 1), a
+N-ésima entrada **a partir do fim** de `X-Forwarded-For`; com `N = 0`, ou com menos entradas que `N`, o IP da conexão.
+Valor truncado em 64 caracteres. Se o app for exposto sem proxy confiável na frente, esses cabeçalhos passam a ser
+controlados pelo cliente e o IP deixa de ser confiável. A tela **Auditoria → Rede da empresa** (`/admin/ip`) mostra os
+cabeçalhos recebidos e o IP registrado, para comparar com um site como meuip.com.br.
 
-**Rate limit** (`RateLimitMiddleware`): janela deslizante em memória, por `política:IP`. Tabela completa em
-[`api-reference.md`](api-reference.md#limites-de-requisições-por-ip-janela-deslizante-em-memória). Pontos que
-importam aqui:
+**Rede da empresa** (`network_service`): os IPs públicos dos links da empresa ficam na tabela `company_networks`
+(cadastrados pelo admin) somados aos de `COMPANY_NETWORKS`. Cada evento da auditoria grava `details.rede`
+(`empresa`/`fora`) na hora, então trocar o IP do link depois não muda o histórico. É só informativo: nada é
+bloqueado por rede. Quando a operadora troca o IP, o novo aparece entre os IPs de login frequentes não cadastrados.
 
-- login e 2FA: 10 por minuto por IP; troca de senha: 10 por 10 minutos; upload: 20 por minuto; documentos: 60 por
-  minuto; `GET /api/*`: 240 por minuto; demais mutações: 120 por minuto.
-- resposta `429` JSON com `Retry-After` igual à janela;
-- o dicionário de contadores é podado quando passa de 5 000 chaves;
+**Rate limit** (`RateLimitMiddleware`): janela deslizante em memória. Com login, conta **por usuário** (`u<id>`):
+num escritório ou numa operadora com CGNAT, todos saem pelo mesmo IP público e contar por IP somaria a empresa
+inteira. Antes do login (`login`, `login2fa`), conta por IP. Tabela completa em
+[`api-reference.md`](api-reference.md#limites-de-requisições-janela-deslizante-em-memória). Pontos que importam aqui:
+
+- login e 2FA: 30 por minuto por IP (a trava de 5 senhas erradas continua por conta); troca de senha: 10 por
+  10 minutos; upload: 20 por minuto; documentos: 60 por minuto; exportações: 10 por minuto; `GET /api/*`: 240 por
+  minuto; demais telas: 300 por minuto; demais mutações: 120 por minuto.
+- resposta `429` com `Retry-After` igual à janela (JSON, ou uma página curta quando é o navegador);
+- o dicionário de contadores é podado quando passa de 5 000 chaves, com teto rígido de 50 000;
 - vale **por processo**: com mais de uma instância, cada uma conta separado (Redis seria o próximo passo);
 - `RATE_LIMIT_ENABLED=false` desliga (usado em testes).
 
@@ -521,6 +533,18 @@ enquanto a importação ainda está em conferência, só quem lança contas (`op
 
 ---
 
+## Exclusões e recuperação
+
+Excluir uma conta ou um lançamento não apaga: o registro vai para a **lixeira** (`trash_items`) com tudo o que é
+preciso para voltar, e a tela seguinte mostra **Desfazer**. Quem excluiu restaura sozinho por
+`TRASH_PERSONAL_DAYS` (30 dias); o administrador restaura qualquer item por `TRASH_DAYS` (180 dias). A restauração
+nunca duplica nem sobrescreve: se o mesmo mês já foi lançado de novo, ela é recusada. Acima de
+`MAX_DELETES_PER_HOUR` (15) exclusões por hora, por pessoa e exceto admin, o sistema pausa as exclusões e registra
+`delete_blocked` na auditoria, o que evita apagar muita coisa de uma vez por engano. Restaurar e excluir ficam na
+auditoria.
+
+---
+
 ## Dependências e CI
 
 `.github/workflows/ci.yml` roda a cada `push` e `pull_request`: `ruff check --select F,E9`, `pytest -q` e
@@ -626,7 +650,10 @@ Itens abaixo são verificáveis no código, a menos que marcados como "não veri
 | Hash e política de senha, senha provisória, sessão, dependências de perfil, CSRF, IP real, pseudonimização | `app/security.py` |
 | Login, bloqueio, 2FA no login, troca de senha, revogação | `app/services/auth_service.py`, `app/routes/auth.py`, `app/routes/account.py` |
 | TOTP, códigos de recuperação | `app/services/totp_service.py`; reset por script em `scripts/reset_2fa.py` |
-| Cabeçalhos, CSP, CSRF de origem, rate limit, limite de corpo | `app/middleware.py` |
+| Cabeçalhos, CSP, CSRF de origem, rate limit, limite de corpo, ID da requisição | `app/middleware.py` |
+| Rede da empresa | `app/services/network_service.py`, `app/models/network.py`, `app/templates/admin/ip.html` |
+| Lixeira, Desfazer e limite de exclusões | `app/services/trash_service.py`, `app/routes/trash.py`, `app/models/trash.py` |
+| PDF com JavaScript ou ação automática | `app/utils/uploads.py` (`pdf_has_active_content`) |
 | Validação de configuração | `app/startup_checks.py`, `app/main.py` (`create_app`), `app/seed.py` (admin inicial) |
 | Configuração e variáveis | `app/config/__init__.py`, `railway.env.example`, `.env.example` |
 | Auditoria e cadeia | `app/services/audit_service.py`, `app/models/audit.py`, `app/routes/admin.py` |
@@ -647,7 +674,11 @@ Itens abaixo são verificáveis no código, a menos que marcados como "não veri
 | `DATABASE_URL` | `sqlite:///app.db` | em produção precisa ser PostgreSQL |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | `admin` / vazio | criam o primeiro administrador se o banco não tem usuários |
 | `REQUIRE_ADMIN_2FA` | `false` | obriga 2FA aos administradores |
-| `TRUSTED_PROXY_COUNT` | `1` | proxies à frente do app |
+| `CLIENT_IP_SOURCE` | `real-ip` | de onde vem o IP real: `real-ip` (`X-Real-IP` do Railway) ou `xff` |
+| `TRUSTED_PROXY_COUNT` | `1` | proxies à frente do app (usado sem `X-Real-IP`) |
+| `COMPANY_NETWORKS` | vazio | IPs/faixas públicas da empresa (CSV), somados aos cadastrados na tela; só marca a auditoria |
+| `MAX_DELETES_PER_HOUR` | `15` | exclusões por hora por pessoa (exceto admin) antes de pausar |
+| `TRASH_DAYS` / `TRASH_PERSONAL_DAYS` | `180` / `30` | lixeira do admin / lixeira pessoal |
 | `MAX_LOGIN_ATTEMPTS` / `LOGIN_BLOCK_MINUTES` | `5` / `15` | bloqueio por tentativas |
 | `TEMP_PASSWORD_HOURS` / `TEMP_MAX_LOGIN_ATTEMPTS` | `48` / `3` | senha provisória |
 | `SESSION_IDLE_MINUTES` / `SESSION_MAX_HOURS` | `60` / `12` | expiração da sessão |

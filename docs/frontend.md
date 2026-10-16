@@ -556,3 +556,19 @@ python -m pytest -q
   o script duas vezes.
 - Telas não testadas em navegador neste levantamento: o conteúdo acima vem da leitura do código, não de
   captura de tela.
+
+---
+
+## Onde isso vive no código
+
+| Assunto | Arquivo |
+|---|---|
+| Layout, menu, avisos, Desfazer | `app/templates/base.html`, `app/templates/macros.html` |
+| Funções e variáveis dos templates (`plural`, `demand_in_use`, versão dos arquivos) | `app/web.py` |
+| Estilo único do sistema | `app/static/css/app.css` |
+| Diálogos, atalhos, sessão expirando, faixa offline, formulário com alterações | `app/static/js/app.js` |
+| Painel executivo e abas | `app/templates/director/panel.html`, `app/static/js/director.js` |
+| Painel admin | `app/templates/admin/panel.html`, `app/static/js/admin.js` |
+| Gráficos da loja e da unidade | `app/templates/partials/chart_panel.html`, `app/static/js/chart_panel.js` |
+| Página offline e service worker | `app/templates/offline.html`, `app/static/sw.js`, `app/static/js/offline.js` |
+| Apresentação do sistema | `app/templates/presentation.html`, `app/static/css/presentation.css`, `app/static/js/presentation.js` |

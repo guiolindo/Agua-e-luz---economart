@@ -109,6 +109,8 @@ padrão são os do código.
 | `MIN_PASSWORD_LENGTH` | `8` | Tamanho mínimo da senha pessoal |
 | `REQUIRE_ADMIN_2FA` | `false` | `true` obriga todo administrador a configurar o 2FA antes de usar o sistema |
 | `PRESENTATION_UNTIL` | `2026-10-16T17:00:00-03:00` | Até quando o botão *Apresentação do sistema* (`/apresentacao`) aparece. ISO 8601; sem fuso = Brasília; vazio ou inválido = desligada |
+| `CLIENT_IP_SOURCE` | `real-ip` | De onde vem o IP real: `real-ip` (`X-Real-IP`, o certo no Railway, que tem uma CDN no caminho) ou `xff` (`X-Forwarded-For` contado do fim com `TRUSTED_PROXY_COUNT`) |
+| `COMPANY_NETWORKS` | vazio | IPs ou faixas públicas da empresa, separados por vírgula (ex.: `187.32.111.41,186.248.0.0/16`). Somam-se aos cadastrados em *Auditoria → Rede da empresa*. Só marcam a auditoria ("na empresa"/"fora"); nada é bloqueado |
 | `RATE_LIMIT_ENABLED` | `true` | Liga o limite de requisições em memória |
 | `CSRF_ALLOWED_ORIGINS` | vazio | Origens extras aceitas em POST (CSV). Normalmente vazio |
 
@@ -129,6 +131,9 @@ padrão são os do código.
 |---|---|---|
 | `DOCUMENT_RETENTION_DAYS` | `183` | Prazo (~6 meses) para apagar a foto/PDF original do banco |
 | `RETENTION_CHECK_HOURS` | `6` | Intervalo da rotina automática de retenção |
+| `TRASH_DAYS` | `180` | Quanto tempo o administrador consegue restaurar um item da lixeira |
+| `TRASH_PERSONAL_DAYS` | `30` | Quanto tempo quem excluiu consegue restaurar sozinho |
+| `MAX_DELETES_PER_HOUR` | `15` | Exclusões por hora, por pessoa (exceto admin), antes de o sistema pausar as exclusões |
 
 Variáveis que **não existem** neste sistema (existem no Notas-despesas):
 `ENVIRONMENT`, `MASTER_ENCRYPTION_KEY`, `R2_*`, `SMTP_*`,
@@ -355,7 +360,7 @@ A foto/PDF original é removida do banco após `DOCUMENT_RETENTION_DAYS`
 | "Limite de uso do Gemini atingido" | 429 do Google. Aguardar ~1 min; reduzir `GEMINI_MAX_CONCURRENCY` se recorrente |
 | Gemini fora do ar | Após 5 falhas seguidas o disjuntor abre e rejeita na hora por 30 s, depois testa uma chamada. Enquanto isso, use *Lançamento manual* |
 | Importação presa em "processando" | Passados `STALE_IMPORT_MINUTES` (10) vira falha com "Tentar novamente" |
-| "Muitas tentativas" (429) | Limite por processo: login 30/min por IP; com login, por usuário. Todos os usuários aparecendo com o mesmo IP indica `TRUSTED_PROXY_COUNT` errado |
+| "Muitas tentativas" (429) | Limite por processo: login 30/min por IP; com login, por usuário. Todos os usuários aparecendo com o mesmo IP indica que o IP vem da CDN: confira `CLIENT_IP_SOURCE=real-ip` e a tela *Auditoria → Rede da empresa* |
 | Usuário bloqueado por tentativas erradas | *Usuários → Desbloquear* (ou esperar `LOGIN_BLOCK_MINUTES`) |
 | Esqueceu a senha | *Usuários → Redefinir senha* (provisória de 4 dígitos, 48 h) |
 | Administrador perdeu o celular do 2FA | Ver [Reset de 2FA](#reset-de-2fa) |
@@ -397,3 +402,16 @@ python -m scripts.unlock_user <usuario>
 Mesma regra do `reset_2fa`: roda com o `DATABASE_URL` do app, só zera o bloqueio e o contador (não mexe na senha nem no
 2FA) e grava `account_unlocked` na auditoria. Testado em banco local de teste; ainda não executado no Railway.
 
+---
+
+## Onde isso vive no código
+
+| Assunto | Arquivo |
+|---|---|
+| Start no Railway e healthcheck | `railway.json`, `Procfile`, `run.py`, `app/main.py` (`/health`) |
+| Variáveis e padrões | `app/config/__init__.py`, `.env.example`, `railway.env.example` |
+| Checagem de configuração ao subir | `app/startup_checks.py` |
+| Migrações ao subir | `app/db_migrate.py` |
+| Rotinas de retenção e lixeira | `app/services/retention_service.py`, `app/services/trash_service.py` (`purge_old`) |
+| Scripts de manutenção | `scripts/purge_documents.py`, `scripts/reset_2fa.py`, `scripts/unlock_user.py` |
+| Log com ID da requisição e requisições lentas | `app/middleware.py` (`RequestIdMiddleware`) |

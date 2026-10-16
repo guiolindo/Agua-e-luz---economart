@@ -40,6 +40,8 @@ erDiagram
     USERS ||--o{ AUDIT_LOG : "executa"
     USERS ||--o{ ALERT_ACKS : "confere"
     USERS ||--o{ DOCUMENTS : "envia"
+    USERS ||--o{ TRASH_ITEMS : "excluiu / restaurou"
+    USERS ||--o{ COMPANY_NETWORKS : "cadastrou"
 ```
 
 `users` também é referenciada por `created_by`/`updated_by` em `energy_bills`, `manual_records` e `imports`
@@ -55,7 +57,7 @@ Quem pode entrar no sistema.
 - `must_change_password` (boolean, anulável), `temp_expires_at` (validade da senha provisória),
   `password_changed_at`.
 - `failed_attempts`, `blocked_until`: bloqueio por tentativas erradas.
-- `last_login`.
+- `last_login`, `last_seen_at` (última atividade, para "quem está on-line" no Painel admin; migração 0005).
 - `session_epoch` (inteiro): incrementa em logout, troca de senha, mudança de perfil e desativação; sessões com
   época antiga deixam de valer.
 - 2FA (só administradores): `totp_secret` (texto, cifrado com a chave dos documentos quando existe),
@@ -67,6 +69,8 @@ Quem pode entrar no sistema.
 
 - `code` (varchar 40, único), `name`, `location`, `region` (varchar 20, UF), `notes`, `aliases` (JSON, lista de
   apelidos), `active`.
+- Lista oficial da empresa (migração 0004): `official` (boolean), `cnpj` (varchar 20, índice), `company`,
+  `group_name`, `details` (JSON). A lista em si não fica no repositório: é importada pela tela.
 
 ### consumer_units
 
@@ -164,6 +168,26 @@ Alertas já conferidos (migração 0002).
 - `key` (varchar 80, **índice único**): `tipo:id-da-conta`, `by_user` (FK `users`, anulável), `at`
   (data/hora, padrão agora), `note` (varchar 300; a rota atual não preenche).
 
+### trash_items
+
+Lixeira (migração 0006). Uma linha por conta ou lançamento excluído, com a linha original inteira.
+
+- `kind` (varchar 30, índice): `energy_bill` ou `manual_record`; `original_id`; `store_id` (índice, anulável).
+- `summary` (varchar 300): texto mostrado na tela e na auditoria, ex.: `L05 · CEMIG · SET/2026 · R$ 1.234,56`.
+- `payload` (JSON): todas as colunas da linha excluída. Restaurar recria a linha a partir daqui; se o id original
+  já foi usado por outra linha, ela volta com um id novo.
+- `deleted_by` (FK `users`, índice), `deleted_at` (índice), `restored_by`, `restored_at`.
+- A foto/PDF original não é apagada enquanto o item está na lixeira (segue só a retenção normal). Itens com mais de
+  `TRASH_DAYS` são expurgados pela rotina de retenção, junto com o documento.
+
+### company_networks
+
+IPs públicos dos links da empresa (migração 0007), cadastrados em *Auditoria → Rede da empresa*.
+
+- `cidr` (varchar 64, único): `187.32.111.41/32` ou uma faixa; `label` (varchar 80, anulável); `created_by` (FK
+  `users`), `created_at`.
+- Lida com cache de 60 s (`network_service.networks`), somada a `COMPANY_NETWORKS`.
+
 ### alembic_version
 
 Criada pelo Alembic; guarda a revisão atual (`version_num`).
@@ -183,6 +207,9 @@ Criada pelo Alembic; guarda a revisão atual (`version_num`).
 | `audit_log` | `at` |
 | `login_throttle` | `key` (único) |
 | `alert_acks` | `key` (único) |
+| `stores` (0004) | `cnpj` |
+| `trash_items` | `kind`, `store_id`, `deleted_by`, `deleted_at` |
+| `company_networks` | `cidr` (único) |
 
 Não há índice composto. As consultas mais frequentes (`bills_for_units`, `manual_for_store`) filtram por unidade ou
 loja mais um intervalo de `reference`; o desempenho com esses índices simples não foi medido neste documento.
@@ -196,6 +223,10 @@ loja mais um intervalo de `reference`; o desempenho com esses índices simples n
 | `0001` | `0001_baseline.py` | Baseline gerado automaticamente a partir dos modelos: cria `login_throttle`, `record_types`, `stores`, `users`, `audit_log`, `consumer_units`, `documents`, `energy_bills`, `manual_records`, `imports` e seus índices. |
 | `0002` | `0002_alert_acks.py` | Cria `alert_acks` e o índice único em `key`. Tem uma guarda: se a tabela já existe (banco criado com o modelo atual), não faz nada. |
 | `0003` | `0003_manual_accounting_date.py` | **Sem alterações de esquema.** `upgrade()` e `downgrade()` são `pass`. |
+| `0004` | `0004_company_stores.py` | Colunas da lista oficial de lojas em `stores` (`official`, `cnpj`, `company`, `group_name`, `details`) e o índice em `cnpj`. Só adiciona o que falta. |
+| `0005` | `0005_user_last_seen.py` | `users.last_seen_at`. Só adiciona se faltar. |
+| `0006` | `0006_trash.py` | Cria `trash_items` (lixeira) e seus índices. |
+| `0007` | `0007_company_networks.py` | Cria `company_networks` (rede da empresa). |
 
 `migrations/env.py` usa os modelos de `app` e o mesmo `DATABASE_URL`, com `compare_type=True` e
 `render_as_batch` quando o banco é SQLite. Aceita uma conexão já aberta (`config.attributes["connection"]`),
@@ -336,3 +367,17 @@ Pontos específicos deste sistema:
   removeu.
 - Não verificado: se há backup externo (fora do Railway) automatizado. O `operations.md` descreve apenas o backup
   do Railway e o manual.
+
+---
+
+## Onde isso vive no código
+
+| Assunto | Arquivo |
+|---|---|
+| Modelos (uma tabela por arquivo) | `app/models/` |
+| Engine, sessão, keepalive e reciclagem de conexões | `app/database.py` |
+| Migrações ao subir e adoção de banco antigo | `app/db_migrate.py`, `alembic.ini`, `migrations/env.py` |
+| Revisões | `migrations/versions/0001`–`0007` |
+| Consultas reaproveitadas | `app/repositories/` |
+| Cadeia de hash da auditoria | `app/services/audit_service.py` |
+| Banco de teste (SQLite ou `TEST_DATABASE_URL`) | `tests/conftest.py` |
