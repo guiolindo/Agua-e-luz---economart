@@ -818,3 +818,7 @@ kbd { display: inline-block; min-width: 22px; padding: 2px 7px; border: 1px soli
 .bridge dt { color: var(--ink-2); } .bridge dd { margin: 0; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
 .bridge dd.up { color: var(--bad); } .bridge dd.down { color: var(--ok); }
 .inline-form { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; } .inline-form .field { margin: 0; flex: 1 1 180px; }
+
+/* Senha pedida dentro do sistema: campo de texto com os caracteres escondidos, para o navegador não oferecer a
+   senha salva (ver app.js, "Senha pedida DENTRO do sistema"). */
+.pw-mask { -webkit-text-security: disc; text-security: disc; font-family: inherit; letter-spacing: .08em; }

@@ -25,7 +25,7 @@
 <form class="card" method="post" action="/admin/users" style="max-width:640px"><h2>Novo usuário</h2>{{ csrf(csrf_token) }}
   <div class="row row-2"><div class="field"><label>Usuário</label><input type="text" name="username" required minlength="3" autocomplete="off"></div>
     <div class="field"><label>Perfil</label><select name="role" id="new-role">{% for k, v in roles.items() %}<option value="{{ k }}" {{ 'selected' if k == 'operator' }}>{{ v }}</option>{% endfor %}</select></div></div>
-  <div class="field" id="new-role-confirm" hidden><label>Sua senha (confirma a criação de um administrador)</label><input type="password" name="confirm_password" autocomplete="off" readonly data-no-autofill data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"></div>
+  <div class="field" id="new-role-confirm" hidden><label>Sua senha (confirma a criação de um administrador)</label><input name="confirm_password" type="text" class="pw-mask" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" data-no-autofill data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"></div>
   <div class="hint" style="margin-bottom:10px">O sistema gera uma senha provisória de 4 dígitos, exibida uma única vez e válida por {{ temp_hours }} horas.</div>
   <button class="btn primary">Criar usuário</button></form>
 {% endblock %}

@@ -13,16 +13,16 @@ document.addEventListener('click', (e) => {
 window.addEventListener('afterprint', () => document.documentElement.classList.remove('sheet-only'));
 // Confirmações numa janela do próprio sistema (no lugar do confirm()/prompt() do navegador, que mostrava a senha
 // digitada em texto aberto). Roda na captura: segura o envio, pergunta e, se confirmado, envia de novo.
-const NO_FILL = 'autocomplete="off" readonly data-no-autofill data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"';
+const NO_FILL = 'class="pw-mask" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" data-no-autofill data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"';
 const ask = (msg, { password = false, danger = false, ok = 'Confirmar' } = {}) => new Promise((resolve) => {
   let d = document.getElementById('ask-dialog');
   if (!d) {
     d = document.createElement('dialog'); d.id = 'ask-dialog'; d.className = 'dialog ask';
     d.setAttribute('aria-labelledby', 'ask-msg');
     d.innerHTML = '<form method="dialog"><p class="ask-msg" id="ask-msg"></p>'
-      + '<div class="field ask-pw"><label for="ask-pw">Sua senha</label><input type="password" id="ask-pw" ' + NO_FILL + '></div>'
+      + '<div class="field ask-pw"><label for="ask-pw">Sua senha</label><input type="text" id="ask-pw" ' + NO_FILL + '></div>'
       + '<div class="ask-actions"><button class="btn" type="submit" value="no">Cancelar</button><button class="btn primary" type="submit" value="ok" id="ask-ok"></button></div></form>';
-    document.body.appendChild(d);
+    document.body.appendChild(d); prepPw(d.querySelector('#ask-pw'));
     d.querySelector('#ask-pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (e.target.value) d.close('ok'); } });
   }
   const pw = d.querySelector('#ask-pw'), okb = d.querySelector('#ask-ok');
@@ -31,13 +31,23 @@ const ask = (msg, { password = false, danger = false, ok = 'Confirmar' } = {}) =
   d.querySelector('.ask-pw').hidden = !password; pw.value = '';
   d.returnValue = '';
   d.addEventListener('close', () => resolve(d.returnValue === 'ok' ? (password ? pw.value : true) : null), { once: true });
-  pw.readOnly = true;                   // trava de novo: o navegador não preenche a cada vez que a janela abre
+  if (!MASK_OK) pw.readOnly = true;     // campo de senha (celular): trava de novo a cada vez que a janela abre
   d.showModal(); (password ? pw : okb).focus();
 });
-// Senha pedida DENTRO do sistema (confirmar ação, trocar senha, 2FA): o navegador não preenche sozinho; só no login.
-// O campo nasce só-leitura (o preenchimento automático pula esses campos) e libera no toque, no clique ou no foco.
-// Ao enviar, a senha segue num campo oculto e o visível fica vazio: o navegador não oferece "salvar senha" com o
-// usuário errado (ex.: o formulário de criar usuário, que tem o nome do usuário novo ao lado).
+// Senha pedida DENTRO do sistema (confirmar ação, trocar senha, 2FA): o navegador não preenche nem oferece a senha
+// salva; isso fica só para o login. O Chrome mostra a lista de senhas salvas em todo campo do tipo "senha", então
+// no computador o campo é de texto comum com os caracteres escondidos (pw-mask, -webkit-text-security). Onde isso
+// não existe (navegador sem suporte) ou no celular (o teclado poderia aprender o que é digitado em campo de texto),
+// volta a ser campo de senha, só-leitura até o toque: o preenchimento automático pula campos só-leitura.
+// O campo visível não tem nome; ao enviar, a senha vai num campo oculto e o visível é esvaziado, para o navegador
+// não guardar nem oferecer "salvar senha" (no formulário de criar usuário, juntaria a senha com o usuário novo).
+const MASK_OK = window.CSS && CSS.supports('-webkit-text-security', 'disc') && matchMedia('(pointer: fine)').matches;
+const prepPw = (i) => {
+  if (i.dataset.prepped) return; i.dataset.prepped = '1';
+  if (i.name) { i.dataset.name = i.name; i.removeAttribute('name'); }
+  if (!MASK_OK) { i.type = 'password'; i.readOnly = true; }
+};
+document.querySelectorAll('input[data-no-autofill]').forEach(prepPw);
 const unlockPw = (e) => {
   const t = e.target; if (!t || !t.closest) return;
   if (t.matches('input[data-no-autofill]')) { t.readOnly = false; return; }
@@ -48,17 +58,18 @@ const unlockPw = (e) => {
 document.addEventListener('pointerdown', unlockPw, true);
 document.addEventListener('keydown', unlockPw, true);
 document.addEventListener('focusin', unlockPw);
+['copy', 'cut', 'dragstart'].forEach((ev) => document.addEventListener(ev, (e) => {   // texto escondido não sai do campo
+  if (e.target.matches && e.target.matches('input[data-no-autofill]')) e.preventDefault();
+}, true));
 window.addEventListener('submit', (e) => {
   if (e.defaultPrevented) return;
-  e.target.querySelectorAll('input[data-no-autofill][name]').forEach((i) => {
-    const h = document.createElement('input'); h.type = 'hidden'; h.name = i.name; h.value = i.value; h.dataset.pwCarry = '';
-    i.form.appendChild(h); i.dataset.name = i.name; i.removeAttribute('name'); i.value = ''; i.readOnly = true;
+  e.target.querySelectorAll('input[data-no-autofill][data-name]').forEach((i) => {
+    if (i.form !== e.target) return;
+    const h = document.createElement('input'); h.type = 'hidden'; h.name = i.dataset.name; h.value = i.value; h.dataset.pwCarry = '';
+    i.form.appendChild(h); i.value = ''; if (!MASK_OK) i.readOnly = true;
   });
 });
-window.addEventListener('pageshow', () => {           // voltou pelo histórico: o campo volta a ter nome, sem senha
-  document.querySelectorAll('input[data-pw-carry]').forEach((h) => h.remove());
-  document.querySelectorAll('input[data-no-autofill][data-name]').forEach((i) => { i.name = i.dataset.name; delete i.dataset.name; });
-});
+window.addEventListener('pageshow', () => document.querySelectorAll('input[data-pw-carry]').forEach((h) => h.remove()));
 const isDanger = (el) => !!(el && (el.classList.contains('danger') || el.querySelector && el.querySelector('.danger')));
 const setHidden = (f, name, value) => {
   let h = f.querySelector('input[name=' + name + ']');

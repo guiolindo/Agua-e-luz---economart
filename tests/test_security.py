@@ -517,15 +517,17 @@ def test_goodbye_overlay_is_in_the_shell_and_login_shows_the_notice(client):
 
 
 def test_navegador_so_preenche_a_senha_no_login(client):
-    """Dentro do sistema (confirmações, trocar senha) o campo de senha nasce travado para o preenchimento
-    automático; só a tela de login aceita a senha salva no navegador."""
+    """Dentro do sistema (confirmações, trocar senha) a senha é pedida num campo de texto com os caracteres
+    escondidos: o navegador só oferece senha salva em campo do tipo senha, e esse fica só no login (e na senha nova)."""
     login = _new_client().tc.get("/login").text
     assert 'autocomplete="current-password"' in login and "data-no-autofill" not in login
     for page in ("/admin/users", "/account/password"):
         html = client.get(page).text
         for tag in re.findall(r"<input[^>]*type=\"password\"[^>]*>", html):
-            if 'autocomplete="new-password"' in tag:
-                continue                                    # senha nova: o navegador pode sugerir/salvar, não preenche
-            assert "data-no-autofill" in tag and " readonly" in tag, (page, tag)
+            assert 'autocomplete="new-password"' in tag, (page, tag)    # senha nova: o navegador sugere, não preenche
+        guarded = [t for t in re.findall(r"<input[^>]*>", html) if "data-no-autofill" in t]
+        assert guarded and all('type="text"' in t and "pw-mask" in t for t in guarded), page
         assert 'autocomplete="current-password"' not in html
-    assert "data-no-autofill" in open("app/static/js/app.js", encoding="utf-8").read()   # janela "Confirme com a sua senha"
+    assert "-webkit-text-security" in open("app/static/css/app.css", encoding="utf-8").read()
+    js = open("app/static/js/app.js", encoding="utf-8").read()
+    assert 'id="ask-pw"' in js and "pw-mask" in js                      # janela "Confirme com a sua senha"
