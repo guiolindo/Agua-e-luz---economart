@@ -28,6 +28,7 @@ Dentro do sistema há também a tela **Ajuda**, diferente para cada perfil.
 |---|---|
 | [operations.md](operations.md) | Deploy no Railway, variáveis de ambiente, migrações na subida, backup, troca de chaves, incidentes |
 | [testing.md](testing.md) | Suíte pytest (450 testes), como rodar, organização, CI, o que não é coberto |
+| [`../tests/manual-smoke.md`](../tests/manual-smoke.md) | Checklist para conferir no navegador depois de mudanças e de cada deploy |
 | [faq.md](faq.md) | Perguntas técnicas frequentes, com respostas curtas |
 
 ## Apresentação e decisões

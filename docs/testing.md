@@ -201,6 +201,11 @@ executado ao escrever este documento** e o CI não faz isso.
 
 ---
 
+## Teste manual no navegador
+
+Os testes automáticos não abrem um navegador. Depois de mexer em tela, JavaScript, login ou permissões, e depois
+de cada deploy, siga o checklist [`../tests/manual-smoke.md`](../tests/manual-smoke.md) (cerca de 15 minutos).
+
 ## O que NÃO é coberto
 
 - **Gemini real**: nenhum teste chama a API. O prompt, o JSON schema e
