@@ -108,7 +108,7 @@ padrão são os do código.
 | `SESSION_MAX_HOURS` | `12` | Duração máxima da sessão (também é o `max_age` do cookie) |
 | `MIN_PASSWORD_LENGTH` | `8` | Tamanho mínimo da senha pessoal |
 | `REQUIRE_ADMIN_2FA` | `false` | `true` obriga todo administrador a configurar o 2FA antes de usar o sistema |
-| `PRESENTATION_UNTIL` | `2026-10-16T17:00:00-03:00` | Até quando o botão *Apresentação do sistema* (`/apresentacao`) aparece. ISO 8601; sem fuso = Brasília; vazio ou inválido = desligada |
+| `PRESENTATION_UNTIL` | `2026-10-23T17:00:00-03:00` | Até quando o botão *Apresentação do sistema* (`/apresentacao`) aparece. ISO 8601; sem fuso = Brasília; vazio ou inválido = desligada |
 | `CLIENT_IP_SOURCE` | `real-ip` | De onde vem o IP real: `real-ip` (`X-Real-IP`, o certo no Railway, que tem uma CDN no caminho) ou `xff` (`X-Forwarded-For` contado do fim com `TRUSTED_PROXY_COUNT`) |
 | `COMPANY_NETWORKS` | vazio | IPs ou faixas públicas da empresa, separados por vírgula (ex.: `187.32.111.41,186.248.0.0/16`). Somam-se aos cadastrados em *Auditoria → Rede da empresa*. Só marcam a auditoria ("na empresa"/"fora"); nada é bloqueado |
 | `RATE_LIMIT_ENABLED` | `true` | Liga o limite de requisições em memória |

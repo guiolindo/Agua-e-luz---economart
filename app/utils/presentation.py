@@ -1,4 +1,4 @@
-"""Janela da apresentação do sistema: aberta até PRESENTATION_UNTIL (padrão: sexta 16/10/2026, 17h, Brasília)."""
+"""Janela da apresentação do sistema: aberta até PRESENTATION_UNTIL (padrão: sexta 23/10/2026, 17h, Brasília)."""
 from datetime import datetime
 
 from app.config import get_settings

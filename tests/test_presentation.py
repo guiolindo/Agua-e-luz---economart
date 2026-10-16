@@ -47,9 +47,9 @@ def test_empty_or_invalid_deadline_keeps_it_closed(client, until, value):
     assert client.get("/apresentacao").status_code == 404
 
 
-def test_default_deadline_is_friday_16_oct_2026_at_5pm_brasilia():
+def test_default_deadline_is_friday_23_oct_2026_at_5pm_brasilia():
     d = presentation.presentation_deadline()
-    assert (d.year, d.month, d.day, d.hour, d.minute) == (2026, 10, 16, 17, 0) and d.weekday() == 4
+    assert (d.year, d.month, d.day, d.hour, d.minute) == (2026, 10, 23, 17, 0) and d.weekday() == 4
     assert d.utcoffset().total_seconds() == -3 * 3600
 
 

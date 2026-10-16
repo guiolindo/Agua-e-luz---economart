@@ -5,6 +5,8 @@ Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada i
 
 ## 2026-10-16
 
+- **Apresentação do sistema prorrogada** até sexta, 23/10/2026, às 17h (Brasília): novo padrão de `PRESENTATION_UNTIL` no código e no `railway.env.example`.
+
 - **Senha salva no navegador só no login.** Dentro do sistema, o navegador (e gerenciadores como LastPass, 1Password e Bitwarden) não preenche nem mostra mais a lista de senhas salvas nas ações críticas: a janela "Confirme com a sua senha" (redefinir senha ou tirar o 2FA de um administrador, restaurar tudo da lixeira, promover a administrador), a senha atual na troca de senha, a de desativar o 2FA e a de criar administrador. A primeira versão (campo travado até o clique) impedia o preenchimento, mas o Chrome ainda abria a lista de senhas ao clicar; agora, no computador, esses campos são de texto com os caracteres escondidos (aparecem como ••••), e o Chrome só oferece senha salva em campo do tipo senha. No celular continuam do tipo senha, travados até o toque. O formulário de criar usuário também deixou de oferecer "salvar senha". O login continua com o preenchimento automático.
 
 - **Checklist de teste manual** (`tests/manual-smoke.md`, como no Notas-despesas): o que conferir no navegador, por perfil, depois de mexer em telas e depois de cada deploy, com o critério para passar (sem erro no console, botão responde, acontece o esperado).
