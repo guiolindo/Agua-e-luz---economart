@@ -17,6 +17,7 @@ from app import (  # noqa: F401  (models registra as tabelas no metadata)
     models,
     security,
 )
+from app.closed import SiteClosedMiddleware
 from app.config import get_settings
 from app.middleware import (
     DropEmptyQueryParamsMiddleware,
@@ -98,7 +99,8 @@ def create_app() -> FastAPI:
     app.add_middleware(BodySizeLimitMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(DropEmptyQueryParamsMiddleware)
-    app.add_middleware(RequestIdMiddleware)          # o mais externo: o código vale até para o erro 500
+    app.add_middleware(RequestIdMiddleware)          # o código vale até para o erro 500
+    app.add_middleware(SiteClosedMiddleware)         # o mais externo: projeto encerrado, responde antes de tudo
     # Só os estáticos vão comprimidos (CSS/JS/fontes: ~70% menores). Páginas com dados ficam de fora de propósito:
     # gzip em HTML com token CSRF + texto refletido da busca abre o ataque BREACH.
     app.mount("/static", GZipMiddleware(StaticCacheMiddleware(StaticFiles(directory=BASE_DIR / "static")),

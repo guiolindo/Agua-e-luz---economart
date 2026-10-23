@@ -4,7 +4,7 @@ import tempfile
 from cryptography.fernet import Fernet
 
 _tmp = tempfile.mkdtemp()
-os.environ.update(DEBUG="true", EXTRACTION_PROVIDER="mock", GEMINI_API_KEY="", ADMIN_USERNAME="admin",
+os.environ.update(SITE_CLOSED="false", DEBUG="true",EXTRACTION_PROVIDER="mock", GEMINI_API_KEY="", ADMIN_USERNAME="admin",
                   ADMIN_PASSWORD="admin-pass-123", SECRET_KEY="test-secret", RUN_MIGRATIONS="false",
                   DATABASE_URL=os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{_tmp}/test.db", DOCUMENT_ENCRYPTION_KEY=Fernet.generate_key().decode())
 

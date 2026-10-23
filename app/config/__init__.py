@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     # ISO 8601; sem fuso = horário de Brasília. Vazio = apresentação desligada.
     presentation_until: str = "2026-10-23T17:00:00-03:00"
 
+    # Fim do projeto: todo endereço (menos /health) responde 404 com a tela verde; a partir de SITE_BLACK_AT, tela
+    # preta. Nada é apagado. SITE_CLOSED=false reabre o sistema como era.
+    site_closed: bool = True
+    site_black_at: str = "2026-11-02T00:00:00-03:00"
+
     # O envio inline ao Gemini vai em base64 (+33%) e o limite da requisição é ~20 MB: 12 MB brutos deixam folga.
     max_upload_mb: int = 12
     gemini_max_concurrency: int = 2  # a cota gratuita (~15 pedidos/min) estoura com rajadas
