@@ -3,6 +3,10 @@
 Histórico do sistema, do mais novo para o mais antigo, agrupado por dia. Cada item corresponde a commits em
 `ccr-9b4b2f9b-4bk1nd`. O motivo das decisões maiores está em [`DECISIONS.md`](DECISIONS.md).
 
+## 2026-10-23
+
+- **Fim do projeto: site fechado.** Qualquer endereço do site responde 404 com uma tela verde: "404 Not Found" grande no centro e "404" espalhado pela tela toda, sem logo, sem o nome do sistema e sem nenhum script. Não dá mais para entrar. A partir de 02/11/2026, 0h (Brasília), só uma tela preta. Ao abrir, o navegador apaga o login, o cache e a tela offline antiga guardados do sistema. `/health` continua respondendo para o Railway publicar. Nada foi apagado: banco, documentos e todo o código ficam como estão, e `SITE_CLOSED=false` reabre o sistema (`app/closed.py`).
+
 ## 2026-10-16
 
 - **Apresentação do sistema prorrogada** até sexta, 23/10/2026, às 17h (Brasília): novo padrão de `PRESENTATION_UNTIL` no código e no `railway.env.example`.

@@ -1,5 +1,5 @@
-"""Site encerrado (fim do projeto): qualquer endereço responde 404 com uma tela verde "404 Not Found", sem logo nem
-nada do sistema. A partir de SITE_BLACK_AT, só uma tela preta. Liga com SITE_CLOSED=true (o padrão).
+"""Site encerrado (fim do projeto): qualquer endereço responde 404 com uma tela verde "404 Not Found" e "404"
+espalhado pela tela toda, sem logo nem nada do sistema. A partir de SITE_BLACK_AT, só uma tela preta. Liga com SITE_CLOSED=true (o padrão).
 
 Nada é apagado: banco, documentos e código continuam como estão; o aplicativo só deixa de ser alcançado. Ficam de
 fora apenas /health (o Railway precisa dele para publicar) e /sw.js, que passa a ser um service worker que se
@@ -29,20 +29,21 @@ def is_black() -> bool:
     return when is not None and local_now() >= when
 
 
-def _binary_columns(n: int = 48, length: int = 64) -> tuple[str, str]:
-    """Colunas de 0 e 1 caindo. Posição e ritmo vão em classes: a CSP não aceita style="..." no HTML."""
+def _scattered(n: int = 160) -> tuple[str, str]:
+    """"404" espalhado pela tela inteira, em tamanhos e brilhos diferentes, piscando fora de compasso. Posição e
+    ritmo vão em classes: a CSP não aceita style="..." no HTML."""
     rnd = random.Random(404)
-    css, cols = [], []
+    css, items = [], []
     for i in range(n):
-        bits = "".join(rnd.choice("01") for _ in range(length))
-        dur = rnd.uniform(7, 16)
-        css.append(f".c{i}{{left:{i * 100 / n:.3f}%;animation-duration:{dur:.1f}s;"
-                   f"animation-delay:-{rnd.uniform(0, dur):.1f}s;opacity:{rnd.uniform(.25, .7):.2f}}}")
-        cols.append(f'<i class="c{i}">{bits}</i>')
-    return "\n".join(css), "".join(cols)
+        dur = rnd.uniform(2.5, 7)
+        css.append(f".c{i}{{left:{rnd.uniform(-3, 97):.2f}%;top:{rnd.uniform(-2, 97):.2f}%;"
+                   f"font-size:{rnd.choice((12, 14, 16, 18, 22, 26, 32, 40, 52, 68)):d}px;"
+                   f"--o:{rnd.uniform(.12, .55):.2f};animation-duration:{dur:.1f}s;animation-delay:-{rnd.uniform(0, dur):.1f}s}}")
+        items.append(f'<i class="c{i}">404</i>')
+    return "\n".join(css), "".join(items)
 
 
-_COLUMN_CSS, _COLUMNS = _binary_columns()
+_COLUMN_CSS, _COLUMNS = _scattered()
 
 GREEN = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
@@ -50,10 +51,10 @@ GREEN = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 html,body{margin:0;height:100%;background:#010a03;overflow:hidden}
 body{font-family:"Courier New",Consolas,monospace;color:#22ff5a}
 .rain{position:fixed;inset:0;pointer-events:none}
-.rain i{position:absolute;top:0;width:1ch;font-style:normal;font-size:18px;line-height:1.15;word-break:break-all;
-  color:#1fd14c;text-shadow:0 0 6px #0f8a2e;animation:fall linear infinite;transform:translateY(-100%)}
-@keyframes fall{from{transform:translateY(-100%)}to{transform:translateY(100vh)}}
-.shade{position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(1,10,3,.92) 0,rgba(1,10,3,.75) 38%,rgba(1,10,3,.25) 75%)}
+.rain i{position:absolute;font-style:normal;font-weight:700;line-height:1;white-space:nowrap;letter-spacing:.04em;
+  color:#1fd14c;text-shadow:0 0 6px #0f8a2e;opacity:var(--o);animation:flick ease-in-out infinite}
+@keyframes flick{0%,100%{opacity:var(--o)}45%{opacity:calc(var(--o) * .25)}55%{opacity:calc(var(--o) * 1.6)}}
+.shade{position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(1,10,3,.9) 0,rgba(1,10,3,.7) 30%,rgba(1,10,3,0) 62%)}
 main{position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
   text-align:center;padding:0 16px}
 h1{margin:0;font-size:clamp(96px,22vw,220px);line-height:1;letter-spacing:.06em;color:#39ff6e;
@@ -65,7 +66,7 @@ p::after{content:"_";animation:blink 1s steps(1) infinite}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;
   background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px)}
 """ + _COLUMN_CSS + """
-@media (prefers-reduced-motion:reduce){.rain i,p::after{animation:none}.rain i{transform:none}}
+@media (prefers-reduced-motion:reduce){.rain i,p::after{animation:none}}
 </style></head><body><div class="rain" aria-hidden="true">""" + _COLUMNS + """</div><div class="shade"></div>
 <main><h1>404</h1><p>Not Found</p></main></body></html>"""
 

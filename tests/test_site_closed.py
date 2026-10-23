@@ -37,7 +37,7 @@ def test_page_is_safe_and_clears_the_browser(client, closed):
     assert "script-src" not in r.headers["content-security-policy"]                 # nem um script na página
     assert r.headers["cache-control"] == "no-store" and "noindex" in r.headers["x-robots-tag"]
     assert '"cookies"' in r.headers["clear-site-data"] and '"storage"' in r.headers["clear-site-data"]
-    assert r.text.count('class="c') == 48 and re.search(r'class="c0">[01]{64}<', r.text)   # binário atrás
+    assert r.text.count('">404</i>') == 160                                         # "404" espalhado pela tela
 
 
 def test_health_still_answers_for_the_deploy_and_old_service_worker_uninstalls(client, closed):
